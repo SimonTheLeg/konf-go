@@ -15,6 +15,9 @@ type konfigFile struct {
 	Content  k8s.Config
 }
 
+// TODO make this configurable
+const konfStore = "~/.kube/konfs/"
+
 // importCmd represents the import command
 var importCmd = &cobra.Command{
 	Use:   "import",
@@ -78,7 +81,7 @@ func determineConfigs(conf io.Reader) ([]*konfigFile, error) {
 
 		var konf konfigFile
 		// I have chosen this combination as it is fairly unique among multiple configs. I decided against using just context.name as a lot of times the context is just called "default", which results in lots of naming collisions
-		konf.FileName = curCon.Name + "_" + cluster.Name
+		konf.FileName = konfStore + curCon.Name + "_" + cluster.Name
 		konf.Content.AuthInfos = append(konf.Content.AuthInfos, user)
 		konf.Content.Clusters = append(konf.Content.Clusters, cluster)
 		konf.Content.Contexts = append(konf.Content.Contexts, curCon)

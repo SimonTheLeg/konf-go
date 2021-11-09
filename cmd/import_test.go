@@ -23,7 +23,7 @@ func TestDetermineConfigs(t *testing.T) {
 			ExpNumOfKonfigFile: 1,
 			ExpKonfigFiles: []*konfigFile{
 				{
-					FileName: "dev-eu_dev-eu-1",
+					FileName: "~/.kube/konfs/dev-eu_dev-eu-1",
 					Content: k8s.Config{
 						APIVersion:     "v1",
 						Kind:           "Config",
@@ -66,7 +66,7 @@ func TestDetermineConfigs(t *testing.T) {
 			ExpNumOfKonfigFile: 2,
 			ExpKonfigFiles: []*konfigFile{
 				{
-					FileName: "dev-asia_dev-asia-1",
+					FileName: "~/.kube/konfs/dev-asia_dev-asia-1",
 					Content: k8s.Config{
 						APIVersion:     "v1",
 						Kind:           "Config",
@@ -101,7 +101,7 @@ func TestDetermineConfigs(t *testing.T) {
 					},
 				},
 				{
-					FileName: "dev-eu_dev-eu-1",
+					FileName: "~/.kube/konfs/dev-eu_dev-eu-1",
 					Content: k8s.Config{
 						APIVersion:     "v1",
 						Kind:           "Config",
@@ -144,7 +144,7 @@ func TestDetermineConfigs(t *testing.T) {
 			ExpNumOfKonfigFile: 1,
 			ExpKonfigFiles: []*konfigFile{
 				{
-					FileName: "dev-asia_dev-asia-1",
+					FileName: "~/.kube/konfs/dev-asia_dev-asia-1",
 					Content: k8s.Config{
 						APIVersion:     "v1",
 						Kind:           "Config",
