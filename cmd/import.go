@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -16,25 +18,46 @@ type konfigFile struct {
 	Content  k8s.Config
 }
 
-// TODO make this configurable
-const konfStore = "~/.kube/konfs/"
-
 // importCmd represents the import command
 var importCmd = &cobra.Command{
 	Use:   "import",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Short: "Import kubeconfigs into konf store",
+	Long: `Import kubeconfigs into konf store
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+It is important that you import all configs first, as konf requires each config to only
+contain a single context. Import will take care of splitting if necessary.`,
 	Args: cobra.ExactArgs(1),
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("import called")
+	RunE: func(cmd *cobra.Command, args []string) error {
 
-		// filePath := args[0] // safe, as we specify cobra.ExactArgs(1)
+		fpath := args[0] // safe, as we specify cobra.ExactArgs(1)
+		f, err := os.Open(fpath)
+		if err != nil {
+			return err
+		}
 
+		confs, err := determineConfigs(f)
+		if err != nil {
+			return err
+		}
+
+		err = os.MkdirAll(filepath.Dir(viper.GetString("konfStore")), 0770)
+		if err != nil {
+			return err
+		}
+
+		for _, conf := range confs {
+			fmt.Printf("Attempting to create file %s\n", conf.FileName)
+			f, err = os.Create(conf.FileName)
+			if err != nil {
+				return err
+			}
+			err = writeConfig(f, &conf.Content)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
 	},
 }
 
@@ -95,6 +118,20 @@ func determineConfigs(conf io.Reader) ([]*konfigFile, error) {
 	}
 
 	return konfs, nil
+}
+
+func writeConfig(w io.Writer, conf *k8s.Config) error {
+	c, err := yaml.Marshal(conf)
+	if err != nil {
+		return err
+	}
+
+	_, err = w.Write(c)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func init() {
