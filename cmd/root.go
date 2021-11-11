@@ -18,12 +18,16 @@ package cmd
 import (
 	"fmt"
 	"os"
+
 	"github.com/spf13/cobra"
 
 	"github.com/spf13/viper"
 )
 
-var cfgFile string
+var (
+	cfgFile   string
+	konfStore string
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -54,6 +58,7 @@ func init() {
 	// will be global for your application.
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.konfig.yaml)")
+	rootCmd.PersistentFlags().StringVar(&konfStore, "konfStore", "", "where to store konfigs (default is $HOME/.kube/konfs)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -74,6 +79,11 @@ func initConfig() {
 		viper.AddConfigPath(home)
 		viper.SetConfigType("yaml")
 		viper.SetConfigName(".konfig")
+	}
+	if konfStore == "" {
+		home, err := os.UserHomeDir()
+		cobra.CheckErr(err)
+		viper.Set("konfStore", home+"/.kube/konfs/")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match

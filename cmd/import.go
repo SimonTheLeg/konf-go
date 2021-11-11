@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	k8s "k8s.io/client-go/tools/clientcmd/api/v1"
 	"sigs.k8s.io/yaml"
 )
@@ -81,7 +82,7 @@ func determineConfigs(conf io.Reader) ([]*konfigFile, error) {
 
 		var konf konfigFile
 		// I have chosen this combination as it is fairly unique among multiple configs. I decided against using just context.name as a lot of times the context is just called "default", which results in lots of naming collisions
-		konf.FileName = konfStore + curCon.Name + "_" + cluster.Name
+		konf.FileName = viper.GetString("konfStore") + curCon.Name + "_" + cluster.Name + ".yaml"
 		konf.Content.AuthInfos = append(konf.Content.AuthInfos, user)
 		konf.Content.Clusters = append(konf.Content.Clusters, cluster)
 		konf.Content.Contexts = append(konf.Content.Contexts, curCon)
