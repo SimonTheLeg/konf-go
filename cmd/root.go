@@ -25,8 +25,8 @@ import (
 )
 
 var (
-	cfgFile   string
-	konfStore string
+	cfgFile string
+	konfDir string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -58,7 +58,7 @@ func init() {
 	// will be global for your application.
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.konfig.yaml)")
-	rootCmd.PersistentFlags().StringVar(&konfStore, "konfStore", "", "where to store konfigs (default is $HOME/.kube/konfs)")
+	rootCmd.PersistentFlags().StringVar(&konfDir, "konfDir", "", "konfs directory for kubeconfigs and tracking active konfs (default is $HOME/.kube/konfs)")
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -80,11 +80,14 @@ func initConfig() {
 		viper.SetConfigType("yaml")
 		viper.SetConfigName(".konfig")
 	}
-	if konfStore == "" {
+	if konfDir == "" {
 		home, err := os.UserHomeDir()
 		cobra.CheckErr(err)
-		viper.Set("konfStore", home+"/.kube/konfs/")
+		viper.Set("konfDir", home+"/.kube/konfs")
 	}
+	// Currently there is no need to customize store and active configs individually.
+	// Setting the konfDir should be fine
+	viper.Set("konfStore", viper.GetString("konfDir")+"/store")
 
 	viper.AutomaticEnv() // read in environment variables that match
 
