@@ -88,6 +88,7 @@ func initConfig() {
 	// Currently there is no need to customize store and active configs individually.
 	// Setting the konfDir should be fine
 	viper.Set("konfStore", viper.GetString("konfDir")+"/store")
+	viper.Set("konfActiveList", viper.GetString("konfDir")+"/active")
 
 	viper.AutomaticEnv() // read in environment variables that match
 
