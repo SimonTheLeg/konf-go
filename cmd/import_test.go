@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/simontheleg/konfig/utils"
 	"github.com/spf13/viper"
 	k8s "k8s.io/client-go/tools/clientcmd/api/v1"
 )
@@ -71,7 +72,7 @@ func TestDetermineConfigs(t *testing.T) {
 
 			res, err := determineConfigs(strings.NewReader(tc.InConfig))
 
-			if !equalError(err, tc.ExpError) {
+			if !utils.EqualError(err, tc.ExpError) {
 				t.Errorf("Want error '%s', got '%s'", tc.ExpError, err)
 			}
 
@@ -293,10 +294,4 @@ func b64Dec(t *testing.T, in string) []byte {
 		t.Fatalf("There seems to be an error in base64-test-data. Offending String: '%s'", in)
 	}
 	return []byte(res)
-}
-
-// equalError reports whether errors a and b are considered equal.
-// They're equal if both are nil, or both are not nil and a.Error() == b.Error().
-func equalError(a, b error) bool {
-	return a == nil && b == nil || a != nil && b != nil && a.Error() == b.Error()
 }
