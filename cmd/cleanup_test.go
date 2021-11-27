@@ -30,17 +30,20 @@ func TestSelfClean(t *testing.T) {
 		NotExpFiles []string
 	}{
 		"PID FS": {
-			pidFS(),
+			ppidFS(),
 			nil,
 			[]string{konfActiveList + "/abc", konfActiveList + "/1234"},
 			[]string{konfActiveList + "/" + fmt.Sprint(ppid)},
 		},
 		"PID file deleted by external source": {
-			pidFileMissing(),
+			ppidFileMissing(),
 			nil,
 			[]string{konfActiveList + "/abc", konfActiveList + "/1234"},
 			[]string{},
 		},
+		// Unfortunately it was not possible with afero to test what happens if
+		// someone changes the active dir permissions an we cannot delete it anymore
+		// apparently in the memFS afero can just delete these files
 	}
 
 	for name, tc := range tt {
@@ -73,7 +76,7 @@ func TestSelfClean(t *testing.T) {
 	}
 }
 
-func pidFS() afero.Fs {
+func ppidFS() afero.Fs {
 	ppid := os.Getppid()
 	fs := afero.NewMemMapFs()
 	afero.WriteFile(fs, konfActiveList+"/"+fmt.Sprint(ppid), []byte(singleClusterSingleContext), 0644)
@@ -82,7 +85,7 @@ func pidFS() afero.Fs {
 	return fs
 }
 
-func pidFileMissing() afero.Fs {
+func ppidFileMissing() afero.Fs {
 	fs := afero.NewMemMapFs()
 	afero.WriteFile(fs, konfActiveList+"/abc", []byte("I am not event a kubeconfig, what am I doing here?"), 0644)
 	afero.WriteFile(fs, konfActiveList+"/1234", []byte(singleClusterSingleContext), 0644)
