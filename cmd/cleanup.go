@@ -6,14 +6,13 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"strconv"
 
+	"github.com/mitchellh/go-ps"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
-
-// TODO current idea: Make cleanup idempotent
-// For this cleanup would need to be able to list all processes that are running
 
 // cleanupCmd represents the cleanup command
 var cleanupCmd = &cobra.Command{
@@ -24,7 +23,12 @@ An active config is considered unused when no process points to it anymore`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		fs := afero.NewOsFs()
-		err := selfClean(fs)
+		err := cleanLeftOvers(fs)
+		if err != nil {
+			return err
+		}
+
+		err = selfClean(fs)
 		if err != nil {
 			return err
 		}
@@ -50,6 +54,41 @@ func selfClean(f afero.Fs) error {
 
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+// cleanLeftOvers should look through the list of all processes that are available
+// and clean up any files that are not in use any more. It's main purpose is to clean-up
+// any leftovers that can occur if a previous session was not cleaned up nicely. This is
+// necessary as we cannot tell a user that a selfClean has failed if they close the shell
+// session before
+func cleanLeftOvers(f afero.Fs) error {
+	konfs, err := afero.ReadDir(f, viper.GetString("konfActiveList"))
+
+	if err != nil {
+		return err
+	}
+
+	for _, konf := range konfs {
+		pid, err := strconv.Atoi(konf.Name())
+		if err != nil {
+			log.Printf("file '%s' could not be converted into an int, and therefore cannot be a valid process id. Skip for cleanup", konf.Name())
+			continue
+		}
+
+		p, err := ps.FindProcess(pid)
+		if err != nil {
+			return err
+		}
+
+		if p == nil {
+			err := f.Remove(viper.GetString("konfActiveList") + "/" + fmt.Sprint(pid))
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
