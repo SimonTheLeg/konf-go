@@ -44,7 +44,7 @@ An active config is considered unused when no process points to it anymore`,
 func selfClean(f afero.Fs) error {
 	pid := os.Getppid()
 
-	fpath := viper.GetString("konfActiveList") + "/" + fmt.Sprint(pid)
+	fpath := viper.GetString("activeDir") + "/" + fmt.Sprint(pid)
 	err := f.Remove(fpath)
 
 	if errors.Is(err, fs.ErrNotExist) {
@@ -65,7 +65,7 @@ func selfClean(f afero.Fs) error {
 // necessary as we cannot tell a user that a selfClean has failed if they close the shell
 // session before
 func cleanLeftOvers(f afero.Fs) error {
-	konfs, err := afero.ReadDir(f, viper.GetString("konfActiveList"))
+	konfs, err := afero.ReadDir(f, viper.GetString("activeDir"))
 
 	if err != nil {
 		return err
@@ -84,7 +84,7 @@ func cleanLeftOvers(f afero.Fs) error {
 		}
 
 		if p == nil {
-			err := f.Remove(viper.GetString("konfActiveList") + "/" + fmt.Sprint(pid))
+			err := f.Remove(viper.GetString("activeDir") + "/" + fmt.Sprint(pid))
 			if err != nil {
 				return err
 			}

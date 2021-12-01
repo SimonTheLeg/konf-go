@@ -8,7 +8,7 @@ func EqualError(a, b error) bool {
 	return a == nil && b == nil || a != nil && b != nil && a.Error() == b.Error()
 }
 
-func InitViper() {
-	viper.Set("konfActiveList", "./konf/active")
-	viper.Set("konfStore", "./konf/store")
+func InitTestViper() {
+	viper.Set("activeDir", "./konf/active")
+	viper.Set("storeDir", "./konf/store")
 }

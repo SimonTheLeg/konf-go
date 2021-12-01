@@ -130,7 +130,7 @@ users:
 // All certificate & token values are mocked
 func setup(t *testing.T) {
 	devEU = konfigFile{
-		FileName: viper.GetString("konfStore") + "/dev-eu_dev-eu-1.yaml",
+		FileName: viper.GetString("storeDir") + "/dev-eu_dev-eu-1.yaml",
 		Content: k8s.Config{
 			APIVersion:     "v1",
 			Kind:           "Config",
@@ -167,7 +167,7 @@ func setup(t *testing.T) {
 	}
 
 	devAsia = konfigFile{
-		FileName: viper.GetString("konfStore") + "/dev-asia_dev-asia-1.yaml",
+		FileName: viper.GetString("storeDir") + "/dev-asia_dev-asia-1.yaml",
 		Content: k8s.Config{
 			APIVersion:     "v1",
 			Kind:           "Config",
