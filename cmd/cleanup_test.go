@@ -14,14 +14,9 @@ import (
 	"github.com/spf13/viper"
 )
 
-const konfActiveList = "/.konf/active"
-
-func initViper() {
-	viper.Set("konfActiveList", konfActiveList)
-}
-
 func TestSelfClean(t *testing.T) {
-	initViper()
+	utils.InitViper()
+	konfActiveList := viper.GetString("konfActiveList")
 
 	ppid := os.Getppid()
 
@@ -34,7 +29,7 @@ func TestSelfClean(t *testing.T) {
 		"PID FS": {
 			ppidFS(),
 			nil,
-			[]string{konfActiveList + "/abc", konfActiveList + "/1234"},
+			[]string{viper.GetString("konfActiveList") + "/abc", konfActiveList + "/1234"},
 			[]string{konfActiveList + "/" + fmt.Sprint(ppid)},
 		},
 		"PID file deleted by external source": {
@@ -79,6 +74,7 @@ func TestSelfClean(t *testing.T) {
 }
 
 func ppidFS() afero.Fs {
+	konfActiveList := viper.GetString("konfActiveList")
 	ppid := os.Getppid()
 	fs := afero.NewMemMapFs()
 	afero.WriteFile(fs, konfActiveList+"/"+fmt.Sprint(ppid), []byte(singleClusterSingleContext), 0644)
@@ -88,6 +84,7 @@ func ppidFS() afero.Fs {
 }
 
 func ppidFileMissing() afero.Fs {
+	konfActiveList := viper.GetString("konfActiveList")
 	fs := afero.NewMemMapFs()
 	afero.WriteFile(fs, konfActiveList+"/abc", []byte("I am not event a kubeconfig, what am I doing here?"), 0644)
 	afero.WriteFile(fs, konfActiveList+"/1234", []byte(singleClusterSingleContext), 0644)
@@ -95,7 +92,8 @@ func ppidFileMissing() afero.Fs {
 }
 
 func TestCleanLeftOvers(t *testing.T) {
-	initViper()
+	utils.InitViper()
+	konfActiveList := viper.GetString("konfActiveList")
 
 	tt := map[string]struct {
 		Setup  func(t *testing.T) (afero.Fs, []*exec.Cmd, []*exec.Cmd)
@@ -180,7 +178,7 @@ func mixedFSWithAllProcs(t *testing.T) (fs afero.Fs, cmdsRunning []*exec.Cmd, cm
 		}
 		pid := cmd.Process.Pid
 		cmdsRunning = append(cmdsRunning, cmd)
-		afero.WriteFile(fs, konfActiveList+"/"+fmt.Sprint(pid), []byte(singleClusterSingleContext), 0644)
+		afero.WriteFile(fs, viper.GetString("konfActiveList")+"/"+fmt.Sprint(pid), []byte(singleClusterSingleContext), 0644)
 	}
 
 	return fs, cmdsRunning, nil
@@ -220,7 +218,7 @@ func mixedFSIncompleteProcs(t *testing.T) (fs afero.Fs, cmdsRunning []*exec.Cmd,
 func mixedFSDirtyDir(t *testing.T) (fs afero.Fs, cmdsRunning []*exec.Cmd, cmdsStopped []*exec.Cmd) {
 	fs, cmdsRunning, cmdsStopped = mixedFSIncompleteProcs(t)
 
-	afero.WriteFile(fs, konfActiveList+"/not-a-valid-process-id", []byte{}, 0644)
+	afero.WriteFile(fs, viper.GetString("konfActiveList")+"/not-a-valid-process-id", []byte{}, 0644)
 
 	return fs, cmdsRunning, cmdsStopped
 
