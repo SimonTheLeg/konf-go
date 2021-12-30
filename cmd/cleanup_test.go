@@ -29,13 +29,13 @@ func TestSelfClean(t *testing.T) {
 		"PID FS": {
 			ppidFS(),
 			nil,
-			[]string{viper.GetString("activeDir") + "/abc", activeDir + "/1234"},
-			[]string{activeDir + "/" + fmt.Sprint(ppid)},
+			[]string{activeDir + "/abc", utils.ActivePathForID("1234")},
+			[]string{activeDir + "/" + fmt.Sprint(ppid) + ".yaml"},
 		},
 		"PID file deleted by external source": {
 			ppidFileMissing(),
 			nil,
-			[]string{activeDir + "/abc", activeDir + "/1234"},
+			[]string{activeDir + "/abc", utils.ActivePathForID("1234")},
 			[]string{},
 		},
 		// Unfortunately it was not possible with afero to test what happens if
@@ -74,26 +74,22 @@ func TestSelfClean(t *testing.T) {
 }
 
 func ppidFS() afero.Fs {
-	activeDir := viper.GetString("activeDir")
 	ppid := os.Getppid()
-	fs := afero.NewMemMapFs()
-	afero.WriteFile(fs, activeDir+"/"+fmt.Sprint(ppid), []byte(singleClusterSingleContext), 0644)
-	afero.WriteFile(fs, activeDir+"/abc", []byte("I am not event a kubeconfig, what am I doing here?"), 0644)
-	afero.WriteFile(fs, activeDir+"/1234", []byte(singleClusterSingleContext), 0644)
+	fs := ppidFileMissing()
+	afero.WriteFile(fs, utils.ActivePathForID(fmt.Sprint(ppid)), []byte(singleClusterSingleContext), 0644)
 	return fs
 }
 
 func ppidFileMissing() afero.Fs {
 	activeDir := viper.GetString("activeDir")
 	fs := afero.NewMemMapFs()
-	afero.WriteFile(fs, activeDir+"/abc", []byte("I am not event a kubeconfig, what am I doing here?"), 0644)
-	afero.WriteFile(fs, activeDir+"/1234", []byte(singleClusterSingleContext), 0644)
+	afero.WriteFile(fs, activeDir+"/abc", []byte("I am not even a kubeconfig, what am I doing here?"), 0644)
+	afero.WriteFile(fs, utils.ActivePathForID("1234"), []byte(singleClusterSingleContext), 0644)
 	return fs
 }
 
 func TestCleanLeftOvers(t *testing.T) {
 	utils.InitTestViper()
-	activeDir := viper.GetString("activeDir")
 
 	tt := map[string]struct {
 		Setup  func(t *testing.T) (afero.Fs, []*exec.Cmd, []*exec.Cmd)
@@ -132,7 +128,7 @@ func TestCleanLeftOvers(t *testing.T) {
 			}
 
 			for _, cmd := range cmdsRunning {
-				fpath := activeDir + "/" + fmt.Sprint(cmd.Process.Pid)
+				fpath := utils.ActivePathForID(fmt.Sprint(cmd.Process.Pid))
 				_, err := f.Stat(fpath)
 
 				if err != nil {
@@ -145,7 +141,7 @@ func TestCleanLeftOvers(t *testing.T) {
 			}
 
 			for _, cmd := range cmdsStopped {
-				fpath := activeDir + "/" + fmt.Sprint(cmd.Process.Pid)
+				fpath := utils.ActivePathForID(fmt.Sprint(cmd.Process.Pid))
 				_, err := f.Stat(fpath)
 
 				if !errors.Is(err, fs.ErrNotExist) {
@@ -178,7 +174,7 @@ func mixedFSWithAllProcs(t *testing.T) (fs afero.Fs, cmdsRunning []*exec.Cmd, cm
 		}
 		pid := cmd.Process.Pid
 		cmdsRunning = append(cmdsRunning, cmd)
-		afero.WriteFile(fs, viper.GetString("activeDir")+"/"+fmt.Sprint(pid), []byte(singleClusterSingleContext), 0644)
+		afero.WriteFile(fs, utils.ActivePathForID(fmt.Sprint(pid)), []byte(singleClusterSingleContext), 0644)
 	}
 
 	return fs, cmdsRunning, nil
@@ -218,7 +214,7 @@ func mixedFSIncompleteProcs(t *testing.T) (fs afero.Fs, cmdsRunning []*exec.Cmd,
 func mixedFSDirtyDir(t *testing.T) (fs afero.Fs, cmdsRunning []*exec.Cmd, cmdsStopped []*exec.Cmd) {
 	fs, cmdsRunning, cmdsStopped = mixedFSIncompleteProcs(t)
 
-	afero.WriteFile(fs, viper.GetString("activeDir")+"/not-a-valid-process-id", []byte{}, 0644)
+	afero.WriteFile(fs, utils.ActivePathForID("/not-a-valid-process-id"), []byte{}, 0644)
 
 	return fs, cmdsRunning, cmdsStopped
 

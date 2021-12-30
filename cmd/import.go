@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/simontheleg/konfig/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	k8s "k8s.io/client-go/tools/clientcmd/api/v1"
@@ -104,10 +105,10 @@ func determineConfigs(conf io.Reader) ([]*konfigFile, error) {
 		}
 
 		var konf konfigFile
-		// I have chosen this combination as it is fairly unique among multiple configs. I decided against using just context.name as a lot of times the context is just called "default", which results in lots of naming collisions
 		// TODO it might make sense to build in a duplicate detection here. This would ensure that the store is trustworthy, which in return makes it easy for
 		// TODO the set command as it does not need any verification
-		konf.FileName = viper.GetString("storeDir") + "/" + curCon.Name + "_" + cluster.Name + ".yaml"
+		id := utils.IDFromClusterAndContext(curCon.Name, cluster.Name)
+		konf.FileName = utils.StorePathForID(id)
 		konf.Content.AuthInfos = append(konf.Content.AuthInfos, user)
 		konf.Content.Clusters = append(konf.Content.Clusters, cluster)
 		konf.Content.Contexts = append(konf.Content.Contexts, curCon)

@@ -6,9 +6,12 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/mitchellh/go-ps"
+	"github.com/simontheleg/konfig/utils"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -44,7 +47,7 @@ An active config is considered unused when no process points to it anymore`,
 func selfClean(f afero.Fs) error {
 	pid := os.Getppid()
 
-	fpath := viper.GetString("activeDir") + "/" + fmt.Sprint(pid)
+	fpath := utils.ActivePathForID(fmt.Sprint(pid))
 	err := f.Remove(fpath)
 
 	if errors.Is(err, fs.ErrNotExist) {
@@ -72,7 +75,8 @@ func cleanLeftOvers(f afero.Fs) error {
 	}
 
 	for _, konf := range konfs {
-		pid, err := strconv.Atoi(konf.Name())
+		// We need to trim of the .yaml file extension to get to the PID
+		pid, err := strconv.Atoi(strings.TrimSuffix(konf.Name(), filepath.Ext(konf.Name())))
 		if err != nil {
 			log.Printf("file '%s' could not be converted into an int, and therefore cannot be a valid process id. Skip for cleanup", konf.Name())
 			continue
@@ -84,7 +88,7 @@ func cleanLeftOvers(f afero.Fs) error {
 		}
 
 		if p == nil {
-			err := f.Remove(viper.GetString("activeDir") + "/" + fmt.Sprint(pid))
+			err := f.Remove(utils.ActivePathForID(fmt.Sprint(pid)))
 			if err != nil {
 				return err
 			}
