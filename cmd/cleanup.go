@@ -6,9 +6,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
-	"path/filepath"
 	"strconv"
-	"strings"
 
 	"github.com/mitchellh/go-ps"
 	"github.com/simontheleg/konfig/utils"
@@ -76,7 +74,8 @@ func cleanLeftOvers(f afero.Fs) error {
 
 	for _, konf := range konfs {
 		// We need to trim of the .yaml file extension to get to the PID
-		pid, err := strconv.Atoi(strings.TrimSuffix(konf.Name(), filepath.Ext(konf.Name())))
+		sPid := utils.IDFromFileInfo(konf)
+		pid, err := strconv.Atoi(sPid)
 		if err != nil {
 			log.Printf("file '%s' could not be converted into an int, and therefore cannot be a valid process id. Skip for cleanup", konf.Name())
 			continue

@@ -1,6 +1,10 @@
 package utils
 
 import (
+	"io/fs"
+	"path/filepath"
+	"strings"
+
 	"github.com/spf13/viper"
 )
 
@@ -10,6 +14,10 @@ import (
 
 func IDFromClusterAndContext(cluster, context string) string {
 	return cluster + "_" + context
+}
+
+func IDFromFileInfo(fi fs.FileInfo) string {
+	return strings.TrimSuffix(fi.Name(), filepath.Ext(fi.Name()))
 }
 
 func StorePathForID(id string) string {
