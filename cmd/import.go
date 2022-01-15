@@ -102,7 +102,7 @@ func determineConfigs(conf io.Reader) ([]*konfigFile, error) {
 		var konf konfigFile
 		// TODO it might make sense to build in a duplicate detection here. This would ensure that the store is trustworthy, which in return makes it easy for
 		// TODO the set command as it does not need any verification
-		id := utils.IDFromClusterAndContext(curCon.Name, cluster.Name)
+		id := utils.IDFromClusterAndContext(cluster.Name, curCon.Name)
 		konf.FileName = utils.StorePathForID(id)
 		konf.Content.AuthInfos = append(konf.Content.AuthInfos, user)
 		konf.Content.Clusters = append(konf.Content.Clusters, cluster)

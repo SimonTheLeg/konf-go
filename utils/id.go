@@ -13,7 +13,7 @@ import (
 // I have chosen this combination as it is fairly unique among multiple configs. I decided against using just context.name as a lot of times the context is just called "default", which results in lots of naming collisions
 
 func IDFromClusterAndContext(cluster, context string) string {
-	return cluster + "_" + context
+	return context + "_" + cluster
 }
 
 func IDFromFileInfo(fi fs.FileInfo) string {
