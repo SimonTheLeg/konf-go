@@ -26,7 +26,7 @@ func TestDetermineConfigs(t *testing.T) {
 		ExpKonfigFiles     []*konfigFile
 	}{
 		"SingleClusterSingleContext": {
-			InConfig:           singleClusterSingleContext,
+			InConfig:           singleClusterSingleContextEU,
 			ExpError:           nil,
 			ExpNumOfKonfigFile: 1,
 			ExpKonfigFiles: []*konfigFile{
@@ -203,7 +203,7 @@ func setup(t *testing.T) {
 	}
 }
 
-var singleClusterSingleContext = `
+var singleClusterSingleContextEU = `
 apiVersion: v1
 clusters:
   - cluster:
