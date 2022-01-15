@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"bytes"
-	"fmt"
 	"io"
+	"log"
 	"os"
 
 	"github.com/simontheleg/konfig/utils"
@@ -42,7 +42,6 @@ contain a single context. Import will take care of splitting if necessary.`,
 		}
 
 		for _, conf := range confs {
-			fmt.Printf("Attempting to create file %s\n", conf.FileName)
 			f, err = os.Create(conf.FileName)
 			if err != nil {
 				return err
@@ -51,6 +50,7 @@ contain a single context. Import will take care of splitting if necessary.`,
 			if err != nil {
 				return err
 			}
+			log.Printf("Imported konf from %s successfully into %s\n", fpath, conf.FileName)
 		}
 
 		return nil
