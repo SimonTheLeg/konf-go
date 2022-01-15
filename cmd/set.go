@@ -49,7 +49,8 @@ var setCmd = &cobra.Command{
 			return err
 		}
 
-		// By printing out to stdout, we pass the value to our zsh hook, which then sources it
+		log.Printf("Setting context to %q\n", id)
+		// By printing out to stdout, we pass the value to our zsh hook, which then sets $KUBECONFIG to it
 		fmt.Println(context)
 
 		return nil
