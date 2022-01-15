@@ -17,6 +17,63 @@ import (
 	"github.com/spf13/viper"
 )
 
+func TestSelectLastKonf(t *testing.T) {
+	tt := map[string]struct {
+		InFs     afero.Fs
+		ExpID    string
+		ExpError error
+	}{
+		"latestKonf set": {
+			InFs:     FSWithFiles(LatestKonf),
+			ExpID:    "context_cluster",
+			ExpError: nil,
+		},
+		"no latestKonf": {
+			InFs:     FSWithFiles(),
+			ExpID:    "",
+			ExpError: fmt.Errorf("could not select latest konf, because no konf was yet set"),
+		},
+	}
+
+	for name, tc := range tt {
+		t.Run(name, func(t *testing.T) {
+			id, err := selectLastKonf(tc.InFs)
+
+			if !utils.EqualError(tc.ExpError, err) {
+				t.Errorf("Want error %q, got %q", tc.ExpError, err)
+			}
+
+			if tc.ExpID != id {
+				t.Errorf("Want ID %q, got %q", tc.ExpID, id)
+			}
+		})
+	}
+}
+
+func TestSaveLatestKonf(t *testing.T) {
+	utils.InitTestViper()
+
+	expFile := "./konf/latestkonf"
+	expID := "context_cluster"
+
+	f := afero.NewMemMapFs()
+	err := saveLatestKonf(f, expID)
+	if err != nil {
+		t.Errorf("Could not save last konf: %q", err)
+	}
+	finf, err := f.Stat(expFile)
+	if err != nil {
+		t.Errorf("Could not stat file: %q", err)
+	}
+	if finf == nil {
+		t.Errorf("Exp file %q to be present, but it isnt", expFile)
+	}
+	id, _ := afero.ReadFile(f, expFile)
+	if string(id) != expID {
+		t.Errorf("Exp id to be %q but is %q", expID, id)
+	}
+}
+
 func TestSetContext(t *testing.T) {
 	utils.InitTestViper()
 	storeDir := viper.GetString("storeDir")
@@ -333,4 +390,8 @@ func MultiClusterSingleContext(fs afero.Fs) {
 
 func SingleClusterMultiContext(fs afero.Fs) {
 	afero.WriteFile(fs, utils.StorePathForID("multi_konf"), []byte(singleClusterMultiContext), 0666)
+}
+
+func LatestKonf(fs afero.Fs) {
+	afero.WriteFile(fs, viper.GetString("latestKonfFile"), []byte("context_cluster"), 0666)
 }

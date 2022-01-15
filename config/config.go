@@ -37,6 +37,7 @@ func Init(cfgFile, konfDir string) error {
 	// Setting the konfDir should be fine
 	viper.Set("storeDir", viper.GetString("konfDir")+"/store")
 	viper.Set("activeDir", viper.GetString("konfDir")+"/active")
+	viper.Set("latestKonfFile", viper.GetString("konfDir")+"/latestkonf")
 
 	viper.AutomaticEnv() // read in environment variables that match
 

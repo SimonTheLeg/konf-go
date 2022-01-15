@@ -1,7 +1,9 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"strings"
@@ -38,8 +40,10 @@ var setCmd = &cobra.Command{
 				return err
 			}
 		} else if args[0] == "-" {
-			// TODO add setLastContext func
-			// id = ...
+			id, err = selectLastKonf(f)
+			if err != nil {
+				return err
+			}
 		} else {
 			id = args[0]
 		}
@@ -47,6 +51,10 @@ var setCmd = &cobra.Command{
 		context, err := setContext(id, f)
 		if err != nil {
 			return err
+		}
+		err = saveLatestKonf(f, id)
+		if err != nil {
+			return fmt.Errorf("could not save latest konf. As a result 'konf set -' might not work: %q ", err)
 		}
 
 		log.Printf("Setting context to %q\n", id)
@@ -78,6 +86,22 @@ func selectContext(f afero.Fs, pf promptFunc) (string, error) {
 	return utils.IDFromClusterAndContext(sel.Cluster, sel.Context), nil
 }
 
+// TODO delete later
+// Case 1 "normal" -> take from file
+// Case 2 "no file" -> return err
+
+func selectLastKonf(f afero.Fs) (string, error) {
+	b, err := afero.ReadFile(f, viper.GetString("latestKonfFile"))
+	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return "", fmt.Errorf("could not select latest konf, because no konf was yet set")
+		} else {
+			return "", err
+		}
+	}
+	return string(b), nil
+}
+
 func setContext(id string, f afero.Fs) (string, error) {
 	konf, err := afero.ReadFile(f, utils.StorePathForID(id))
 	if err != nil {
@@ -93,6 +117,10 @@ func setContext(id string, f afero.Fs) (string, error) {
 
 	return activeKonf, nil
 
+}
+
+func saveLatestKonf(f afero.Fs, id string) error {
+	return afero.WriteFile(f, viper.GetString("latestKonfFile"), []byte(id), 0644)
 }
 
 // KubeConfigOverload describes a state in which a kubeconfig has multiple Contexts or Clusters
