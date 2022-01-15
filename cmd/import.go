@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/simontheleg/konfig/utils"
+	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/cobra"
 	k8s "k8s.io/client-go/tools/clientcmd/api/v1"
 	"sigs.k8s.io/yaml"

@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/simontheleg/konfig/config"
+	"github.com/simontheleg/konf-go/config"
 )
 
 // EqualError reports whether errors a and b are considered equal.

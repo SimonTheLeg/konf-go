@@ -9,7 +9,7 @@ import (
 
 	sprig "github.com/Masterminds/sprig/v3"
 	"github.com/manifoldco/promptui"
-	"github.com/simontheleg/konfig/utils"
+	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

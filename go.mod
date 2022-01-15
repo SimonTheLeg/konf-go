@@ -1,4 +1,4 @@
-module github.com/simontheleg/konfig
+module github.com/simontheleg/konf-go
 
 go 1.17
 

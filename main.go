@@ -15,7 +15,7 @@ limitations under the License.
 */
 package main
 
-import "github.com/simontheleg/konfig/cmd"
+import "github.com/simontheleg/konf-go/cmd"
 
 func main() {
 	cmd.Execute()

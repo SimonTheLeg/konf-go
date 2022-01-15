@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/mitchellh/go-ps"
-	"github.com/simontheleg/konfig/utils"
+	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

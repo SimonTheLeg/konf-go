@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/simontheleg/konfig/utils"
+	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 )

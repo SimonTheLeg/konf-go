@@ -12,7 +12,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/manifoldco/promptui"
-	"github.com/simontheleg/konfig/utils"
+	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
 )

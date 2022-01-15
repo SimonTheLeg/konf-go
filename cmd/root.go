@@ -16,8 +16,8 @@ limitations under the License.
 package cmd
 
 import (
-	"github.com/simontheleg/konfig/config"
-	"github.com/simontheleg/konfig/utils"
+	"github.com/simontheleg/konf-go/config"
+	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 )
