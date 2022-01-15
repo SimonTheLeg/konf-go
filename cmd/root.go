@@ -16,12 +16,10 @@ limitations under the License.
 package cmd
 
 import (
-	"fmt"
-	"os"
-
+	"github.com/simontheleg/konfig/config"
+	"github.com/simontheleg/konfig/utils"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
-
-	"github.com/spf13/viper"
 )
 
 var (
@@ -51,49 +49,18 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
-
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
+	cobra.OnInitialize(wrapInit)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.konfig.yaml)")
 	rootCmd.PersistentFlags().StringVar(&konfDir, "konfDir", "", "konfs directory for kubeconfigs and tracking active konfs (default is $HOME/.kube/konfs)")
 
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
+// wrapInit is required as cobra.OnInitialize only accepts func() as interface
+func wrapInit() {
+	err := config.Init(cfgFile, konfDir)
+	cobra.CheckErr(err)
 
-		// Search config in home directory with name ".konfig" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigType("yaml")
-		viper.SetConfigName(".konfig")
-	}
-	if konfDir == "" {
-		home, err := os.UserHomeDir()
-		cobra.CheckErr(err)
-		viper.Set("konfDir", home+"/.kube/konfs")
-	}
-	// Currently there is no need to customize store and active configs individually.
-	// Setting the konfDir should be fine
-	viper.Set("storeDir", viper.GetString("konfDir")+"/store")
-	viper.Set("activeDir", viper.GetString("konfDir")+"/active")
-
-	viper.AutomaticEnv() // read in environment variables that match
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
-	}
+	err = utils.EnsureDir(afero.NewOsFs())
+	cobra.CheckErr(err)
 }

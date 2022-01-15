@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 
 	"github.com/simontheleg/konfig/utils"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	k8s "k8s.io/client-go/tools/clientcmd/api/v1"
 	"sigs.k8s.io/yaml"
 )
@@ -18,6 +16,8 @@ type konfigFile struct {
 	FileName string
 	Content  k8s.Config
 }
+
+// TODO rewrite this package to make use of afero
 
 // importCmd represents the import command
 var importCmd = &cobra.Command{
@@ -37,11 +37,6 @@ contain a single context. Import will take care of splitting if necessary.`,
 		}
 
 		confs, err := determineConfigs(f)
-		if err != nil {
-			return err
-		}
-
-		err = os.MkdirAll(filepath.Dir(viper.GetString("storeDir")+"/"), 0770)
 		if err != nil {
 			return err
 		}
@@ -139,14 +134,4 @@ func writeConfig(w io.Writer, conf *k8s.Config) error {
 
 func init() {
 	rootCmd.AddCommand(importCmd)
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// importCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// importCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
