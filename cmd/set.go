@@ -110,7 +110,7 @@ func setContext(id string, f afero.Fs) (string, error) {
 
 	ppid := os.Getppid()
 	activeKonf := utils.ActivePathForID(fmt.Sprint(ppid))
-	err = afero.WriteFile(f, activeKonf, konf, 0644)
+	err = afero.WriteFile(f, activeKonf, konf, 0600)
 	if err != nil {
 		return "", err
 	}
@@ -120,7 +120,7 @@ func setContext(id string, f afero.Fs) (string, error) {
 }
 
 func saveLatestKonf(f afero.Fs, id string) error {
-	return afero.WriteFile(f, viper.GetString("latestKonfFile"), []byte(id), 0644)
+	return afero.WriteFile(f, viper.GetString("latestKonfFile"), []byte(id), 0600)
 }
 
 // KubeConfigOverload describes a state in which a kubeconfig has multiple Contexts or Clusters

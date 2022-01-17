@@ -105,7 +105,7 @@ func TestSetContext(t *testing.T) {
 			f := afero.NewMemMapFs()
 
 			if tc.StoreExists {
-				afero.WriteFile(f, storeDir+"/"+tc.InID+".yaml", []byte(singleClusterSingleContextEU), 0644)
+				afero.WriteFile(f, storeDir+"/"+tc.InID+".yaml", []byte(singleClusterSingleContextEU), 0600)
 			}
 
 			resKonfPath, resError := setContext(tc.InID, f)
