@@ -157,7 +157,7 @@ func TestPrepareTemplates(t *testing.T) {
 			25,
 			"  kind-eu                   | cluster-eu                | kind-eu.cluster-eu.yaml   |",
 			"▸ kind-eu                   | cluster-eu                | kind-eu.cluster-eu.yaml   |",
-			"  Cluster                   | Context                   | File                      ",
+			"  Context                   | Cluster                   | File                      ",
 		},
 		"values == trunc": {
 			tableOutput{
@@ -168,7 +168,7 @@ func TestPrepareTemplates(t *testing.T) {
 			10,
 			"  0123456789 | 0123456789 | xyz.yaml   |",
 			"▸ 0123456789 | 0123456789 | xyz.yaml   |",
-			"  Cluster    | Context    | File       ",
+			"  Context    | Cluster    | File       ",
 		},
 		"values > trunc": {
 			tableOutput{
@@ -179,7 +179,7 @@ func TestPrepareTemplates(t *testing.T) {
 			10,
 			"  0123456789 | 0123456789 | xyz.yaml   |",
 			"▸ 0123456789 | 0123456789 | xyz.yaml   |",
-			"  Cluster    | Context    | File       ",
+			"  Context    | Cluster    | File       ",
 		},
 		"trunc is below minLength": {
 			tableOutput{
@@ -190,7 +190,7 @@ func TestPrepareTemplates(t *testing.T) {
 			5,
 			"  0123456 | 0123456 | xyz.yam |",
 			"▸ 0123456 | 0123456 | xyz.yam |",
-			"  Cluster | Context | File    ",
+			"  Context | Cluster | File    ",
 		},
 	}
 
