@@ -21,13 +21,15 @@ import (
 
 // setCmd represents the set command
 var setCmd = &cobra.Command{
-	Use:   "set <konfig id>",
-	Short: "konfig set [konfig id]",
+	Use:   `set`,
+	Short: "Set kubeconfig to use in current shell",
 	Args:  cobra.MaximumNArgs(1),
-	Long: `Sets the kubeconfig to use.
-		set 						run konf selection
-		set <konfig id>	set a specific konf
-		set -						select last konf
+	Long: `Sets kubeconfig to use or start picker dialogue.
+
+Examples:
+	-> 'set' run konf selection
+	-> 'set <konfig id>' set a specific konf
+	-> 'set -' set to last used konf
 	`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var id string

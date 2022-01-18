@@ -18,7 +18,7 @@ import (
 // cleanupCmd represents the cleanup command
 var cleanupCmd = &cobra.Command{
 	Use:   "cleanup",
-	Short: "cleanup inactive kubeconfigs",
+	Short: "Cleanup inactive kubeconfigs",
 	Long: `This command cleans up any unused active configs (stored in konfDir/active).
 An active config is considered unused when no process points to it anymore`,
 	RunE: func(cmd *cobra.Command, args []string) error {
