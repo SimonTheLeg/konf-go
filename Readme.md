@@ -12,20 +12,21 @@
 
 ## Why konf?
 
-- konf allows you to quickly switch between different kubeconfig files and keep different kubeconfigs per shell session
+- konf allows you to quickly switch between different kubeconfig files
+- konf allows you to simultaneously use different kubeconfigs in different shells
 - konf executes directly in your current shell and does not start any subshell (unlike kubie). As a result it works extremely fast
 
 // TODO add little screencast
 
 ## Installation
 
-Clone the repository, afterwards run:
+Run
 
 ```shell
-go install .
+go install github.com/simontheleg/konf-go@latest
 ```
 
-Add the following to your `.zshrc` and restart your shell or re-source the `.zshrc` afterwards:
+Aferwards, add the following to your `.zshrc` and restart your shell or re-source the `.zshrc` afterwards:
 
 ```zsh
 # mandatory konf settings
