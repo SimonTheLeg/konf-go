@@ -83,7 +83,7 @@ We need these two extra directories because:
 
 One of the largest difficulties in this project lies in the core design of the shell. Essentially a child process cannot make modifications to its parents. This includes setting an environment variable, which affects us because we want to set `$KUBECONFIG`. The way we work around this "limitation" is by using a zsh function that executes our binary and then sets `$KUBECONFIG` to the output of `konf-go`. With this trick we are actually able to set `$KUBECONFIG` and can make this project work. Since only the result of stdout will be captured by the zsh-func, we can still communicate normally with the user by using stderr.
 
-As a result of this trick, konf currently only works with zsh. I did not have the time to see if I can also make it work for bash or fish. Maybe this is becomes a community contribution? :)
+As a result of this trick, konf currently only works with zsh. I did not have the time to see if I can also make it work for bash or fish. Maybe this becomes a community contribution? :)
 
 ## Contributing
 
