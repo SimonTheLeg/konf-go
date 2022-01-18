@@ -88,10 +88,6 @@ func selectContext(f afero.Fs, pf promptFunc) (string, error) {
 	return utils.IDFromClusterAndContext(sel.Cluster, sel.Context), nil
 }
 
-// TODO delete later
-// Case 1 "normal" -> take from file
-// Case 2 "no file" -> return err
-
 func selectLastKonf(f afero.Fs) (string, error) {
 	b, err := afero.ReadFile(f, viper.GetString("latestKonfFile"))
 	if err != nil {
