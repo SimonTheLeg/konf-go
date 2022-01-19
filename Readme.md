@@ -97,7 +97,6 @@ Usually this should not be too much of an issue, because components like the def
 - Maybe you can print zsh_func directly from a command?
 - Allow usage of other fuzzy finders like fzf
 - Add CI
-- Add License
 - Double check the root.go and command descriptions
 - `--silent` option for `set` command on which it does not log anything. This can be useful for things like `konf set -` when running it in every new session
 - `konf manage` so you can rename contexts and clusters
