@@ -46,14 +46,6 @@ func TestPathForID(t *testing.T) {
 	}
 }
 
-func TestIDFromClusterAndContext(t *testing.T) {
-	cl, co, exp := "cluster", "context", "context_cluster"
-	res := IDFromClusterAndContext(cl, co)
-	if res != exp {
-		t.Errorf("Exp ID %q, got %q", exp, res)
-	}
-}
-
 type mockFileInfo struct{ name string }
 
 func (m *mockFileInfo) Name() string       { return m.name }
