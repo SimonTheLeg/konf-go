@@ -31,7 +31,8 @@
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
+
 
 # Thumbnails
 ._*
@@ -74,4 +75,8 @@ Temporary Items
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,macos,go
 
 # Custom rules (everything added below won't be overriden by 'Generate .gitignore File' if you use 'Update' option)
-
+# ignore linux binary
+konf-go
+retro.md
+# for now there is not really anything interesting in the launch.json, so we can ignore it
+.vscode/launch.json 
