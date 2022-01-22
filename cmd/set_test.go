@@ -397,3 +397,21 @@ func SingleClusterMultiContext(fs afero.Fs) {
 func LatestKonf(fs afero.Fs) {
 	afero.WriteFile(fs, viper.GetString("latestKonfFile"), []byte("context_cluster"), utils.KonfPerm)
 }
+
+func KonfWithoutContext(fs afero.Fs) {
+	var noContext = `
+apiVersion: v1
+clusters:
+  - cluster:
+      server: https://10.1.1.0
+    name: dev-eu-1
+kind: Config
+preferences: {}
+users:
+  - name: dev-eu
+    user: {}
+`
+
+	afero.WriteFile(fs, utils.StorePathForID("no-context"), []byte(noContext), utils.KonfPerm)
+	afero.WriteFile(fs, utils.ActivePathForID("no-context"), []byte(noContext), utils.KonfPerm)
+}

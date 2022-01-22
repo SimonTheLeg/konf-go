@@ -32,7 +32,11 @@ Aferwards, add the following to your `.zshrc` and restart your shell or re-sourc
 # mandatory konf settings
 konf() {
   res=$(konf-go $@)
-  export KUBECONFIG=$res
+  # protect against an empty command
+  # Note we cannot do something like if "$1 == set" and only run the export on set commands as cmd flags can be at any position in our cli
+  if [[ $res != "" ]] then
+    export KUBECONFIG=$res
+  fi
 }
 konf_cleanup() {
   konf-go cleanup
@@ -41,7 +45,9 @@ add-zsh-hook zshexit konf_cleanup
 
 
 # optional konf settings
+# Alias
 alias kctx="konf set"
+alias kns="konf ns"
 # Open last konf on new session
 export KUBECONFIG=$(konf-go set -)
 ```
