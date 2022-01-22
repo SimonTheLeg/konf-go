@@ -105,7 +105,7 @@ func TestSetContext(t *testing.T) {
 			f := afero.NewMemMapFs()
 
 			if tc.StoreExists {
-				afero.WriteFile(f, storeDir+"/"+tc.InID+".yaml", []byte(singleClusterSingleContextEU), 0600)
+				afero.WriteFile(f, storeDir+"/"+tc.InID+".yaml", []byte(singleClusterSingleContextEU), utils.KonfPerm)
 			}
 
 			resKonfPath, resError := setContext(tc.InID, f)
@@ -364,36 +364,36 @@ func FSWithFiles(ff ...filefunc) afero.Fs {
 }
 
 func StoreDir(fs afero.Fs) {
-	fs.MkdirAll(viper.GetString("storeDir"), 0666)
+	fs.MkdirAll(viper.GetString("storeDir"), utils.KonfPerm)
 }
 
 func ActiveDir(fs afero.Fs) {
-	fs.MkdirAll(viper.GetString("activeDir"), 0666)
+	fs.MkdirAll(viper.GetString("activeDir"), utils.KonfPerm)
 }
 
 func SingleClusterSingleContextEU(fs afero.Fs) {
-	afero.WriteFile(fs, utils.StorePathForID("dev-eu_dev-eu-1"), []byte(singleClusterSingleContextEU), 0666)
-	afero.WriteFile(fs, utils.ActivePathForID("dev-eu_dev-eu-1"), []byte(singleClusterSingleContextEU), 0666)
+	afero.WriteFile(fs, utils.StorePathForID("dev-eu_dev-eu-1"), []byte(singleClusterSingleContextEU), utils.KonfPerm)
+	afero.WriteFile(fs, utils.ActivePathForID("dev-eu_dev-eu-1"), []byte(singleClusterSingleContextEU), utils.KonfPerm)
 }
 
 func SingleClusterSingleContextASIA(fs afero.Fs) {
-	afero.WriteFile(fs, utils.StorePathForID("dev-asia_dev-asia-1"), []byte(singleClusterSingleContextASIA), 0666)
-	afero.WriteFile(fs, utils.ActivePathForID("dev-asia_dev-asia-1"), []byte(singleClusterSingleContextASIA), 0666)
+	afero.WriteFile(fs, utils.StorePathForID("dev-asia_dev-asia-1"), []byte(singleClusterSingleContextASIA), utils.KonfPerm)
+	afero.WriteFile(fs, utils.ActivePathForID("dev-asia_dev-asia-1"), []byte(singleClusterSingleContextASIA), utils.KonfPerm)
 }
 
 func InvalidKonfs(fs afero.Fs) {
-	afero.WriteFile(fs, utils.ActivePathForID("no-konf"), []byte("I am no valid yaml"), 0666)
-	afero.WriteFile(fs, utils.StorePathForID("no-konf"), []byte("I am no valid yaml"), 0666)
+	afero.WriteFile(fs, utils.ActivePathForID("no-konf"), []byte("I am no valid yaml"), utils.KonfPerm)
+	afero.WriteFile(fs, utils.StorePathForID("no-konf"), []byte("I am no valid yaml"), utils.KonfPerm)
 }
 
 func MultiClusterSingleContext(fs afero.Fs) {
-	afero.WriteFile(fs, utils.StorePathForID("multi_konf"), []byte(multiClusterSingleContext), 0666)
+	afero.WriteFile(fs, utils.StorePathForID("multi_konf"), []byte(multiClusterSingleContext), utils.KonfPerm)
 }
 
 func SingleClusterMultiContext(fs afero.Fs) {
-	afero.WriteFile(fs, utils.StorePathForID("multi_konf"), []byte(singleClusterMultiContext), 0666)
+	afero.WriteFile(fs, utils.StorePathForID("multi_konf"), []byte(singleClusterMultiContext), utils.KonfPerm)
 }
 
 func LatestKonf(fs afero.Fs) {
-	afero.WriteFile(fs, viper.GetString("latestKonfFile"), []byte("context_cluster"), 0666)
+	afero.WriteFile(fs, viper.GetString("latestKonfFile"), []byte("context_cluster"), utils.KonfPerm)
 }

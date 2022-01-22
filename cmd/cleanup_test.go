@@ -76,15 +76,15 @@ func TestSelfClean(t *testing.T) {
 func ppidFS() afero.Fs {
 	ppid := os.Getppid()
 	fs := ppidFileMissing()
-	afero.WriteFile(fs, utils.ActivePathForID(fmt.Sprint(ppid)), []byte(singleClusterSingleContextEU), 0600)
+	afero.WriteFile(fs, utils.ActivePathForID(fmt.Sprint(ppid)), []byte(singleClusterSingleContextEU), utils.KonfPerm)
 	return fs
 }
 
 func ppidFileMissing() afero.Fs {
 	activeDir := viper.GetString("activeDir")
 	fs := afero.NewMemMapFs()
-	afero.WriteFile(fs, activeDir+"/abc", []byte("I am not even a kubeconfig, what am I doing here?"), 0600)
-	afero.WriteFile(fs, utils.ActivePathForID("1234"), []byte(singleClusterSingleContextEU), 0600)
+	afero.WriteFile(fs, activeDir+"/abc", []byte("I am not even a kubeconfig, what am I doing here?"), utils.KonfPerm)
+	afero.WriteFile(fs, utils.ActivePathForID("1234"), []byte(singleClusterSingleContextEU), utils.KonfPerm)
 	return fs
 }
 
@@ -174,7 +174,7 @@ func mixedFSWithAllProcs(t *testing.T) (fs afero.Fs, cmdsRunning []*exec.Cmd, cm
 		}
 		pid := cmd.Process.Pid
 		cmdsRunning = append(cmdsRunning, cmd)
-		afero.WriteFile(fs, utils.ActivePathForID(fmt.Sprint(pid)), []byte(singleClusterSingleContextEU), 0600)
+		afero.WriteFile(fs, utils.ActivePathForID(fmt.Sprint(pid)), []byte(singleClusterSingleContextEU), utils.KonfPerm)
 	}
 
 	return fs, cmdsRunning, nil
@@ -214,7 +214,7 @@ func mixedFSIncompleteProcs(t *testing.T) (fs afero.Fs, cmdsRunning []*exec.Cmd,
 func mixedFSDirtyDir(t *testing.T) (fs afero.Fs, cmdsRunning []*exec.Cmd, cmdsStopped []*exec.Cmd) {
 	fs, cmdsRunning, cmdsStopped = mixedFSIncompleteProcs(t)
 
-	afero.WriteFile(fs, utils.ActivePathForID("/not-a-valid-process-id"), []byte{}, 0600)
+	afero.WriteFile(fs, utils.ActivePathForID("/not-a-valid-process-id"), []byte{}, utils.KonfPerm)
 
 	return fs, cmdsRunning, cmdsStopped
 
