@@ -373,10 +373,12 @@ func ActiveDir(fs afero.Fs) {
 
 func SingleClusterSingleContextEU(fs afero.Fs) {
 	afero.WriteFile(fs, utils.StorePathForID("dev-eu_dev-eu-1"), []byte(singleClusterSingleContextEU), 0666)
+	afero.WriteFile(fs, utils.ActivePathForID("dev-eu_dev-eu-1"), []byte(singleClusterSingleContextEU), 0666)
 }
 
 func SingleClusterSingleContextASIA(fs afero.Fs) {
 	afero.WriteFile(fs, utils.StorePathForID("dev-asia_dev-asia-1"), []byte(singleClusterSingleContextASIA), 0666)
+	afero.WriteFile(fs, utils.ActivePathForID("dev-asia_dev-asia-1"), []byte(singleClusterSingleContextASIA), 0666)
 }
 
 func InvalidKonfs(fs afero.Fs) {
