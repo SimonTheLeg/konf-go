@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bytes"
-	"encoding/base64"
 	"fmt"
 	"strings"
 	"testing"
@@ -307,11 +306,3 @@ users:
   - name: dev-asia
     user: {}
 `
-
-func b64Dec(t *testing.T, in string) []byte {
-	res, err := base64.StdEncoding.DecodeString(in)
-	if err != nil {
-		t.Fatalf("There seems to be an error in base64-test-data. Offending String: '%s'", in)
-	}
-	return []byte(res)
-}
