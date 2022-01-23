@@ -83,8 +83,11 @@ As a result of this trick, konf currently only works with zsh. I did not have th
 
 ## Contributing
 
-When developing for konf, it is important to keep in mind that you can never print anything to stdout. You always have to use stderr. This is because anything printed to stdout will automatically be added to the `$KUBECONFIG` variable by the surrounding zsh-func.
-Usually this should not be too much of an issue, because components like the default logger or promptui can both use stderr.
+When developing for konf, it is important to keep in mind that you can never print anything to stdout. You always have to use stderr. This is because anything printed to stdout will automatically be added to the `$KUBECONFIG` variable by the surrounding zsh-func. This has the following implications
+
+- Since cobra only makes the out for commands accesible via the `SetOut()` accessor, all future commands for konf should be implemented by wrapping cobra.Command and creating a custom creation func.
+An example can be found in the `shellwrapper.go` command. Other commands will be refactored over time, and should not be taken as role-models.
+- promptUI always needs to be configured to use stderr, otherwise no prompt will appear
 
 ## Ideas for Future Improvements
 

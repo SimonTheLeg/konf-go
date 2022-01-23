@@ -133,5 +133,6 @@ func writeConfig(w io.Writer, conf *k8s.Config) error {
 }
 
 func init() {
+	importCmd.SetOut(os.Stderr)
 	rootCmd.AddCommand(importCmd)
 }

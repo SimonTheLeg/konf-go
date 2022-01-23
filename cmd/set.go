@@ -252,5 +252,6 @@ func prepareTable(maxColumnLen int) (inactive, active, label string) {
 }
 
 func init() {
+	setCmd.SetOut(os.Stderr)
 	rootCmd.AddCommand(setCmd)
 }

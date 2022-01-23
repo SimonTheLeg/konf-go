@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -24,6 +25,8 @@ See https://github.com/SimonTheLeg/konf-go#installation for how to do so
 		RunE: sc.shellwrapper,
 		Args: cobra.ExactArgs(1),
 	}
+
+	sc.cmd.SetOut(os.Stderr)
 
 	return &sc
 }

@@ -58,6 +58,8 @@ Examples:
 		Args: cobra.MaximumNArgs(1),
 	}
 
+	cc.cmd.SetOut(os.Stderr)
+
 	return cc
 }
 
