@@ -11,6 +11,7 @@ import (
 
 	sprig "github.com/Masterminds/sprig/v3"
 	"github.com/manifoldco/promptui"
+	"github.com/simontheleg/konf-go/prompt"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
@@ -37,7 +38,7 @@ Examples:
 		var err error
 
 		if len(args) == 0 {
-			id, err = selectContext(f, terminalPrompt)
+			id, err = selectContext(f, prompt.Terminal)
 			if err != nil {
 				return err
 			}
@@ -226,16 +227,6 @@ func newTemplateFuncMap() template.FuncMap {
 	ret["italic"] = promptui.Styler(promptui.FGItalic)
 	ret["underline"] = promptui.Styler(promptui.FGUnderline)
 	return ret
-}
-
-// terminalPrompt runs a given prompt in the terminal of the user and
-// returns the selected items position
-func terminalPrompt(prompt *promptui.Select) (sel int, err error) {
-	pos, _, err := prompt.Run()
-	if err != nil {
-		return -1, fmt.Errorf("prompt failed %v", err)
-	}
-	return pos, nil
 }
 
 // tableOutput describes a formatting of kubekonf information, that is being used to present the user a nice table selection
