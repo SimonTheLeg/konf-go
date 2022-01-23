@@ -94,7 +94,6 @@ An example can be found in the `shellwrapper.go` command. Other commands will be
 - Make it work with other shells like bash or fish
 - Allow usage of other fuzzy finders like fzf
 - Add CI
-- Double check the root.go and command descriptions
 - `--silent` option for `set` command on which it does not log anything. This can be useful for things like `konf set -` when running it in every new session
 - `konf manage` so you can rename contexts and clusters
 - `konf delete` option so you can delete konfs you don't need anymore

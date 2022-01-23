@@ -16,12 +16,13 @@ func newShellwrapperCmd() *shellwrapperCmd {
 
 	sc.cmd = &cobra.Command{
 		Use:   "shellwrapper",
-		Short: "shell wrapper and hooks for konf command",
-		Long: `shell wrapper and hooks for konf command
+		Short: "Shell wrapper and hooks for konf command",
+		Long: `Shell wrapper and hooks for konf command
+
 The output of this command should be sourced in your .rc file.
 
-See https://github.com/SimonTheLeg/konf-go#installation for how to do so
-		`,
+See https://github.com/SimonTheLeg/konf-go#installation on how to do so
+`,
 		RunE: sc.shellwrapper,
 		Args: cobra.ExactArgs(1),
 	}

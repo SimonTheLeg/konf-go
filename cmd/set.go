@@ -31,7 +31,7 @@ Examples:
 	-> 'set' run konf selection
 	-> 'set <konfig id>' set a specific konf
 	-> 'set -' set to last used konf
-	`,
+`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var id string
 		f := afero.NewOsFs()

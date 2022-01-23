@@ -46,7 +46,7 @@ func newNamespaceCmd() *namespaceCmd {
 	cc.cmd = &cobra.Command{
 		Use:     "namespace",
 		Aliases: []string{"ns"},
-		Short:   "change namespace in current context",
+		Short:   "Change namespace in current context",
 		Long: `Set the namespace in the current context or start picker dialogue.
 Can also be invoked via 'ns' alias
 
