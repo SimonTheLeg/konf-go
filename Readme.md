@@ -29,20 +29,9 @@ go install github.com/simontheleg/konf-go@latest
 Aferwards, add the following to your `.zshrc` and restart your shell or re-source the `.zshrc` afterwards:
 
 ```zsh
-# mandatory konf settings
-konf() {
-  res=$(konf-go $@)
-  # protect against an empty command
-  # Note we cannot do something like if "$1 == set" and only run the export on set commands as cmd flags can be at any position in our cli
-  if [[ $res != "" ]] then
-    export KUBECONFIG=$res
-  fi
-}
-konf_cleanup() {
-  konf-go cleanup
-}
-add-zsh-hook zshexit konf_cleanup
-
+# mandatory konf settings. This will install a shell wrapper called "konf" for you to use.
+# Always use this wrapper, never call the konf-go binary directly!
+source <(konf-go shellwrapper zsh)
 
 # optional konf settings
 # Alias
@@ -100,7 +89,6 @@ Usually this should not be too much of an issue, because components like the def
 ## Ideas for Future Improvements
 
 - Make it work with other shells like bash or fish
-- Maybe you can print zsh_func directly from a command?
 - Allow usage of other fuzzy finders like fzf
 - Add CI
 - Double check the root.go and command descriptions
