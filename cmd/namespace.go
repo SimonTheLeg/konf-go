@@ -43,17 +43,17 @@ func newNamespaceCmd() *namespaceCmd {
 		clientSetCreator: newKubeClientSet,
 	}
 
-	// TODO write description
 	cc.cmd = &cobra.Command{
 		Use:     "namespace",
 		Aliases: []string{"ns"},
-		Short:   "A brief description of your command",
-		Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+		Short:   "change namespace in current context",
+		Long: `Set the namespace in the current context or start picker dialogue.
+Can also be invoked via 'ns' alias
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+Examples:
+	-> 'ns' run namespace selection
+	-> 'ns <namespace-name' set to a specific namespace
+`,
 		RunE: cc.namespace,
 		Args: cobra.MaximumNArgs(1),
 	}
