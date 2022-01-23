@@ -34,13 +34,13 @@ See https://github.com/SimonTheLeg/konf-go#installation on how to do so
 
 func (c *shellwrapperCmd) shellwrapper(cmd *cobra.Command, args []string) error {
 	var wrapper string
-
-	zsh := `
+	var zsh = `
 konf() {
   res=$(konf-go $@)
   # protect against an empty command
   # Note we cannot do something like if "$1 == set" and only run the export on set commands as cmd flags can be at any position in our cli
-  if [[ $res != "" ]] then
+  if [[ $res != "" ]]
+	then
     export KUBECONFIG=$res
   fi
 }
@@ -50,9 +50,29 @@ konf_cleanup() {
 add-zsh-hook zshexit konf_cleanup
 `
 
-	if args[0] == "zsh" { // safe as we specify cobra.ExactArgs(1)
+	var bash = `
+konf() {
+  res=$(konf-go $@)
+  # protect against an empty command
+  # Note we cannot do something like if "$1 == set" and only run the export on set commands as cmd flags can be at any position in our cli
+  if [[ $res != "" ]]
+	then
+    export KUBECONFIG=$res
+  fi
+}
+konf_cleanup() {
+  konf-go cleanup
+}
+
+trap konf_cleanup EXIT
+`
+
+	switch args[0] {
+	case "zsh":
 		wrapper = zsh
-	} else {
+	case "bash":
+		wrapper = bash
+	default:
 		return fmt.Errorf("konf currently does not support %s", args[0])
 	}
 

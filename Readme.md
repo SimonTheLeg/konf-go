@@ -31,6 +31,7 @@ Aferwards, add the following to your `.zshrc` and restart your shell or re-sourc
 ```zsh
 # mandatory konf settings. This will install a shell wrapper called "konf" for you to use.
 # Always use this wrapper, never call the konf-go binary directly!
+# Currently supported shells: zsh, bash
 source <(konf-go shellwrapper zsh)
 
 # optional konf settings
@@ -91,7 +92,7 @@ An example can be found in the `shellwrapper.go` command. Other commands will be
 
 ## Ideas for Future Improvements
 
-- Make it work with other shells like bash or fish
+- Make it work for fish
 - Allow usage of other fuzzy finders like fzf
 - Add CI
 - `--silent` option for `set` command on which it does not log anything. This can be useful for things like `konf set -` when running it in every new session
