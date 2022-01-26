@@ -16,6 +16,7 @@ var devAsia konfigFile
 
 func TestDetermineConfigs(t *testing.T) {
 	setup(t)
+	sm := utils.SampleKonfManager{}
 
 	tt := map[string]struct {
 		InConfig           string
@@ -24,7 +25,7 @@ func TestDetermineConfigs(t *testing.T) {
 		ExpKonfigFiles     []*konfigFile
 	}{
 		"SingleClusterSingleContext": {
-			InConfig:           singleClusterSingleContextEU,
+			InConfig:           sm.SingleClusterSingleContextEU(),
 			ExpError:           nil,
 			ExpNumOfKonfigFile: 1,
 			ExpKonfigFiles: []*konfigFile{
@@ -32,7 +33,7 @@ func TestDetermineConfigs(t *testing.T) {
 			},
 		},
 		"multiClusterMultiContext": {
-			InConfig:           multiClusterMultiContext,
+			InConfig:           sm.MultiClusterMultiContext(),
 			ExpError:           nil,
 			ExpNumOfKonfigFile: 2,
 			ExpKonfigFiles: []*konfigFile{
@@ -41,7 +42,7 @@ func TestDetermineConfigs(t *testing.T) {
 			},
 		},
 		"multiClusterSingleContext": {
-			InConfig:           multiClusterSingleContext,
+			InConfig:           sm.MultiClusterSingleContext(),
 			ExpError:           nil,
 			ExpNumOfKonfigFile: 1,
 			ExpKonfigFiles: []*konfigFile{
@@ -187,122 +188,3 @@ func setup(t *testing.T) {
 	}
 }
 
-var singleClusterSingleContextEU = `
-apiVersion: v1
-clusters:
-  - cluster:
-      server: https://10.1.1.0
-    name: dev-eu-1
-contexts:
-  - context:
-      namespace: kube-public
-      cluster: dev-eu-1
-      user: dev-eu
-    name: dev-eu
-current-context: dev-eu
-kind: Config
-preferences: {}
-users:
-  - name: dev-eu
-    user: {}
-`
-
-var singleClusterSingleContextASIA = `
-apiVersion: v1
-clusters:
-  - cluster:
-      server: https://10.1.1.0
-    name: dev-asia-1
-contexts:
-  - context:
-      namespace: kube-public
-      cluster: dev-asia-1
-      user: dev-asia
-    name: dev-asia
-current-context: dev-asia
-kind: Config
-preferences: {}
-users:
-  - name: dev-asia
-    user: {}
-`
-var multiClusterMultiContext = `
-apiVersion: v1
-clusters:
-  - cluster:
-      server: https://192.168.0.1
-    name: dev-asia-1
-  - cluster:
-      server: https://10.1.1.0
-    name: dev-eu-1
-contexts:
-  - context:
-      namespace: kube-system
-      cluster: dev-asia-1
-      user: dev-asia
-    name: dev-asia
-  - context:
-      namespace: kube-public
-      cluster: dev-eu-1
-      user: dev-eu
-    name: dev-eu
-current-context: dev-eu
-kind: Config
-preferences: {}
-users:
-  - name: dev-asia
-    user: {}
-  - name: dev-eu
-    user: {}
-`
-
-var singleClusterMultiContext = `
-apiVersion: v1
-clusters:
-  - cluster:
-      server: https://10.1.1.0
-    name: dev-eu-1
-contexts:
-  - context:
-      namespace: kube-system
-      cluster: dev-asia-1
-      user: dev-asia
-    name: dev-asia
-  - context:
-      namespace: kube-public
-      cluster: dev-eu-1
-      user: dev-eu
-    name: dev-eu
-current-context: dev-eu
-kind: Config
-preferences: {}
-users:
-  - name: dev-asia
-    user: {}
-  - name: dev-eu
-    user: {}
-`
-
-var multiClusterSingleContext = `
-apiVersion: v1
-clusters:
-  - cluster:
-      server: https://192.168.0.1
-    name: dev-asia-1
-  - cluster:
-      server: https://10.1.1.0
-    name: dev-eu-1
-contexts:
-  - context:
-      namespace: kube-system
-      cluster: dev-asia-1
-      user: dev-asia
-    name: dev-asia
-# Purposefully kept this wrong
-current-context: dev-eu
-kind: Config
-preferences: {}
-users:
-  - name: dev-asia
-    user: {}
-`

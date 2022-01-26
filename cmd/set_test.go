@@ -18,18 +18,20 @@ import (
 )
 
 func TestSelectLastKonf(t *testing.T) {
+	fm := utils.FilesystemManager{}
+
 	tt := map[string]struct {
 		InFs     afero.Fs
 		ExpID    string
 		ExpError error
 	}{
 		"latestKonf set": {
-			InFs:     FSWithFiles(LatestKonf),
+			InFs:     utils.FSWithFiles(fm.LatestKonf),
 			ExpID:    "context_cluster",
 			ExpError: nil,
 		},
 		"no latestKonf": {
-			InFs:     FSWithFiles(),
+			InFs:     utils.FSWithFiles(),
 			ExpID:    "",
 			ExpError: fmt.Errorf("could not select latest konf, because no konf was yet set"),
 		},
@@ -78,6 +80,7 @@ func TestSetContext(t *testing.T) {
 	utils.InitTestViper()
 	storeDir := viper.GetString("storeDir")
 	ppid := os.Getppid()
+	sm := utils.SampleKonfManager{}
 
 	tt := map[string]struct {
 		InID        string
@@ -105,7 +108,7 @@ func TestSetContext(t *testing.T) {
 			f := afero.NewMemMapFs()
 
 			if tc.StoreExists {
-				afero.WriteFile(f, storeDir+"/"+tc.InID+".yaml", []byte(singleClusterSingleContextEU), utils.KonfPerm)
+				afero.WriteFile(f, storeDir+"/"+tc.InID+".yaml", []byte(sm.SingleClusterSingleContextEU()), utils.KonfPerm)
 			}
 
 			resKonfPath, resError := setContext(tc.InID, f)
@@ -131,8 +134,8 @@ func TestSetContext(t *testing.T) {
 				if err != nil {
 					t.Errorf("Wanted to read file %q, but failed: %q", tc.ExpKonfPath, err)
 				}
-				if string(res) != singleClusterSingleContextEU {
-					t.Errorf("Exp content %q, got %q", res, singleClusterSingleContextEU)
+				if string(res) != sm.SingleClusterSingleContextEU() {
+					t.Errorf("Exp content %q, got %q", res, sm.SingleClusterSingleContextEU())
 				}
 			}
 		})
@@ -233,18 +236,20 @@ func checkTemplate(t *testing.T, stpl string, val tableOutput, exp string) {
 
 func TestFetchKonfs(t *testing.T) {
 	utils.InitTestViper()
+	fm := utils.FilesystemManager{}
+
 	tt := map[string]struct {
 		FSIn        afero.Fs
 		CheckError  func(*testing.T, error) // currently this convoluted mess is needed so we can accurately check for types. errors.As does not work in our case
 		ExpTableOut []tableOutput
 	}{
 		"empty store": {
-			FSIn:        FSWithFiles(StoreDir),
+			FSIn:        utils.FSWithFiles(fm.StoreDir),
 			CheckError:  expEmptyStore,
 			ExpTableOut: nil,
 		},
 		"valid konfs and a wrong konf": {
-			FSIn:       FSWithFiles(StoreDir, SingleClusterSingleContextEU, SingleClusterSingleContextASIA, InvalidKonfs),
+			FSIn:       utils.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA, fm.InvalidKonfs),
 			CheckError: expNil,
 			ExpTableOut: []tableOutput{
 				{
@@ -260,12 +265,12 @@ func TestFetchKonfs(t *testing.T) {
 			},
 		},
 		"overloaded konf (cluster)": {
-			FSIn:        FSWithFiles(StoreDir, MultiClusterSingleContext),
+			FSIn:        utils.FSWithFiles(fm.StoreDir, fm.MultiClusterSingleContext),
 			CheckError:  expKubeConfigOverload,
 			ExpTableOut: nil,
 		},
 		"overloaded konf (context)": {
-			FSIn:        FSWithFiles(StoreDir, SingleClusterMultiContext),
+			FSIn:        utils.FSWithFiles(fm.StoreDir, fm.SingleClusterMultiContext),
 			CheckError:  expKubeConfigOverload,
 			ExpTableOut: nil,
 		},
@@ -285,7 +290,8 @@ func TestFetchKonfs(t *testing.T) {
 }
 
 func TestSelectContext(t *testing.T) {
-	f := FSWithFiles(StoreDir, SingleClusterSingleContextEU, SingleClusterSingleContextASIA)
+	fm := utils.FilesystemManager{}
+	f := utils.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA)
 
 	// cases
 	// - invalid selection
@@ -349,69 +355,4 @@ func expNil(t *testing.T, err error) {
 	if err != nil {
 		t.Errorf("Expected err to be nil, but got %q", err)
 	}
-}
-
-// TODO this should probably be moved to a central location once I rewrite 'import' to use afero as well
-type filefunc = func(afero.Fs)
-
-func FSWithFiles(ff ...filefunc) afero.Fs {
-	fs := afero.NewMemMapFs()
-
-	for _, f := range ff {
-		f(fs)
-	}
-	return fs
-}
-
-func StoreDir(fs afero.Fs) {
-	fs.MkdirAll(viper.GetString("storeDir"), utils.KonfPerm)
-}
-
-func ActiveDir(fs afero.Fs) {
-	fs.MkdirAll(viper.GetString("activeDir"), utils.KonfPerm)
-}
-
-func SingleClusterSingleContextEU(fs afero.Fs) {
-	afero.WriteFile(fs, utils.StorePathForID("dev-eu_dev-eu-1"), []byte(singleClusterSingleContextEU), utils.KonfPerm)
-	afero.WriteFile(fs, utils.ActivePathForID("dev-eu_dev-eu-1"), []byte(singleClusterSingleContextEU), utils.KonfPerm)
-}
-
-func SingleClusterSingleContextASIA(fs afero.Fs) {
-	afero.WriteFile(fs, utils.StorePathForID("dev-asia_dev-asia-1"), []byte(singleClusterSingleContextASIA), utils.KonfPerm)
-	afero.WriteFile(fs, utils.ActivePathForID("dev-asia_dev-asia-1"), []byte(singleClusterSingleContextASIA), utils.KonfPerm)
-}
-
-func InvalidKonfs(fs afero.Fs) {
-	afero.WriteFile(fs, utils.ActivePathForID("no-konf"), []byte("I am no valid yaml"), utils.KonfPerm)
-	afero.WriteFile(fs, utils.StorePathForID("no-konf"), []byte("I am no valid yaml"), utils.KonfPerm)
-}
-
-func MultiClusterSingleContext(fs afero.Fs) {
-	afero.WriteFile(fs, utils.StorePathForID("multi_konf"), []byte(multiClusterSingleContext), utils.KonfPerm)
-}
-
-func SingleClusterMultiContext(fs afero.Fs) {
-	afero.WriteFile(fs, utils.StorePathForID("multi_konf"), []byte(singleClusterMultiContext), utils.KonfPerm)
-}
-
-func LatestKonf(fs afero.Fs) {
-	afero.WriteFile(fs, viper.GetString("latestKonfFile"), []byte("context_cluster"), utils.KonfPerm)
-}
-
-func KonfWithoutContext(fs afero.Fs) {
-	var noContext = `
-apiVersion: v1
-clusters:
-  - cluster:
-      server: https://10.1.1.0
-    name: dev-eu-1
-kind: Config
-preferences: {}
-users:
-  - name: dev-eu
-    user: {}
-`
-
-	afero.WriteFile(fs, utils.StorePathForID("no-context"), []byte(noContext), utils.KonfPerm)
-	afero.WriteFile(fs, utils.ActivePathForID("no-context"), []byte(noContext), utils.KonfPerm)
 }

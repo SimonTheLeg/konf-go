@@ -121,7 +121,8 @@ func TestSearchNamespace(t *testing.T) {
 
 func TestNewKubeClientSet(t *testing.T) {
 	utils.InitTestViper()
-	// TODO when rewriting the import command to use afero, this should use FSWithFiles from a central place
+	fm := utils.FilesystemManager{}
+
 	tt := map[string]struct {
 		kubeenv string
 		Fs      afero.Fs
@@ -134,12 +135,12 @@ func TestNewKubeClientSet(t *testing.T) {
 		},
 		"valid kubeconfig": {
 			"./konf/active/dev-eu_dev-eu-1.yaml",
-			FSWithFiles(ActiveDir, SingleClusterSingleContextEU),
+			utils.FSWithFiles(fm.ActiveDir, fm.SingleClusterSingleContextEU),
 			false,
 		},
 		"invalid kubeconfig": {
 			"./konf/active/no-konf.yaml",
-			FSWithFiles(ActiveDir, InvalidKonfs),
+			utils.FSWithFiles(fm.ActiveDir, fm.InvalidKonfs),
 			true,
 		},
 	}
@@ -232,6 +233,8 @@ func TestSelectNamespace(t *testing.T) {
 
 func TestSetNamespace(t *testing.T) {
 	utils.InitTestViper()
+	fm := utils.FilesystemManager{}
+
 	tt := map[string]struct {
 		kubeenv string
 		Fs      afero.Fs
@@ -246,19 +249,19 @@ func TestSetNamespace(t *testing.T) {
 		},
 		"valid kubeconfig": {
 			"./konf/active/dev-eu_dev-eu-1.yaml",
-			FSWithFiles(ActiveDir, SingleClusterSingleContextEU),
+			utils.FSWithFiles(fm.ActiveDir, fm.SingleClusterSingleContextEU),
 			"kube-system",
 			false,
 		},
 		"invalid kubeconfig": {
 			"./konf/active/no-konf.yaml",
-			FSWithFiles(ActiveDir, InvalidKonfs),
+			utils.FSWithFiles(fm.ActiveDir, fm.InvalidKonfs),
 			"kube-system",
 			true,
 		},
 		"valid kubeconfig, but missing context[]": {
 			"./konf/active/no-context.yaml",
-			FSWithFiles(ActiveDir, KonfWithoutContext),
+			utils.FSWithFiles(fm.ActiveDir, fm.KonfWithoutContext),
 			"kube-system",
 			true,
 		},
