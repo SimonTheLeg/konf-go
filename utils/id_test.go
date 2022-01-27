@@ -9,44 +9,32 @@ import (
 	"github.com/spf13/afero"
 )
 
-// As we currently do not have any requirements for what an ID looks like, these unit tests are more for coverage sake
-
-var allowedIDs = []string{
-	"i-have-dashes",
-	"i/have/slashes",
-	"i.have.dots",
+var validCombos = []struct {
+	context string
+	cluster string
+	id      string
+}{
+	{"dev-eu", "dev-eu-1", "dev-eu_dev-eu-1"},
+	{"con", "mygreathost.com:443", "con_mygreathost.com:443"},
 }
 
 func TestPathForID(t *testing.T) {
 	InitTestViper()
 
-	expStorePaths := []string{
-		"./konf/store/i-have-dashes.yaml",
-		"./konf/store/i/have/slashes.yaml",
-		"./konf/store/i.have.dots.yaml",
-	}
+	for _, co := range validCombos {
+		resStore := StorePathForID(co.id)
+		expStore := fmt.Sprintf("./konf/store/%s.yaml", co.id)
+		if resStore != expStore {
+			t.Errorf("Exp StorePath %q, got %q", expStore, resStore)
+		}
 
-	for i := range allowedIDs {
-		res := StorePathForID(allowedIDs[i])
-		exp := expStorePaths[i]
-		if res != expStorePaths[i] {
-			t.Errorf("Exp StorePath %q, got %q", exp, res)
+		resActive := ActivePathForID(co.id)
+		expActive := fmt.Sprintf("./konf/active/%s.yaml", co.id)
+		if resActive != expActive {
+			t.Errorf("Exp ActivePath %q, got %q", expActive, resActive)
 		}
 	}
 
-	expActivePaths := []string{
-		"./konf/active/i-have-dashes.yaml",
-		"./konf/active/i/have/slashes.yaml",
-		"./konf/active/i.have.dots.yaml",
-	}
-
-	for i := range allowedIDs {
-		res := ActivePathForID(allowedIDs[i])
-		exp := expActivePaths[i]
-		if res != expActivePaths[i] {
-			t.Errorf("Exp StorePath %q, got %q", exp, res)
-		}
-	}
 }
 
 func TestIDFromClusterAndContext(t *testing.T) {
@@ -119,14 +107,6 @@ func TestIDFileValidityIntegration(t *testing.T) {
 	err := f.MkdirAll(dir, KonfDirPerm)
 	if err != nil {
 		t.Errorf("could not create dir for test %q", err)
-	}
-
-	validCombos := []struct {
-		context string
-		cluster string
-	}{
-		{"dev-eu", "dev-eu-1"},
-		{"con", "mygreathost.com:443"},
 	}
 
 	for _, co := range validCombos {
