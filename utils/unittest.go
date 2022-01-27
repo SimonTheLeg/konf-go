@@ -52,6 +52,10 @@ func (*FilesystemManager) InvalidKonfs(fs afero.Fs) {
 	afero.WriteFile(fs, StorePathForID("no-konf"), []byte("I am no valid yaml"), KonfPerm)
 }
 
+func (*FilesystemManager) MultiClusterMultiContext(fs afero.Fs) {
+	afero.WriteFile(fs, StorePathForID("multi_multi_konf"), []byte(multiClusterMultiContext), KonfPerm)
+}
+
 func (*FilesystemManager) MultiClusterSingleContext(fs afero.Fs) {
 	afero.WriteFile(fs, StorePathForID("multi_konf"), []byte(multiClusterSingleContext), KonfPerm)
 }

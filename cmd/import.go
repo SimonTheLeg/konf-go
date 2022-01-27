@@ -1,60 +1,78 @@
 package cmd
 
 import (
-	"bytes"
-	"io"
+	"fmt"
 	"log"
 	"os"
 
 	"github.com/simontheleg/konf-go/utils"
+	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	k8s "k8s.io/client-go/tools/clientcmd/api/v1"
 	"sigs.k8s.io/yaml"
 )
 
-type konfigFile struct {
-	FileName string
+type konfFile struct {
+	FilePath string
 	Content  k8s.Config
 }
 
-// TODO rewrite this package to make use of afero
+type importCmd struct {
+	fs afero.Fs
 
-// importCmd represents the import command
-var importCmd = &cobra.Command{
-	Use:   "import",
-	Short: "Import kubeconfigs into konf store",
-	Long: `Import kubeconfigs into konf store
+	determineConfigs func(afero.Fs, string) ([]*konfFile, error)
+	writeConfig      func(afero.Fs, *konfFile) error
+
+	cmd *cobra.Command
+}
+
+func newImportCmd() *importCmd {
+	fs := afero.NewOsFs()
+
+	ic := &importCmd{
+		fs:               fs,
+		determineConfigs: determineConfigs,
+		writeConfig:      writeConfig,
+	}
+
+	ic.cmd = &cobra.Command{
+		Use:   "import",
+		Short: "Import kubeconfigs into konf store",
+		Long: `Import kubeconfigs into konf store
 
 It is important that you import all configs first, as konf requires each config to only
 contain a single context. Import will take care of splitting if necessary.`,
-	Args: cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+		Args: cobra.ExactArgs(1),
+		RunE: ic.importf,
+	}
 
-		fpath := args[0] // safe, as we specify cobra.ExactArgs(1)
-		f, err := os.Open(fpath)
+	ic.cmd.SetOut(os.Stderr)
+
+	return ic
+}
+
+// because import is a reserved word, we have to slighly rename this :)
+func (c *importCmd) importf(cmd *cobra.Command, args []string) error {
+	fpath := args[0] // safe, as we specify cobra.ExactArgs(1)
+
+	confs, err := c.determineConfigs(c.fs, fpath)
+	if err != nil {
+		return err
+	}
+
+	if len(confs) == 0 {
+		return fmt.Errorf("no contexts found in file %q", fpath)
+	}
+
+	for _, conf := range confs {
+		err = c.writeConfig(c.fs, conf)
 		if err != nil {
 			return err
 		}
+		log.Printf("Imported konf from %q successfully into %q\n", fpath, conf.FilePath)
+	}
 
-		confs, err := determineConfigs(f)
-		if err != nil {
-			return err
-		}
-
-		for _, conf := range confs {
-			f, err = os.Create(conf.FileName)
-			if err != nil {
-				return err
-			}
-			err = writeConfig(f, &conf.Content)
-			if err != nil {
-				return err
-			}
-			log.Printf("Imported konf from %s successfully into %s\n", fpath, conf.FileName)
-		}
-
-		return nil
-	},
+	return nil
 }
 
 // determineConfigs returns the individual configs from a konfigfile
@@ -62,7 +80,18 @@ contain a single context. Import will take care of splitting if necessary.`,
 // only contain a single context
 // If more than one cluster is in a kubeconfig, determineConfig will split it up
 // into multiple konfigFile and returns them as a slice
-func determineConfigs(conf io.Reader) ([]*konfigFile, error) {
+func determineConfigs(f afero.Fs, fpath string) ([]*konfFile, error) {
+
+	b, err := afero.ReadFile(f, fpath)
+	if err != nil {
+		return nil, err
+	}
+
+	var origConf k8s.Config
+	err = yaml.Unmarshal(b, &origConf)
+	if err != nil {
+		return nil, err
+	}
 
 	// basically should be as simple as
 	// 1. Loop through all the contexts
@@ -70,18 +99,7 @@ func determineConfigs(conf io.Reader) ([]*konfigFile, error) {
 	// 3. Find the corresponding user for each context
 	// 4. Create a new konfigFile for each context mapped to its cluster
 
-	var origConf k8s.Config
-	b := new(bytes.Buffer)
-	_, err := b.ReadFrom(conf)
-	if err != nil {
-		return nil, err
-	}
-	err = yaml.Unmarshal(b.Bytes(), &origConf)
-	if err != nil {
-		return nil, err
-	}
-
-	var konfs = []*konfigFile{}
+	var konfs = []*konfFile{}
 	for _, curCon := range origConf.Contexts {
 
 		cluster := k8s.NamedCluster{}
@@ -99,11 +117,11 @@ func determineConfigs(conf io.Reader) ([]*konfigFile, error) {
 			}
 		}
 
-		var konf konfigFile
+		var konf konfFile
 		// TODO it might make sense to build in a duplicate detection here. This would ensure that the store is trustworthy, which in return makes it easy for
 		// TODO the set command as it does not need any verification
 		id := utils.IDFromClusterAndContext(cluster.Name, curCon.Name)
-		konf.FileName = utils.StorePathForID(id)
+		konf.FilePath = utils.StorePathForID(id)
 		konf.Content.AuthInfos = append(konf.Content.AuthInfos, user)
 		konf.Content.Clusters = append(konf.Content.Clusters, cluster)
 		konf.Content.Contexts = append(konf.Content.Contexts, curCon)
@@ -118,13 +136,13 @@ func determineConfigs(conf io.Reader) ([]*konfigFile, error) {
 	return konfs, nil
 }
 
-func writeConfig(w io.Writer, conf *k8s.Config) error {
-	c, err := yaml.Marshal(conf)
+func writeConfig(f afero.Fs, kf *konfFile) error {
+	b, err := yaml.Marshal(kf.Content)
 	if err != nil {
 		return err
 	}
 
-	_, err = w.Write(c)
+	err = afero.WriteFile(f, kf.FilePath, b, utils.KonfPerm)
 	if err != nil {
 		return err
 	}
@@ -133,6 +151,5 @@ func writeConfig(w io.Writer, conf *k8s.Config) error {
 }
 
 func init() {
-	importCmd.SetOut(os.Stderr)
-	rootCmd.AddCommand(importCmd)
+	rootCmd.AddCommand(newImportCmd().cmd)
 }
