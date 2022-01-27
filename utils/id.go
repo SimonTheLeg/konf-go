@@ -11,9 +11,17 @@ import (
 // ID unifies ID and File management that konf uses
 // Currently an ID is defined by the context and clustername of the config, separated by an underscore
 // I have chosen this combination as it is fairly unique among multiple configs. I decided against using just context.name as a lot of times the context is just called "default", which results in lots of naming collisions
+// Some special characters that are reserved by the filesystem, will be replaced by a "-" character
 
 func IDFromClusterAndContext(cluster, context string) string {
-	return context + "_" + cluster
+	id := context + "_" + cluster
+
+	illegalChars := []string{"/"}
+	for _, c := range illegalChars {
+		id = strings.ReplaceAll(id, c, "-")
+	}
+
+	return id
 }
 
 func IDFromFileInfo(fi fs.FileInfo) string {

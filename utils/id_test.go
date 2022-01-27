@@ -16,6 +16,7 @@ var validCombos = []struct {
 }{
 	{"dev-eu", "dev-eu-1", "dev-eu_dev-eu-1"},
 	{"con", "mygreathost.com:443", "con_mygreathost.com:443"},
+	{"host.com:443/with/slashes", "danger", "host.com:443-with-slashes_danger"},
 }
 
 func TestPathForID(t *testing.T) {
