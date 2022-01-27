@@ -7,6 +7,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 	k8s "k8s.io/client-go/tools/clientcmd/api/v1"
 )
 
@@ -266,6 +268,18 @@ users:
 		t.Errorf("\nExp:\n%s\ngot\n%s\n", exp, res)
 	}
 
-	// TODO it would be really nice to check if the returned kubeconfig yaml is valid in sense of it being complete
-	// Unfortunately I was not able to find a good way to perform this check using the client-go package
+	// check if the konf is also valid for creating a clientset
+	conf, err := clientcmd.NewClientConfigFromBytes(b)
+	if err != nil {
+		t.Errorf("Exp to create clientconfig, but got %q", err)
+	}
+	cc, err := conf.ClientConfig()
+	if err != nil {
+		t.Errorf("Exp to extract rest.config, but got %q", err)
+	}
+	_, err = kubernetes.NewForConfig(cc)
+	if err != nil {
+		t.Errorf("Exp to create clientset, but got %q", err)
+	}
+
 }
