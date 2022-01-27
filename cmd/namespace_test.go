@@ -140,7 +140,7 @@ func TestNewKubeClientSet(t *testing.T) {
 		},
 		"invalid kubeconfig": {
 			"./konf/active/no-konf.yaml",
-			utils.FSWithFiles(fm.ActiveDir, fm.InvalidKonfs),
+			utils.FSWithFiles(fm.ActiveDir, fm.InvalidYaml),
 			true,
 		},
 	}
@@ -255,7 +255,7 @@ func TestSetNamespace(t *testing.T) {
 		},
 		"invalid kubeconfig": {
 			"./konf/active/no-konf.yaml",
-			utils.FSWithFiles(fm.ActiveDir, fm.InvalidKonfs),
+			utils.FSWithFiles(fm.ActiveDir, fm.InvalidYaml),
 			"kube-system",
 			true,
 		},

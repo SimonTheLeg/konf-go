@@ -47,7 +47,7 @@ func (*FilesystemManager) SingleClusterSingleContextASIA(fs afero.Fs) {
 	afero.WriteFile(fs, ActivePathForID("dev-asia_dev-asia-1"), []byte(singleClusterSingleContextASIA), KonfPerm)
 }
 
-func (*FilesystemManager) InvalidKonfs(fs afero.Fs) {
+func (*FilesystemManager) InvalidYaml(fs afero.Fs) {
 	afero.WriteFile(fs, ActivePathForID("no-konf"), []byte("I am no valid yaml"), KonfPerm)
 	afero.WriteFile(fs, StorePathForID("no-konf"), []byte("I am no valid yaml"), KonfPerm)
 }

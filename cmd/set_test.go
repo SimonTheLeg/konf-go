@@ -249,7 +249,7 @@ func TestFetchKonfs(t *testing.T) {
 			ExpTableOut: nil,
 		},
 		"valid konfs and a wrong konf": {
-			FSIn:       utils.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA, fm.InvalidKonfs),
+			FSIn:       utils.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA, fm.InvalidYaml),
 			CheckError: expNil,
 			ExpTableOut: []tableOutput{
 				{

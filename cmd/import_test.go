@@ -197,7 +197,7 @@ func TestDetermineConfigs(t *testing.T) {
 		},
 		// All for the coverage ;)
 		"invalidConfig": {
-			Fs:                 utils.FSWithFiles(fm.StoreDir, fm.InvalidKonfs),
+			Fs:                 utils.FSWithFiles(fm.StoreDir, fm.InvalidYaml),
 			konfpath:           "./konf/store/no-konf.yaml",
 			ExpError:           fmt.Errorf("error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1.Config"),
 			ExpNumOfKonfigFile: 0,
