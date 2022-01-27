@@ -1,9 +1,12 @@
 package utils
 
 import (
+	"fmt"
 	"io/fs"
 	"testing"
 	"time"
+
+	"github.com/spf13/afero"
 )
 
 // As we currently do not have any requirements for what an ID looks like, these unit tests are more for coverage sake
@@ -90,5 +93,49 @@ func TestIDFromFileInfo(t *testing.T) {
 				t.Errorf("Expected ID %q, got %q", tc.Exp, res)
 			}
 		})
+	}
+}
+
+// this test simply checks if an ID is valid, by writing a file of that name to the os filesystem
+// this test should be treated as an Integration test and run by CI on all OS supported by konf
+func TestIDFileValidityIntegration(t *testing.T) {
+	if testing.Short() {
+		t.Skip("Skipping TestIDFileValidityIntegration integration test")
+	}
+
+	sm := SampleKonfManager{}
+	f := afero.NewOsFs()
+	dir := IntegrationtestDir + "/TestIDFileValidityIntegration"
+
+	t.Cleanup(
+		func() {
+			err := f.RemoveAll(IntegrationtestDir)
+			if err != nil {
+				t.Errorf("Cleanup failed %q", err)
+			}
+		},
+	)
+
+	err := f.MkdirAll(dir, KonfDirPerm)
+	if err != nil {
+		t.Errorf("could not create dir for test %q", err)
+	}
+
+	validCombos := []struct {
+		context string
+		cluster string
+	}{
+		{"dev-eu", "dev-eu-1"},
+		{"con", "mygreathost.com:443"},
+	}
+
+	for _, co := range validCombos {
+		id := IDFromClusterAndContext(co.cluster, co.context)
+		fpath := fmt.Sprintf("%s/%s.yaml", dir, id)
+
+		err := afero.WriteFile(f, fpath, []byte(sm.SingleClusterSingleContextEU()), KonfPerm)
+		if err != nil {
+			t.Errorf("Exp filename %q to work, but got error %q", fpath, err)
+		}
 	}
 }

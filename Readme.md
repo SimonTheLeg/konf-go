@@ -8,6 +8,8 @@
     - [kubeconfig management across shells](#kubeconfig-management-across-shells)
     - [zsh-func-magic](#zsh-func-magic)
   - [Contributing](#contributing)
+    - [Usage of stdout and stderr](#usage-of-stdout-and-stderr)
+    - [Tests](#tests)
   - [Ideas for Future Improvements](#ideas-for-future-improvements)
 
 ## Why konf?
@@ -84,11 +86,27 @@ As a result of this trick, konf currently only works with zsh. I did not have th
 
 ## Contributing
 
+### Usage of stdout and stderr
+
 When developing for konf, it is important to keep in mind that you can never print anything to stdout. You always have to use stderr. This is because anything printed to stdout will automatically be added to the `$KUBECONFIG` variable by the surrounding zsh-func. This has the following implications
 
 - Since cobra only makes the out for commands accesible via the `SetOut()` accessor, all future commands for konf should be implemented by wrapping cobra.Command and creating a custom creation func.
 An example can be found in the `shellwrapper.go` command. Other commands will be refactored over time, and should not be taken as role-models.
 - promptUI always needs to be configured to use stderr, otherwise no prompt will appear
+
+### Tests
+
+By default `go test ./...` will run both unit and integration tests. Integration tests are mainly used to check for filename validity and only write in the `/tmp/konf` directory. They are mainly being used by the CI. If you only want to run unit-test, you can do so by using the `-short` flag:
+
+```sh
+go test -short ./...
+```
+
+If you want to only run integration tests, simply run:
+
+```sh
+go test -run Integration ./...
+```
 
 ## Ideas for Future Improvements
 
