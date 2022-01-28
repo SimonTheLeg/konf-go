@@ -13,7 +13,10 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
-      - run: go test -short -cover ./...
+      - name: Run test
+        run: go test -short -cover -coverprofile=coverage.txt -covermode=atomic ./...
+      - name: Upload coverage
+        run: bash <(curl -s https://codecov.io/bash)
   integration-test:
     strategy:
       fail-fast: false
