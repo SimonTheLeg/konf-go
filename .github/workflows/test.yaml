@@ -1,0 +1,22 @@
+name: test
+on: push
+jobs:
+  integration-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        go: [1.17.6]
+    runs-on: ${{ matrix.os }}
+    name: integration -> ${{ matrix.os }} / go ${{ matrix.go }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      # for now we only run Integration tests in utils.
+      # Unfortunately we have to go this way, because if you use './...' it will try to build
+      # the unittests for windows in ./cmd (even if there is no integration test there) and fail
+      # in the build phase already with 'unknown field 'Setpgid' in struct literal of type syscall.SysProcAttr'
+      - run: go test -run Integration ./utils
