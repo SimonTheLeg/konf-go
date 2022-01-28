@@ -1,0 +1,7 @@
+version = 1
+
+[merge]
+automerge_label = ["merge", "automerge"]
+blocking_labels = ["wip", "hold"]
+delete_branch_on_merge = true
+method = "rebase_fast_forward"
