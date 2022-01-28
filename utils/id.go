@@ -16,7 +16,7 @@ import (
 func IDFromClusterAndContext(cluster, context string) string {
 	id := context + "_" + cluster
 
-	illegalChars := []string{"/"}
+	illegalChars := []string{"/", ":"}
 	for _, c := range illegalChars {
 		id = strings.ReplaceAll(id, c, "-")
 	}
