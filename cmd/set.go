@@ -4,13 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"log"
 	"os"
 	"strings"
 	"text/template"
 
 	sprig "github.com/Masterminds/sprig/v3"
 	"github.com/manifoldco/promptui"
+	log "github.com/simontheleg/konf-go/log"
 	"github.com/simontheleg/konf-go/prompt"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
@@ -60,7 +60,7 @@ Examples:
 			return fmt.Errorf("could not save latest konf. As a result 'konf set -' might not work: %q ", err)
 		}
 
-		log.Printf("Setting context to %q\n", id)
+		log.Info("Setting context to %q\n", id)
 		// By printing out to stdout, we pass the value to our zsh hook, which then sets $KUBECONFIG to it
 		fmt.Println(context)
 
@@ -166,7 +166,7 @@ func fetchKonfs(f afero.Fs) ([]tableOutput, error) {
 		kubeconf := &k8s.Config{}
 		err = yaml.Unmarshal(val, kubeconf)
 		if err != nil {
-			log.Printf("file %q does not contain a valid kubeconfig. Skipping for evaluation", path)
+			log.Warn("file %q does not contain a valid kubeconfig. Skipping for evaluation", path)
 			continue
 		}
 

@@ -4,11 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
-	"log"
 	"os"
 	"strconv"
 
 	"github.com/mitchellh/go-ps"
+	log "github.com/simontheleg/konf-go/log"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
@@ -49,7 +49,7 @@ func selfClean(f afero.Fs) error {
 	err := f.Remove(fpath)
 
 	if errors.Is(err, fs.ErrNotExist) {
-		log.Printf("current konf '%s' was already deleted, nothing to self-cleanup\n", fpath)
+		log.Info("current konf '%s' was already deleted, nothing to self-cleanup\n", fpath)
 		return nil
 	}
 
@@ -77,7 +77,7 @@ func cleanLeftOvers(f afero.Fs) error {
 		sPid := utils.IDFromFileInfo(konf)
 		pid, err := strconv.Atoi(sPid)
 		if err != nil {
-			log.Printf("file '%s' could not be converted into an int, and therefore cannot be a valid process id. Skip for cleanup", konf.Name())
+			log.Warn("file '%s' could not be converted into an int, and therefore cannot be a valid process id. Skip for cleanup", konf.Name())
 			continue
 		}
 
