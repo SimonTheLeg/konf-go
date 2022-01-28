@@ -78,80 +78,73 @@ func TestImport(t *testing.T) {
 	}
 }
 
-func devEUControlGroup() *konfFile {
-	return &konfFile{
-		FilePath: utils.StorePathForID(utils.IDFromClusterAndContext("dev-eu-1", "dev-eu")),
-		Content: k8s.Config{
-			APIVersion:     "v1",
-			Kind:           "Config",
-			CurrentContext: "dev-eu",
-			Clusters: []k8s.NamedCluster{
-				{
-					Name: "dev-eu-1",
-					Cluster: k8s.Cluster{
-						Server: "https://10.1.1.0",
-					},
-				},
-			},
-			Contexts: []k8s.NamedContext{
-				{
-					Name: "dev-eu",
-					Context: k8s.Context{
-						Cluster:   "dev-eu-1",
-						Namespace: "kube-public",
-						AuthInfo:  "dev-eu",
-					},
-				},
-			},
-			AuthInfos: []k8s.NamedAuthInfo{
-				{
-					Name: "dev-eu",
+var devEUControlGroup = &konfFile{
+	FilePath: utils.StorePathForID(utils.IDFromClusterAndContext("dev-eu-1", "dev-eu")),
+	Content: k8s.Config{
+		APIVersion:     "v1",
+		Kind:           "Config",
+		CurrentContext: "dev-eu",
+		Clusters: []k8s.NamedCluster{
+			{
+				Name: "dev-eu-1",
+				Cluster: k8s.Cluster{
+					Server: "https://10.1.1.0",
 				},
 			},
 		},
-	}
+		Contexts: []k8s.NamedContext{
+			{
+				Name: "dev-eu",
+				Context: k8s.Context{
+					Cluster:   "dev-eu-1",
+					Namespace: "kube-public",
+					AuthInfo:  "dev-eu",
+				},
+			},
+		},
+		AuthInfos: []k8s.NamedAuthInfo{
+			{
+				Name: "dev-eu",
+			},
+		},
+	},
 }
 
-func devASIAControlGroup() *konfFile {
-	return &konfFile{
-		FilePath: utils.StorePathForID(utils.IDFromClusterAndContext("dev-asia-1", "dev-asia")),
-		Content: k8s.Config{
-			APIVersion:     "v1",
-			Kind:           "Config",
-			CurrentContext: "dev-asia",
-			Clusters: []k8s.NamedCluster{
-				{
-					Name: "dev-asia-1",
-					Cluster: k8s.Cluster{
-						Server: "https://192.168.0.1",
-					},
-				},
-			},
-			Contexts: []k8s.NamedContext{
-				{
-					Name: "dev-asia",
-					Context: k8s.Context{
-						Cluster:   "dev-asia-1",
-						Namespace: "kube-system",
-						AuthInfo:  "dev-asia",
-					},
-				},
-			},
-			AuthInfos: []k8s.NamedAuthInfo{
-				{
-					Name:     "dev-asia",
-					AuthInfo: k8s.AuthInfo{},
+var devASIAControlGroup = &konfFile{
+	FilePath: utils.StorePathForID(utils.IDFromClusterAndContext("dev-asia-1", "dev-asia")),
+	Content: k8s.Config{
+		APIVersion:     "v1",
+		Kind:           "Config",
+		CurrentContext: "dev-asia",
+		Clusters: []k8s.NamedCluster{
+			{
+				Name: "dev-asia-1",
+				Cluster: k8s.Cluster{
+					Server: "https://192.168.0.1",
 				},
 			},
 		},
-	}
+		Contexts: []k8s.NamedContext{
+			{
+				Name: "dev-asia",
+				Context: k8s.Context{
+					Cluster:   "dev-asia-1",
+					Namespace: "kube-system",
+					AuthInfo:  "dev-asia",
+				},
+			},
+		},
+		AuthInfos: []k8s.NamedAuthInfo{
+			{
+				Name:     "dev-asia",
+				AuthInfo: k8s.AuthInfo{},
+			},
+		},
+	},
 }
 
 func TestDetermineConfigs(t *testing.T) {
 	fm := utils.FilesystemManager{}
-
-	devEU := devEUControlGroup()
-	devAsia := devASIAControlGroup()
 
 	tt := map[string]struct {
 		Fs                 afero.Fs
@@ -166,7 +159,7 @@ func TestDetermineConfigs(t *testing.T) {
 			ExpError:           nil,
 			ExpNumOfKonfigFile: 1,
 			ExpKonfigFiles: []*konfFile{
-				devEU,
+				devEUControlGroup,
 			},
 		},
 		"multiClusterMultiContext": {
@@ -175,8 +168,8 @@ func TestDetermineConfigs(t *testing.T) {
 			ExpError:           nil,
 			ExpNumOfKonfigFile: 2,
 			ExpKonfigFiles: []*konfFile{
-				devAsia,
-				devEU,
+				devASIAControlGroup,
+				devEUControlGroup,
 			},
 		},
 		"multiClusterSingleContext": {
@@ -185,7 +178,7 @@ func TestDetermineConfigs(t *testing.T) {
 			ExpError:           nil,
 			ExpNumOfKonfigFile: 1,
 			ExpKonfigFiles: []*konfFile{
-				devAsia,
+				devASIAControlGroup,
 			},
 		},
 		"emptyConfig": {
@@ -229,7 +222,6 @@ func TestDetermineConfigs(t *testing.T) {
 func TestWriteConfig(t *testing.T) {
 	fm := utils.FilesystemManager{}
 	f := utils.FSWithFiles(fm.ActiveDir, fm.StoreDir)
-	kf := devEUControlGroup()
 
 	exp := `apiVersion: v1
 clusters:
@@ -250,12 +242,12 @@ users:
   user: {}
 `
 
-	err := writeConfig(f, kf)
+	err := writeConfig(f, devEUControlGroup)
 	if err != nil {
 		t.Errorf("Exp err to be nil but got %q", err)
 	}
 
-	b, err := afero.ReadFile(f, kf.FilePath)
+	b, err := afero.ReadFile(f, devEUControlGroup.FilePath)
 	if err != nil {
 		t.Errorf("Exp read in file without any issues, but got %q", err)
 	}
