@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"io"
 	"os"
 
 	"github.com/simontheleg/konf-go/config"
+	"github.com/simontheleg/konf-go/log"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
@@ -12,6 +14,7 @@ import (
 var (
 	cfgFile string
 	konfDir string
+	silent  bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -38,6 +41,7 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.konfig.yaml)")
 	rootCmd.PersistentFlags().StringVar(&konfDir, "konfDir", "", "konfs directory for kubeconfigs and tracking active konfs (default is $HOME/.kube/konfs)")
+	rootCmd.PersistentFlags().BoolVar(&silent, "silent", false, "suppress log output if set to true (default is false)")
 
 }
 
@@ -45,6 +49,10 @@ func init() {
 func wrapInit() {
 	err := config.Init(cfgFile, konfDir)
 	cobra.CheckErr(err)
+
+	if silent {
+		log.InitLogger(io.Discard, io.Discard)
+	}
 
 	err = utils.EnsureDir(afero.NewOsFs())
 	cobra.CheckErr(err)

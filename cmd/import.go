@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 
+	log "github.com/simontheleg/konf-go/log"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
@@ -69,7 +69,7 @@ func (c *importCmd) importf(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		log.Printf("Imported konf from %q successfully into %q\n", fpath, conf.FilePath)
+		log.Info("Imported konf from %q successfully into %q\n", fpath, conf.FilePath)
 	}
 
 	return nil

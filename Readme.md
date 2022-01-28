@@ -40,8 +40,8 @@ source <(konf-go shellwrapper zsh)
 # Alias
 alias kctx="konf set"
 alias kns="konf ns"
-# Open last konf on new session
-export KUBECONFIG=$(konf-go set -)
+# Open last konf on new session (use --silent to suppress INFO log line)
+export KUBECONFIG=$(konf-go --silent set -)
 ```
 
 ## Usage
@@ -113,7 +113,6 @@ go test -run Integration ./...
 - Make it work for fish
 - Allow usage of other fuzzy finders like fzf
 - Add CI
-- `--silent` option for `set` command on which it does not log anything. This can be useful for things like `konf set -` when running it in every new session
 - `konf manage` so you can rename contexts and clusters
 - `konf delete` option so you can delete konfs you don't need anymore
 - figure out auto-completion. This might be a bit tricky due to the `konf` zsh func wrapper
