@@ -6,7 +6,7 @@ import (
 
 	"github.com/manifoldco/promptui"
 	"github.com/simontheleg/konf-go/prompt"
-	"github.com/simontheleg/konf-go/utils"
+	"github.com/simontheleg/konf-go/testhelper"
 	"github.com/spf13/afero"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -59,7 +59,7 @@ func TestNamespace(t *testing.T) {
 			cmd := nscmd.cmd
 
 			err := cmd.RunE(cmd, tc.Args)
-			if !utils.EqualError(tc.ExpErr, err) {
+			if !testhelper.EqualError(tc.ExpErr, err) {
 				t.Errorf("Exp error %q, got %q", tc.ExpErr, err)
 			}
 
@@ -119,7 +119,7 @@ func TestSearchNamespace(t *testing.T) {
 }
 
 func TestNewKubeClientSet(t *testing.T) {
-	fm := utils.FilesystemManager{}
+	fm := testhelper.FilesystemManager{}
 
 	tt := map[string]struct {
 		kubeenv string
@@ -133,12 +133,12 @@ func TestNewKubeClientSet(t *testing.T) {
 		},
 		"valid kubeconfig": {
 			"./konf/active/dev-eu_dev-eu-1.yaml",
-			utils.FSWithFiles(fm.ActiveDir, fm.SingleClusterSingleContextEU),
+			testhelper.FSWithFiles(fm.ActiveDir, fm.SingleClusterSingleContextEU),
 			false,
 		},
 		"invalid kubeconfig": {
 			"./konf/active/no-konf.yaml",
-			utils.FSWithFiles(fm.ActiveDir, fm.InvalidYaml),
+			testhelper.FSWithFiles(fm.ActiveDir, fm.InvalidYaml),
 			true,
 		},
 	}
@@ -217,7 +217,7 @@ func TestSelectNamespace(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			res, err := selectNamespace(tc.csc, tc.sel, nil)
 
-			if !utils.EqualError(err, tc.expErr) {
+			if !testhelper.EqualError(err, tc.expErr) {
 				t.Errorf("Exp err %q, got %q", tc.expErr, err)
 			}
 
@@ -230,7 +230,7 @@ func TestSelectNamespace(t *testing.T) {
 }
 
 func TestSetNamespace(t *testing.T) {
-	fm := utils.FilesystemManager{}
+	fm := testhelper.FilesystemManager{}
 
 	tt := map[string]struct {
 		kubeenv string
@@ -246,19 +246,19 @@ func TestSetNamespace(t *testing.T) {
 		},
 		"valid kubeconfig": {
 			"./konf/active/dev-eu_dev-eu-1.yaml",
-			utils.FSWithFiles(fm.ActiveDir, fm.SingleClusterSingleContextEU),
+			testhelper.FSWithFiles(fm.ActiveDir, fm.SingleClusterSingleContextEU),
 			"kube-system",
 			false,
 		},
 		"invalid kubeconfig": {
 			"./konf/active/no-konf.yaml",
-			utils.FSWithFiles(fm.ActiveDir, fm.InvalidYaml),
+			testhelper.FSWithFiles(fm.ActiveDir, fm.InvalidYaml),
 			"kube-system",
 			true,
 		},
 		"valid kubeconfig, but missing context[]": {
 			"./konf/active/no-context.yaml",
-			utils.FSWithFiles(fm.ActiveDir, fm.KonfWithoutContext),
+			testhelper.FSWithFiles(fm.ActiveDir, fm.KonfWithoutContext),
 			"kube-system",
 			true,
 		},

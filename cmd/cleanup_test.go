@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/simontheleg/konf-go/config"
+	"github.com/simontheleg/konf-go/testhelper"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 )
@@ -47,7 +48,7 @@ func TestSelfClean(t *testing.T) {
 
 			err := selfClean(tc.Fs)
 
-			if !utils.EqualError(err, tc.ExpError) {
+			if !testhelper.EqualError(err, tc.ExpError) {
 				t.Errorf("Want error '%s', got '%s'", tc.ExpError, err)
 			}
 
@@ -75,14 +76,14 @@ func TestSelfClean(t *testing.T) {
 func ppidFS() afero.Fs {
 	ppid := os.Getppid()
 	fs := ppidFileMissing()
-	sm := utils.SampleKonfManager{}
+	sm := testhelper.SampleKonfManager{}
 	afero.WriteFile(fs, utils.ActivePathForID(fmt.Sprint(ppid)), []byte(sm.SingleClusterSingleContextEU()), utils.KonfPerm)
 	return fs
 }
 
 func ppidFileMissing() afero.Fs {
 	fs := afero.NewMemMapFs()
-	sm := utils.SampleKonfManager{}
+	sm := testhelper.SampleKonfManager{}
 	afero.WriteFile(fs, config.ActiveDir()+"/abc", []byte("I am not even a kubeconfig, what am I doing here?"), utils.KonfPerm)
 	afero.WriteFile(fs, utils.ActivePathForID("1234"), []byte(sm.SingleClusterSingleContextEU()), utils.KonfPerm)
 	return fs
@@ -162,7 +163,7 @@ func mixedFSWithAllProcs(t *testing.T) (fs afero.Fs, cmdsRunning []*exec.Cmd, cm
 	numOfConfs := 3
 
 	fs = afero.NewMemMapFs()
-	sm := utils.SampleKonfManager{}
+	sm := testhelper.SampleKonfManager{}
 
 	for i := 1; i <= numOfConfs; i++ {
 		// set sleep to an extremely high number as the argument "infinity" does not exist in all versions of the util

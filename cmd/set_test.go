@@ -15,10 +15,11 @@ import (
 	"github.com/simontheleg/konf-go/config"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
+	"github.com/simontheleg/konf-go/testhelper"
 )
 
 func TestSelectLastKonf(t *testing.T) {
-	fm := utils.FilesystemManager{}
+	fm := testhelper.FilesystemManager{}
 
 	tt := map[string]struct {
 		InFs     afero.Fs
@@ -26,12 +27,12 @@ func TestSelectLastKonf(t *testing.T) {
 		ExpError error
 	}{
 		"latestKonf set": {
-			InFs:     utils.FSWithFiles(fm.LatestKonf),
+			InFs:     testhelper.FSWithFiles(fm.LatestKonf),
 			ExpID:    "context_cluster",
 			ExpError: nil,
 		},
 		"no latestKonf": {
-			InFs:     utils.FSWithFiles(),
+			InFs:     testhelper.FSWithFiles(),
 			ExpID:    "",
 			ExpError: fmt.Errorf("could not select latest konf, because no konf was yet set"),
 		},
@@ -41,7 +42,7 @@ func TestSelectLastKonf(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			id, err := selectLastKonf(tc.InFs)
 
-			if !utils.EqualError(tc.ExpError, err) {
+			if !testhelper.EqualError(tc.ExpError, err) {
 				t.Errorf("Want error %q, got %q", tc.ExpError, err)
 			}
 
@@ -77,7 +78,7 @@ func TestSaveLatestKonf(t *testing.T) {
 func TestSetContext(t *testing.T) {
 	storeDir := config.StoreDir()
 	ppid := os.Getppid()
-	sm := utils.SampleKonfManager{}
+	sm := testhelper.SampleKonfManager{}
 
 	tt := map[string]struct {
 		InID        string
@@ -232,7 +233,7 @@ func checkTemplate(t *testing.T, stpl string, val tableOutput, exp string) {
 }
 
 func TestFetchKonfs(t *testing.T) {
-	fm := utils.FilesystemManager{}
+	fm := testhelper.FilesystemManager{}
 
 	tt := map[string]struct {
 		FSIn        afero.Fs
@@ -240,12 +241,12 @@ func TestFetchKonfs(t *testing.T) {
 		ExpTableOut []tableOutput
 	}{
 		"empty store": {
-			FSIn:        utils.FSWithFiles(fm.StoreDir),
+			FSIn:        testhelper.FSWithFiles(fm.StoreDir),
 			CheckError:  expEmptyStore,
 			ExpTableOut: nil,
 		},
 		"valid konfs and a wrong konf": {
-			FSIn:       utils.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA, fm.InvalidYaml),
+			FSIn:       testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA, fm.InvalidYaml),
 			CheckError: expNil,
 			ExpTableOut: []tableOutput{
 				{
@@ -261,12 +262,12 @@ func TestFetchKonfs(t *testing.T) {
 			},
 		},
 		"overloaded konf (cluster)": {
-			FSIn:        utils.FSWithFiles(fm.StoreDir, fm.MultiClusterSingleContext),
+			FSIn:        testhelper.FSWithFiles(fm.StoreDir, fm.MultiClusterSingleContext),
 			CheckError:  expKubeConfigOverload,
 			ExpTableOut: nil,
 		},
 		"overloaded konf (context)": {
-			FSIn:        utils.FSWithFiles(fm.StoreDir, fm.SingleClusterMultiContext),
+			FSIn:        testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterMultiContext),
 			CheckError:  expKubeConfigOverload,
 			ExpTableOut: nil,
 		},
@@ -286,8 +287,8 @@ func TestFetchKonfs(t *testing.T) {
 }
 
 func TestSelectContext(t *testing.T) {
-	fm := utils.FilesystemManager{}
-	f := utils.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA)
+	fm := testhelper.FilesystemManager{}
+	f := testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA)
 
 	// cases
 	// - invalid selection
@@ -324,7 +325,7 @@ func TestSelectContext(t *testing.T) {
 
 			res, err := selectContext(f, tc.pf)
 
-			if !utils.EqualError(err, tc.expErr) {
+			if !testhelper.EqualError(err, tc.expErr) {
 				t.Errorf("Exp err %q, got %q", tc.expErr, err)
 			}
 

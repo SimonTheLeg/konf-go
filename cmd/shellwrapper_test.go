@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/simontheleg/konf-go/utils"
+	"github.com/simontheleg/konf-go/testhelper"
 )
 
 func TestShellWrapperCmd(t *testing.T) {
@@ -34,7 +34,7 @@ func TestShellWrapperCmd(t *testing.T) {
 
 			err := cmd.RunE(cmd, tc.args)
 
-			if !utils.EqualError(err, tc.ExpErr) {
+			if !testhelper.EqualError(err, tc.ExpErr) {
 				t.Errorf("Want error '%s', got '%s'", tc.ExpErr, err)
 			}
 		})

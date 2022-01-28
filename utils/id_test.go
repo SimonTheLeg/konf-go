@@ -93,7 +93,6 @@ func TestIDFileValidityIntegration(t *testing.T) {
 		t.Skip("Skipping TestIDFileValidityIntegration integration test")
 	}
 
-	sm := SampleKonfManager{}
 	f := afero.NewOsFs()
 	dir := IntegrationtestDir + "/TestIDFileValidityIntegration"
 
@@ -115,7 +114,8 @@ func TestIDFileValidityIntegration(t *testing.T) {
 		id := IDFromClusterAndContext(co.cluster, co.context)
 		fpath := fmt.Sprintf("%s/%s.yaml", dir, id)
 
-		err := afero.WriteFile(f, fpath, []byte(sm.SingleClusterSingleContextEU()), KonfPerm)
+		// it should be fine to write empty
+		err := afero.WriteFile(f, fpath, []byte{}, KonfPerm)
 		if err != nil {
 			t.Errorf("Exp filename %q to work, but got error %q", fpath, err)
 		}

@@ -1,11 +1,11 @@
-package utils
+package testhelper
 
 import (
 	"github.com/simontheleg/konf-go/config"
+	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 )
 
-const IntegrationtestDir = "/tmp/konfs"
 
 // EqualError reports whether errors a and b are considered equal.
 // They're equal if both are nil, or both are not nil and a.Error() == b.Error().
@@ -27,42 +27,42 @@ func FSWithFiles(ff ...filefunc) afero.Fs {
 type FilesystemManager struct{}
 
 func (*FilesystemManager) StoreDir(fs afero.Fs) {
-	fs.MkdirAll(config.StoreDir(), KonfPerm)
+	fs.MkdirAll(config.StoreDir(), utils.KonfPerm)
 }
 
 func (*FilesystemManager) ActiveDir(fs afero.Fs) {
-	fs.MkdirAll(config.ActiveDir(), KonfPerm)
+	fs.MkdirAll(config.ActiveDir(), utils.KonfPerm)
 }
 
 func (*FilesystemManager) SingleClusterSingleContextEU(fs afero.Fs) {
-	afero.WriteFile(fs, StorePathForID("dev-eu_dev-eu-1"), []byte(singleClusterSingleContextEU), KonfPerm)
-	afero.WriteFile(fs, ActivePathForID("dev-eu_dev-eu-1"), []byte(singleClusterSingleContextEU), KonfPerm)
+	afero.WriteFile(fs, utils.StorePathForID("dev-eu_dev-eu-1"), []byte(singleClusterSingleContextEU), utils.KonfPerm)
+	afero.WriteFile(fs, utils.ActivePathForID("dev-eu_dev-eu-1"), []byte(singleClusterSingleContextEU), utils.KonfPerm)
 }
 
 func (*FilesystemManager) SingleClusterSingleContextASIA(fs afero.Fs) {
-	afero.WriteFile(fs, StorePathForID("dev-asia_dev-asia-1"), []byte(singleClusterSingleContextASIA), KonfPerm)
-	afero.WriteFile(fs, ActivePathForID("dev-asia_dev-asia-1"), []byte(singleClusterSingleContextASIA), KonfPerm)
+	afero.WriteFile(fs, utils.StorePathForID("dev-asia_dev-asia-1"), []byte(singleClusterSingleContextASIA), utils.KonfPerm)
+	afero.WriteFile(fs, utils.ActivePathForID("dev-asia_dev-asia-1"), []byte(singleClusterSingleContextASIA), utils.KonfPerm)
 }
 
 func (*FilesystemManager) InvalidYaml(fs afero.Fs) {
-	afero.WriteFile(fs, ActivePathForID("no-konf"), []byte("I am no valid yaml"), KonfPerm)
-	afero.WriteFile(fs, StorePathForID("no-konf"), []byte("I am no valid yaml"), KonfPerm)
+	afero.WriteFile(fs, utils.ActivePathForID("no-konf"), []byte("I am no valid yaml"), utils.KonfPerm)
+	afero.WriteFile(fs, utils.StorePathForID("no-konf"), []byte("I am no valid yaml"), utils.KonfPerm)
 }
 
 func (*FilesystemManager) MultiClusterMultiContext(fs afero.Fs) {
-	afero.WriteFile(fs, StorePathForID("multi_multi_konf"), []byte(multiClusterMultiContext), KonfPerm)
+	afero.WriteFile(fs, utils.StorePathForID("multi_multi_konf"), []byte(multiClusterMultiContext), utils.KonfPerm)
 }
 
 func (*FilesystemManager) MultiClusterSingleContext(fs afero.Fs) {
-	afero.WriteFile(fs, StorePathForID("multi_konf"), []byte(multiClusterSingleContext), KonfPerm)
+	afero.WriteFile(fs, utils.StorePathForID("multi_konf"), []byte(multiClusterSingleContext), utils.KonfPerm)
 }
 
 func (*FilesystemManager) SingleClusterMultiContext(fs afero.Fs) {
-	afero.WriteFile(fs, StorePathForID("multi_konf"), []byte(singleClusterMultiContext), KonfPerm)
+	afero.WriteFile(fs, utils.StorePathForID("multi_konf"), []byte(singleClusterMultiContext), utils.KonfPerm)
 }
 
 func (*FilesystemManager) LatestKonf(fs afero.Fs) {
-	afero.WriteFile(fs, config.LatestKonfFile(), []byte("context_cluster"), KonfPerm)
+	afero.WriteFile(fs, config.LatestKonfFile(), []byte("context_cluster"), utils.KonfPerm)
 }
 
 func (*FilesystemManager) KonfWithoutContext(fs afero.Fs) {
@@ -79,8 +79,8 @@ users:
     user: {}
 `
 
-	afero.WriteFile(fs, StorePathForID("no-context"), []byte(noContext), KonfPerm)
-	afero.WriteFile(fs, ActivePathForID("no-context"), []byte(noContext), KonfPerm)
+	afero.WriteFile(fs, utils.StorePathForID("no-context"), []byte(noContext), utils.KonfPerm)
+	afero.WriteFile(fs, utils.ActivePathForID("no-context"), []byte(noContext), utils.KonfPerm)
 }
 
 type SampleKonfManager struct{}

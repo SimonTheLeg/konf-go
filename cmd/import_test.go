@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/simontheleg/konf-go/testhelper"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 	"k8s.io/client-go/kubernetes"
@@ -13,7 +14,7 @@ import (
 )
 
 func TestImport(t *testing.T) {
-	fm := utils.FilesystemManager{}
+	fm := testhelper.FilesystemManager{}
 	var determineConfigsCalled bool
 	var writeConfigCalledCount int
 	// using just a wrapper here instead of a full mock, makes testing it slightly easier
@@ -35,13 +36,13 @@ func TestImport(t *testing.T) {
 	}{
 		"single context": {
 			[]string{"./konf/store/dev-eu_dev-eu-1.yaml"},
-			utils.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU),
+			testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU),
 			nil,
 			ExpCalls{DetermineConfigs: true, WriteConfig: 1},
 		},
 		"empty context": {
 			[]string{"./konf/store/no-context.yaml"},
-			utils.FSWithFiles(fm.StoreDir, fm.KonfWithoutContext),
+			testhelper.FSWithFiles(fm.StoreDir, fm.KonfWithoutContext),
 			fmt.Errorf("no contexts found in file \"./konf/store/no-context.yaml\""),
 			ExpCalls{DetermineConfigs: true, WriteConfig: 0},
 		},
@@ -62,7 +63,7 @@ func TestImport(t *testing.T) {
 			// the cobra.OnInitialize, which sets the filesystem to OS. It should be investigated
 			// if there is another way
 			err := cmd.RunE(cmd, tc.Args)
-			if !utils.EqualError(tc.ExpErr, err) {
+			if !testhelper.EqualError(tc.ExpErr, err) {
 				t.Errorf("Exp error %q, got %q", tc.ExpErr, err)
 			}
 
@@ -144,7 +145,7 @@ var devASIAControlGroup = &konfFile{
 }
 
 func TestDetermineConfigs(t *testing.T) {
-	fm := utils.FilesystemManager{}
+	fm := testhelper.FilesystemManager{}
 
 	tt := map[string]struct {
 		Fs                 afero.Fs
@@ -154,7 +155,7 @@ func TestDetermineConfigs(t *testing.T) {
 		ExpKonfigFiles     []*konfFile
 	}{
 		"SingleClusterSingleContext": {
-			Fs:                 utils.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU),
+			Fs:                 testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU),
 			konfpath:           "./konf/store/dev-eu_dev-eu-1.yaml",
 			ExpError:           nil,
 			ExpNumOfKonfigFile: 1,
@@ -163,7 +164,7 @@ func TestDetermineConfigs(t *testing.T) {
 			},
 		},
 		"multiClusterMultiContext": {
-			Fs:                 utils.FSWithFiles(fm.StoreDir, fm.MultiClusterMultiContext),
+			Fs:                 testhelper.FSWithFiles(fm.StoreDir, fm.MultiClusterMultiContext),
 			konfpath:           "./konf/store/multi_multi_konf.yaml",
 			ExpError:           nil,
 			ExpNumOfKonfigFile: 2,
@@ -173,7 +174,7 @@ func TestDetermineConfigs(t *testing.T) {
 			},
 		},
 		"multiClusterSingleContext": {
-			Fs:                 utils.FSWithFiles(fm.StoreDir, fm.MultiClusterSingleContext),
+			Fs:                 testhelper.FSWithFiles(fm.StoreDir, fm.MultiClusterSingleContext),
 			konfpath:           "./konf/store/multi_konf.yaml",
 			ExpError:           nil,
 			ExpNumOfKonfigFile: 1,
@@ -182,7 +183,7 @@ func TestDetermineConfigs(t *testing.T) {
 			},
 		},
 		"emptyConfig": {
-			Fs:                 utils.FSWithFiles(),
+			Fs:                 testhelper.FSWithFiles(),
 			konfpath:           "i-dont-exist.yaml",
 			ExpError:           fmt.Errorf("open i-dont-exist.yaml: file does not exist"),
 			ExpNumOfKonfigFile: 0,
@@ -190,7 +191,7 @@ func TestDetermineConfigs(t *testing.T) {
 		},
 		// All for the coverage ;)
 		"invalidConfig": {
-			Fs:                 utils.FSWithFiles(fm.StoreDir, fm.InvalidYaml),
+			Fs:                 testhelper.FSWithFiles(fm.StoreDir, fm.InvalidYaml),
 			konfpath:           "./konf/store/no-konf.yaml",
 			ExpError:           fmt.Errorf("error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1.Config"),
 			ExpNumOfKonfigFile: 0,
@@ -202,7 +203,7 @@ func TestDetermineConfigs(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			res, err := determineConfigs(tc.Fs, tc.konfpath)
 
-			if !utils.EqualError(err, tc.ExpError) {
+			if !testhelper.EqualError(err, tc.ExpError) {
 				t.Errorf("Want error '%s', got '%s'", tc.ExpError, err)
 			}
 
@@ -220,8 +221,8 @@ func TestDetermineConfigs(t *testing.T) {
 }
 
 func TestWriteConfig(t *testing.T) {
-	fm := utils.FilesystemManager{}
-	f := utils.FSWithFiles(fm.ActiveDir, fm.StoreDir)
+	fm := testhelper.FilesystemManager{}
+	f := testhelper.FSWithFiles(fm.ActiveDir, fm.StoreDir)
 
 	exp := `apiVersion: v1
 clusters:

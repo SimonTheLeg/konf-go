@@ -10,6 +10,8 @@ import (
 const KonfPerm fs.FileMode = 0600    // based on the standard file-permissions for .kube/config
 const KonfDirPerm fs.FileMode = 0700 // needed so we can create folders inside
 
+const IntegrationtestDir = "/tmp/konfs"
+
 // EnsureDir makes sure that konf store and active dirs exist
 func EnsureDir(f afero.Fs) error {
 
