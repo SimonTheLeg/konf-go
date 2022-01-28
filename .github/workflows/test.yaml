@@ -1,6 +1,19 @@
 name: test
 on: push
 jobs:
+  unit-test:
+    strategy:
+      matrix:
+        go: [1.17.6]
+    runs-on: ubuntu-latest
+    name: unit -> go ${{ matrix.go }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+      - run: go test -short -cover ./...
   integration-test:
     strategy:
       fail-fast: false
