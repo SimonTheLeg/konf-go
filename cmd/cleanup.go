@@ -8,11 +8,11 @@ import (
 	"strconv"
 
 	"github.com/mitchellh/go-ps"
+	"github.com/simontheleg/konf-go/config"
 	log "github.com/simontheleg/konf-go/log"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // cleanupCmd represents the cleanup command
@@ -66,7 +66,7 @@ func selfClean(f afero.Fs) error {
 // necessary as we cannot tell a user that a selfClean has failed if they close the shell
 // session before
 func cleanLeftOvers(f afero.Fs) error {
-	konfs, err := afero.ReadDir(f, viper.GetString("activeDir"))
+	konfs, err := afero.ReadDir(f, config.ActiveDir())
 
 	if err != nil {
 		return err

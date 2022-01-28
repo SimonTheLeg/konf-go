@@ -30,9 +30,9 @@ func TestShellWrapperCmd(t *testing.T) {
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
 			cs := newShellwrapperCmd()
-			cs.cmd.SetArgs(tc.args)
+			cmd := cs.cmd
 
-			_, err := cs.cmd.ExecuteC()
+			err := cmd.RunE(cmd, tc.args)
 
 			if !utils.EqualError(err, tc.ExpErr) {
 				t.Errorf("Want error '%s', got '%s'", tc.ExpErr, err)

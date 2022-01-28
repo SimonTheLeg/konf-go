@@ -12,7 +12,6 @@ import (
 )
 
 var (
-	cfgFile string
 	konfDir string
 	silent  bool
 )
@@ -39,7 +38,6 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(wrapInit)
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.konfig.yaml)")
 	rootCmd.PersistentFlags().StringVar(&konfDir, "konfDir", "", "konfs directory for kubeconfigs and tracking active konfs (default is $HOME/.kube/konfs)")
 	rootCmd.PersistentFlags().BoolVar(&silent, "silent", false, "suppress log output if set to true (default is false)")
 
@@ -47,12 +45,18 @@ func init() {
 
 // wrapInit is required as cobra.OnInitialize only accepts func() as interface
 func wrapInit() {
-	err := config.Init(cfgFile, konfDir)
+	conf, err := config.NewDefaultConf()
 	cobra.CheckErr(err)
 
+	if konfDir != "" {
+		conf.KonfDir = konfDir
+	}
 	if silent {
+		conf.Silent = silent
 		log.InitLogger(io.Discard, io.Discard)
 	}
+
+	config.InitWithOverrides(conf)
 
 	err = utils.EnsureDir(afero.NewOsFs())
 	cobra.CheckErr(err)

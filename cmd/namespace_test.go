@@ -57,9 +57,8 @@ func TestNamespace(t *testing.T) {
 			selectNamespaceCalled = false
 			setNamespaceCalled = false
 			cmd := nscmd.cmd
-			cmd.SetArgs(tc.Args)
 
-			_, err := cmd.ExecuteC()
+			err := cmd.RunE(cmd, tc.Args)
 			if !utils.EqualError(tc.ExpErr, err) {
 				t.Errorf("Exp error %q, got %q", tc.ExpErr, err)
 			}
@@ -120,7 +119,6 @@ func TestSearchNamespace(t *testing.T) {
 }
 
 func TestNewKubeClientSet(t *testing.T) {
-	utils.InitTestViper()
 	fm := utils.FilesystemManager{}
 
 	tt := map[string]struct {
@@ -232,7 +230,6 @@ func TestSelectNamespace(t *testing.T) {
 }
 
 func TestSetNamespace(t *testing.T) {
-	utils.InitTestViper()
 	fm := utils.FilesystemManager{}
 
 	tt := map[string]struct {

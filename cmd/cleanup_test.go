@@ -9,14 +9,13 @@ import (
 	"syscall"
 	"testing"
 
+	"github.com/simontheleg/konf-go/config"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
-	"github.com/spf13/viper"
 )
 
 func TestSelfClean(t *testing.T) {
-	utils.InitTestViper()
-	activeDir := viper.GetString("activeDir")
+	activeDir := config.ActiveDir()
 
 	ppid := os.Getppid()
 
@@ -82,16 +81,14 @@ func ppidFS() afero.Fs {
 }
 
 func ppidFileMissing() afero.Fs {
-	activeDir := viper.GetString("activeDir")
 	fs := afero.NewMemMapFs()
 	sm := utils.SampleKonfManager{}
-	afero.WriteFile(fs, activeDir+"/abc", []byte("I am not even a kubeconfig, what am I doing here?"), utils.KonfPerm)
+	afero.WriteFile(fs, config.ActiveDir()+"/abc", []byte("I am not even a kubeconfig, what am I doing here?"), utils.KonfPerm)
 	afero.WriteFile(fs, utils.ActivePathForID("1234"), []byte(sm.SingleClusterSingleContextEU()), utils.KonfPerm)
 	return fs
 }
 
 func TestCleanLeftOvers(t *testing.T) {
-	utils.InitTestViper()
 
 	tt := map[string]struct {
 		Setup  func(t *testing.T) (afero.Fs, []*exec.Cmd, []*exec.Cmd)

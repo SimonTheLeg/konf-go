@@ -12,9 +12,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/manifoldco/promptui"
+	"github.com/simontheleg/konf-go/config"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
-	"github.com/spf13/viper"
 )
 
 func TestSelectLastKonf(t *testing.T) {
@@ -53,8 +53,6 @@ func TestSelectLastKonf(t *testing.T) {
 }
 
 func TestSaveLatestKonf(t *testing.T) {
-	utils.InitTestViper()
-
 	expFile := "./konf/latestkonf"
 	expID := "context_cluster"
 
@@ -77,8 +75,7 @@ func TestSaveLatestKonf(t *testing.T) {
 }
 
 func TestSetContext(t *testing.T) {
-	utils.InitTestViper()
-	storeDir := viper.GetString("storeDir")
+	storeDir := config.StoreDir()
 	ppid := os.Getppid()
 	sm := utils.SampleKonfManager{}
 
@@ -235,7 +232,6 @@ func checkTemplate(t *testing.T, stpl string, val tableOutput, exp string) {
 }
 
 func TestFetchKonfs(t *testing.T) {
-	utils.InitTestViper()
 	fm := utils.FilesystemManager{}
 
 	tt := map[string]struct {

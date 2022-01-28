@@ -13,7 +13,6 @@ import (
 )
 
 func TestImport(t *testing.T) {
-	utils.InitTestViper()
 	fm := utils.FilesystemManager{}
 	var determineConfigsCalled bool
 	var writeConfigCalledCount int
@@ -58,9 +57,11 @@ func TestImport(t *testing.T) {
 			icmd.determineConfigs = wrapDetermineConfig
 			icmd.writeConfig = mockWriteConfig
 			cmd := icmd.cmd
-			cmd.SetArgs(tc.Args)
 
-			_, err := cmd.ExecuteC()
+			// TODO unfortunately I was not able to use ExecuteC here as this would run
+			// the cobra.OnInitialize, which sets the filesystem to OS. It should be investigated
+			// if there is another way
+			err := cmd.RunE(cmd, tc.Args)
 			if !utils.EqualError(tc.ExpErr, err) {
 				t.Errorf("Exp error %q, got %q", tc.ExpErr, err)
 			}
@@ -78,7 +79,6 @@ func TestImport(t *testing.T) {
 }
 
 func devEUControlGroup() *konfFile {
-	utils.InitTestViper()
 	return &konfFile{
 		FilePath: utils.StorePathForID(utils.IDFromClusterAndContext("dev-eu-1", "dev-eu")),
 		Content: k8s.Config{
@@ -113,7 +113,6 @@ func devEUControlGroup() *konfFile {
 }
 
 func devASIAControlGroup() *konfFile {
-	utils.InitTestViper()
 	return &konfFile{
 		FilePath: utils.StorePathForID(utils.IDFromClusterAndContext("dev-asia-1", "dev-asia")),
 		Content: k8s.Config{
@@ -150,7 +149,6 @@ func devASIAControlGroup() *konfFile {
 
 func TestDetermineConfigs(t *testing.T) {
 	fm := utils.FilesystemManager{}
-	utils.InitTestViper()
 
 	devEU := devEUControlGroup()
 	devAsia := devASIAControlGroup()
@@ -229,7 +227,6 @@ func TestDetermineConfigs(t *testing.T) {
 }
 
 func TestWriteConfig(t *testing.T) {
-	utils.InitTestViper()
 	fm := utils.FilesystemManager{}
 	f := utils.FSWithFiles(fm.ActiveDir, fm.StoreDir)
 	kf := devEUControlGroup()

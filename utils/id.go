@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/spf13/viper"
+	"github.com/simontheleg/konf-go/config"
 )
 
 // ID unifies ID and File management that konf uses
@@ -29,11 +29,11 @@ func IDFromFileInfo(fi fs.FileInfo) string {
 }
 
 func StorePathForID(id string) string {
-	return genIDPath(viper.GetString("storeDir"), id)
+	return genIDPath(config.StoreDir(), id)
 }
 
 func ActivePathForID(id string) string {
-	return genIDPath(viper.GetString("activeDir"), id)
+	return genIDPath(config.ActiveDir(), id)
 }
 
 func genIDPath(path, id string) string {

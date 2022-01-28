@@ -10,12 +10,12 @@ import (
 
 	sprig "github.com/Masterminds/sprig/v3"
 	"github.com/manifoldco/promptui"
+	"github.com/simontheleg/konf-go/config"
 	log "github.com/simontheleg/konf-go/log"
 	"github.com/simontheleg/konf-go/prompt"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	k8s "k8s.io/client-go/tools/clientcmd/api/v1"
 	"sigs.k8s.io/yaml"
 )
@@ -90,7 +90,7 @@ func selectContext(f afero.Fs, pf promptFunc) (string, error) {
 }
 
 func selectLastKonf(f afero.Fs) (string, error) {
-	b, err := afero.ReadFile(f, viper.GetString("latestKonfFile"))
+	b, err := afero.ReadFile(f, config.LatestKonfFile())
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return "", fmt.Errorf("could not select latest konf, because no konf was yet set")
@@ -119,7 +119,7 @@ func setContext(id string, f afero.Fs) (string, error) {
 }
 
 func saveLatestKonf(f afero.Fs, id string) error {
-	return afero.WriteFile(f, viper.GetString("latestKonfFile"), []byte(id), utils.KonfPerm)
+	return afero.WriteFile(f, config.LatestKonfFile(), []byte(id), utils.KonfPerm)
 }
 
 // KubeConfigOverload describes a state in which a kubeconfig has multiple Contexts or Clusters
@@ -137,12 +137,12 @@ func (k *KubeConfigOverload) Error() string {
 type EmptyStore struct{}
 
 func (k *EmptyStore) Error() string {
-	return fmt.Sprintf("The konf store at %q is empty. Please run 'konf import' to populate it", viper.GetString("storeDir"))
+	return fmt.Sprintf("The konf store at %q is empty. Please run 'konf import' to populate it", config.StoreDir())
 }
 
 // fetchKonfs returns a list of all konfs currently in konfDir/store. Additionally it returns metadata on these konfs for easier usage of the information
 func fetchKonfs(f afero.Fs) ([]tableOutput, error) {
-	konfs, err := afero.ReadDir(f, viper.GetString("storeDir"))
+	konfs, err := afero.ReadDir(f, config.StoreDir())
 	if err != nil {
 		return nil, err
 	}

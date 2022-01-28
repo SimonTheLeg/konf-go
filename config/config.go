@@ -1,49 +1,51 @@
 package config
 
 import (
-	"fmt"
 	"os"
-
-	"github.com/spf13/viper"
 )
 
-// Init reads in config file and ENV variables if set.
-func Init(cfgFile, konfDir string) error {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Find home directory.
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return err
-		}
+var curConf *Config
 
-		// Search config in home directory with name ".konfig" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigType("yaml")
-		viper.SetConfigName(".konfig")
-	}
-	if konfDir == "" {
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return err
-		}
-		viper.Set("konfDir", home+"/.kube/konfs")
-	} else {
-		viper.Set("konfDir", konfDir)
-	}
-	// Currently there is no need to customize store and active configs individually.
-	// Setting the konfDir should be fine
-	viper.Set("storeDir", viper.GetString("konfDir")+"/store")
-	viper.Set("activeDir", viper.GetString("konfDir")+"/active")
-	viper.Set("latestKonfFile", viper.GetString("konfDir")+"/latestkonf")
+// Config describes all values that can currently be configured for konf
+type Config struct {
+	KonfDir string
+	Silent  bool
+}
 
-	viper.AutomaticEnv() // read in environment variables that match
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+// This is mainly used to provide some sane and lively defaults for unit tests
+// TODO with the new config system in place, it might make sense to rework all the test-cases and remove the "./konf" reference
+func init() {
+	curConf = &Config{
+		KonfDir: "./konf",
 	}
-	return nil
+}
+
+func NewDefaultConf() (*Config, error) {
+	c := &Config{}
+
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+
+	c.KonfDir = home + "/.kube/konfs"
+	c.Silent = false
+
+	return c, nil
+}
+
+func InitWithOverrides(or *Config) {
+	curConf = or
+}
+
+// Currently there is no need to customize store and active configs individually.
+// Setting the konfDir should be enough
+func ActiveDir() string {
+	return curConf.KonfDir + "/active"
+}
+func StoreDir() string {
+	return curConf.KonfDir + "/store"
+}
+func LatestKonfFile() string {
+	return curConf.KonfDir + "/latestkonf"
 }

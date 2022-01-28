@@ -7,8 +7,6 @@ import (
 )
 
 func TestEnsureDir(t *testing.T) {
-	InitTestViper()
-
 	f := afero.NewMemMapFs()
 	EnsureDir(f)
 

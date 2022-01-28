@@ -3,7 +3,6 @@ package utils
 import (
 	"github.com/simontheleg/konf-go/config"
 	"github.com/spf13/afero"
-	"github.com/spf13/viper"
 )
 
 const IntegrationtestDir = "/tmp/konfs"
@@ -12,10 +11,6 @@ const IntegrationtestDir = "/tmp/konfs"
 // They're equal if both are nil, or both are not nil and a.Error() == b.Error().
 func EqualError(a, b error) bool {
 	return a == nil && b == nil || a != nil && b != nil && a.Error() == b.Error()
-}
-
-func InitTestViper() {
-	config.Init("", "./konf")
 }
 
 type filefunc = func(afero.Fs)
@@ -32,11 +27,11 @@ func FSWithFiles(ff ...filefunc) afero.Fs {
 type FilesystemManager struct{}
 
 func (*FilesystemManager) StoreDir(fs afero.Fs) {
-	fs.MkdirAll(viper.GetString("storeDir"), KonfPerm)
+	fs.MkdirAll(config.StoreDir(), KonfPerm)
 }
 
 func (*FilesystemManager) ActiveDir(fs afero.Fs) {
-	fs.MkdirAll(viper.GetString("activeDir"), KonfPerm)
+	fs.MkdirAll(config.ActiveDir(), KonfPerm)
 }
 
 func (*FilesystemManager) SingleClusterSingleContextEU(fs afero.Fs) {
@@ -67,7 +62,7 @@ func (*FilesystemManager) SingleClusterMultiContext(fs afero.Fs) {
 }
 
 func (*FilesystemManager) LatestKonf(fs afero.Fs) {
-	afero.WriteFile(fs, viper.GetString("latestKonfFile"), []byte("context_cluster"), KonfPerm)
+	afero.WriteFile(fs, config.LatestKonfFile(), []byte("context_cluster"), KonfPerm)
 }
 
 func (*FilesystemManager) KonfWithoutContext(fs afero.Fs) {

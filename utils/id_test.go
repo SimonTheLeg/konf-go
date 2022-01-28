@@ -22,8 +22,6 @@ var validCombos = []struct {
 }
 
 func TestPathForID(t *testing.T) {
-	InitTestViper()
-
 	for _, co := range validCombos {
 		resStore := StorePathForID(co.id)
 		expStore := fmt.Sprintf("./konf/store/%s.yaml", co.id)
