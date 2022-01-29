@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strings"
 
+	"github.com/lithammer/fuzzysearch/fuzzy"
 	"github.com/manifoldco/promptui"
 	"github.com/simontheleg/konf-go/prompt"
 	"github.com/simontheleg/konf-go/utils"
@@ -133,7 +133,7 @@ func selectNamespace(csc clientSetCreator, pf prompt.PromptFunc, fs afero.Fs) (s
 }
 
 func searchNamespace(searchTerm, curItem string) bool {
-	return strings.Contains(curItem, searchTerm)
+	return fuzzy.Match(searchTerm, curItem)
 }
 
 func newKubeClientSet(fs afero.Fs) (kubernetes.Interface, error) {

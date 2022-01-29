@@ -101,6 +101,11 @@ func TestSearchNamespace(t *testing.T) {
 			"kube-system",
 			true,
 		},
+		"partial-match-fuzzy": {
+			"esys",
+			"kube-system",
+			true,
+		},
 		"no-match": {
 			"apples and oranges",
 			"kube-system",
