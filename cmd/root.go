@@ -38,7 +38,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(wrapInit)
 
-	rootCmd.PersistentFlags().StringVar(&konfDir, "konfDir", "", "konfs directory for kubeconfigs and tracking active konfs (default is $HOME/.kube/konfs)")
+	rootCmd.PersistentFlags().StringVar(&konfDir, "konf-dir", "", "konfs directory for kubeconfigs and tracking active konfs (default is $HOME/.kube/konfs)")
 	rootCmd.PersistentFlags().BoolVar(&silent, "silent", false, "suppress log output if set to true (default is false)")
 
 }
