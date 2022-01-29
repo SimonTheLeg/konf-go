@@ -13,9 +13,9 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/manifoldco/promptui"
 	"github.com/simontheleg/konf-go/config"
+	"github.com/simontheleg/konf-go/testhelper"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
-	"github.com/simontheleg/konf-go/testhelper"
 )
 
 func TestSelectLastKonf(t *testing.T) {
@@ -351,5 +351,43 @@ func expKubeConfigOverload(t *testing.T, err error) {
 func expNil(t *testing.T, err error) {
 	if err != nil {
 		t.Errorf("Expected err to be nil, but got %q", err)
+	}
+}
+
+func TestSearchKonf(t *testing.T) {
+	tt := map[string]struct {
+		search string
+		item   *tableOutput
+		expRes bool
+	}{
+		"full match across all": {
+			"a b c",
+			&tableOutput{"a", "b", "c"},
+			true,
+		},
+		"full match across all - fuzzy": {
+			"abc",
+			&tableOutput{"a", "b", "c"},
+			true,
+		},
+		"partial match across fields": {
+			"textclu",
+			&tableOutput{"context", "cluster", "file"},
+			true,
+		},
+		"no match": {
+			"oranges",
+			&tableOutput{"apples", "and", "bananas"},
+			false,
+		},
+	}
+
+	for name, tc := range tt {
+		t.Run(name, func(t *testing.T) {
+			res := searchKonf(tc.search, tc.item)
+			if res != tc.expRes {
+				t.Errorf("Exp res to be %t got %t", tc.expRes, res)
+			}
+		})
 	}
 }

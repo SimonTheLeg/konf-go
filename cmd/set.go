@@ -9,6 +9,7 @@ import (
 	"text/template"
 
 	sprig "github.com/Masterminds/sprig/v3"
+	"github.com/lithammer/fuzzysearch/fuzzy"
 	"github.com/manifoldco/promptui"
 	"github.com/simontheleg/konf-go/config"
 	log "github.com/simontheleg/konf-go/log"
@@ -189,6 +190,13 @@ func createPrompt(options []tableOutput) *promptui.Select {
 	trunc := 25
 	promptInactive, promptActive, label := prepareTable(trunc)
 
+	// Wrapper is required as we need access to options, but the methodSignature from promptUI
+	// requires you to only pass an index not the whole func
+	// This wrapper allows us to unit-test the searchKonf func better
+	var wrapSearchKonf = func(input string, index int) bool {
+		return searchKonf(input, &options[index])
+	}
+
 	prompt := promptui.Select{
 		Label: label,
 		Items: options,
@@ -199,8 +207,17 @@ func createPrompt(options []tableOutput) *promptui.Select {
 		},
 		HideSelected: true,
 		Stdout:       os.Stderr,
+		Searcher:     wrapSearchKonf,
+		Size:         15,
 	}
 	return &prompt
+}
+
+func searchKonf(searchTerm string, curItem *tableOutput) bool {
+	// since there is no weight on any of the table entries, we can just combine them to one string
+	// and run the contains on it, which automatically is going to match any of the three values
+	r := fmt.Sprintf("%s %s %s", curItem.Context, curItem.Cluster, curItem.File)
+	return fuzzy.Match(searchTerm, r)
 }
 
 // TODO only inject the funcs I am actually using
