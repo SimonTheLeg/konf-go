@@ -28,7 +28,7 @@ Run
 go install github.com/simontheleg/konf-go@latest
 ```
 
-Aferwards, add the following to your `.zshrc` and restart your shell or re-source the `.zshrc` afterwards:
+Afterwards, add the following to your `.zshrc` / `.bashrc` and restart your shell or re-source this file:
 
 ```zsh
 # mandatory konf settings. This will install a shell wrapper called "konf" for you to use.
