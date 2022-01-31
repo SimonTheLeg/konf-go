@@ -6,7 +6,7 @@
   - [Usage](#usage)
   - [How does it work?](#how-does-it-work)
     - [kubeconfig management across shells](#kubeconfig-management-across-shells)
-    - [zsh-func-magic](#zsh-func-magic)
+    - [zsh/bash-func-magic](#zshbash-func-magic)
   - [Contributing](#contributing)
     - [Usage of stdout and stderr](#usage-of-stdout-and-stderr)
     - [Tests](#tests)
@@ -78,11 +78,13 @@ We need these two extra directories because:
 - each konf file must only contain one context. This is because konf can only use the `$KUBECONFIG` variable to point to one kubeconfig file. If there are multiple contexts in that file, kubernetes looks for a `current-context` key and sets the config to that, thus introducing some ambiguity. To avoid this, konf import splits all the contexts into separate files
 - in order to allow for different shells to have different kubeconfigs we need to maintain a single one per shell. Otherwise when you run modifications like changing the namespace, these would affect all shells, which is not what we want
 
-### zsh-func-magic
+### zsh/bash-func-magic
 
-One of the largest difficulties in this project lies in the core design of the shell. Essentially a child process cannot make modifications to its parents. This includes setting an environment variable, which affects us because we want to set `$KUBECONFIG`. The way we work around this "limitation" is by using a zsh function that executes our binary and then sets `$KUBECONFIG` to the output of `konf-go`. With this trick we are actually able to set `$KUBECONFIG` and can make this project work. Since only the result of stdout will be captured by the zsh-func, we can still communicate normally with the user by using stderr.
-
-As a result of this trick, konf currently only works with zsh. I did not have the time to see if I can also make it work for bash or fish. Maybe this becomes a community contribution? :)
+One of the largest difficulties in this project lies in the core design of the shell.
+Essentially a child process cannot make modifications to its parents.
+This includes setting an environment variable, which affects us because we want to set `$KUBECONFIG`.
+The way we work around this "limitation" is by using a zsh/bash function that executes our binary and then sets `$KUBECONFIG` to the output of `konf-go`.
+With this trick we are able to set `$KUBECONFIG` and can make this project work. Since only the result of stdout will be captured by the zsh/bash-func, we can still communicate normally with the user by using stderr.
 
 ## Contributing
 
@@ -112,7 +114,6 @@ go test -run Integration ./...
 
 - Make it work for fish
 - Allow usage of other fuzzy finders like fzf
-- Add CI
 - `konf manage` so you can rename contexts and clusters
 - `konf delete` option so you can delete konfs you don't need anymore
 - figure out auto-completion. This might be a bit tricky due to the `konf` zsh func wrapper
