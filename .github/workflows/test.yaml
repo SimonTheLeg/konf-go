@@ -36,3 +36,20 @@ jobs:
       # the unittests for windows in ./cmd (even if there is no integration test there) and fail
       # in the build phase already with 'unknown field 'Setpgid' in struct literal of type syscall.SysProcAttr'
       - run: go test -run Integration ./utils
+  shellwrapper-test:
+    runs-on: ubuntu-latest
+    name: shellwrapper
+    steps:
+      - uses: actions/checkout@v2
+      - name: Setup go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17.6 # for now we can keep this as a fixed version
+      - name: Install zsh # until https://github.com/actions/virtual-environments/issues/4849 is resolved
+        run: sudo apt-get update; sudo apt-get install zsh
+      - name: Install konf-go
+        run: go install .
+      - name: zsh test
+        run: zsh testhelper/shellwrapper.sh
+      - name: bash test
+        run: bash testhelper/shellwrapper.sh
