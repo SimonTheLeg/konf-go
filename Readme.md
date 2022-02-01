@@ -90,11 +90,10 @@ With this trick we are able to set `$KUBECONFIG` and can make this project work.
 
 ### Usage of stdout and stderr
 
-When developing for konf, it is important to keep in mind that you can never print anything to stdout. You always have to use stderr. This is because anything printed to stdout will automatically be added to the `$KUBECONFIG` variable by the surrounding zsh-func. This has the following implications
-
-- Since cobra only makes the out for commands accesible via the `SetOut()` accessor, all future commands for konf should be implemented by wrapping cobra.Command and creating a custom creation func.
-An example can be found in the `shellwrapper.go` command. Other commands will be refactored over time, and should not be taken as role-models.
-- promptUI always needs to be configured to use stderr, otherwise no prompt will appear
+When developing for konf, it is important to understand the konf-shellwrapper. It is designed to solve the problem described in the [zsh/bash-func-magic section](###zsh/bash-func-magic).
+It works by saving the stdOut of konf-go in a separate variable and then evaluating the result. Should the result contain the keyword `KUBECONFIGCHANGE:`, the wrapper will set `$KUBECONFIG` to the value after the colon.
+Otherwise the wrapper ist just going to print the result to stdOut in the terminal. This setup allows for konf-go commands to print to stdOut (which is required for example for zsh/bash completion). Additionally it should be able to handle large stdOut outputs as well, as it only parses the first line of output.
+Interactive prompts however (like promptUI) should always print their dialogue to stdErr, as the wrapper has troubles with user input. Nonetheless you can still easily submit the result of the selection to the wrapper later on using the aforementioned keyword. So it should not be a big issue.
 
 ### Tests
 

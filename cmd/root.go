@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"io"
-	"os"
 
 	"github.com/simontheleg/konf-go/config"
 	"github.com/simontheleg/konf-go/log"
@@ -31,7 +30,6 @@ Afterwards switch between different kubeconfigs via 'konf set'
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	rootCmd.SetOut(os.Stderr)
 	cobra.CheckErr(rootCmd.Execute())
 }
 

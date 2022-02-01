@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	log "github.com/simontheleg/konf-go/log"
 	"github.com/simontheleg/konf-go/utils"
@@ -45,8 +44,6 @@ contain a single context. Import will take care of splitting if necessary.`,
 		Args: cobra.ExactArgs(1),
 		RunE: ic.importf,
 	}
-
-	ic.cmd.SetOut(os.Stderr)
 
 	return ic
 }

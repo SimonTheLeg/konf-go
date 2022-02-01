@@ -66,7 +66,7 @@ Examples:
 		// By printing out to stdout, we pass the value to our zsh hook, which then sets $KUBECONFIG to it
 		// Both operate on the convention to use "KUBECONFIGCHANGE:<new-path>". If you change this part in
 		// here, do not forget to update shellwraper.go
-		fmt.Println("KUBECONFIGCHANGE:"+context)
+		fmt.Println("KUBECONFIGCHANGE:" + context)
 
 		return nil
 	},
@@ -272,6 +272,5 @@ func prepareTable(maxColumnLen int) (inactive, active, label string) {
 }
 
 func init() {
-	setCmd.SetOut(os.Stderr)
 	rootCmd.AddCommand(setCmd)
 }

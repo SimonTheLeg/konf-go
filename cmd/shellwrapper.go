@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -27,8 +26,6 @@ See https://github.com/SimonTheLeg/konf-go#installation on how to do so
 		Args: cobra.ExactArgs(1),
 	}
 
-	sc.cmd.SetOut(os.Stderr)
-
 	return &sc
 }
 
@@ -39,9 +36,12 @@ konf() {
   res=$(konf-go $@)
   # only change $KUBECONFIG if instructed by konf-go
   if [[ $res == "KUBECONFIGCHANGE:"* ]]
-	then
+  then
     # this basically takes the line and cuts out the KUBECONFIGCHANGE Part
     export KUBECONFIG="${res#*KUBECONFIGCHANGE:}"
+  else
+    # this makes --help work
+    echo $res
   fi
 }
 konf_cleanup() {
@@ -55,9 +55,12 @@ konf() {
   res=$(konf-go $@)
   # only change $KUBECONFIG if instructed by konf-go
   if [[ $res == "KUBECONFIGCHANGE:"* ]]
-	then
+  then
     # this basically takes the line and cuts out the KUBECONFIGCHANGE Part
     export KUBECONFIG="${res#*KUBECONFIGCHANGE:}"
+  else
+    # this makes --help work
+    echo $res
   fi
 }
 konf_cleanup() {
