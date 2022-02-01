@@ -37,11 +37,11 @@ func (c *shellwrapperCmd) shellwrapper(cmd *cobra.Command, args []string) error 
 	var zsh = `
 konf() {
   res=$(konf-go $@)
-  # protect against an empty command
-  # Note we cannot do something like if "$1 == set" and only run the export on set commands as cmd flags can be at any position in our cli
-  if [[ $res != "" ]]
+  # only change $KUBECONFIG if instructed by konf-go
+  if [[ $res == "KUBECONFIGCHANGE:"* ]]
 	then
-    export KUBECONFIG=$res
+    # this basically takes the line and cuts out the KUBECONFIGCHANGE Part
+    export KUBECONFIG="${res#*KUBECONFIGCHANGE:}"
   fi
 }
 konf_cleanup() {
@@ -53,11 +53,11 @@ add-zsh-hook zshexit konf_cleanup
 	var bash = `
 konf() {
   res=$(konf-go $@)
-  # protect against an empty command
-  # Note we cannot do something like if "$1 == set" and only run the export on set commands as cmd flags can be at any position in our cli
-  if [[ $res != "" ]]
+  # only change $KUBECONFIG if instructed by konf-go
+  if [[ $res == "KUBECONFIGCHANGE:"* ]]
 	then
-    export KUBECONFIG=$res
+    # this basically takes the line and cuts out the KUBECONFIGCHANGE Part
+    export KUBECONFIG="${res#*KUBECONFIGCHANGE:}"
   fi
 }
 konf_cleanup() {

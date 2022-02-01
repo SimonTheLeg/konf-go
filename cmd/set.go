@@ -62,8 +62,11 @@ Examples:
 		}
 
 		log.Info("Setting context to %q\n", id)
+
 		// By printing out to stdout, we pass the value to our zsh hook, which then sets $KUBECONFIG to it
-		fmt.Println(context)
+		// Both operate on the convention to use "KUBECONFIGCHANGE:<new-path>". If you change this part in
+		// here, do not forget to update shellwraper.go
+		fmt.Println("KUBECONFIGCHANGE:"+context)
 
 		return nil
 	},
