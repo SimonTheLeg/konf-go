@@ -41,7 +41,7 @@ konf() {
     export KUBECONFIG="${res#*KUBECONFIGCHANGE:}"
   else
     # this makes --help work
-    echo $res
+    echo "${res}"
   fi
 }
 konf_cleanup() {
@@ -60,7 +60,7 @@ konf() {
     export KUBECONFIG="${res#*KUBECONFIGCHANGE:}"
   else
     # this makes --help work
-    echo $res
+    echo "${res}"
   fi
 }
 konf_cleanup() {
