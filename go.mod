@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/Masterminds/sprig/v3 v3.2.2
 	github.com/google/go-cmp v0.5.5
+	github.com/lithammer/fuzzysearch v1.1.3
 	github.com/manifoldco/promptui v0.9.0
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/spf13/afero v1.6.0
@@ -31,7 +32,6 @@ require (
 	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.11 // indirect
-	github.com/lithammer/fuzzysearch v1.1.3 // indirect
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
