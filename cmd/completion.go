@@ -77,6 +77,17 @@ func (c *completionCmd) completion(cmd *cobra.Command, args []string) error {
 
 		os.Stdout.WriteString(zshHeader + genZsh)
 
+	case "bash":
+		var b bytes.Buffer
+		err := rootCmd.GenBashCompletionV2(&b, true)
+		if err != nil {
+			return err
+		}
+		anchor := "local requestComp lastParam lastChar args"
+		genBash := strings.Replace(b.String(), anchor, anchor+"\n    words[0]=\"konf-go\"", 1) // basically the same as for zsh, but this words[] is zero-indexed
+
+		os.Stdout.WriteString(genBash)
+
 	default:
 		return fmt.Errorf("konf currently does not support autocompletions for %s", args[0])
 	}

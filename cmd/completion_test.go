@@ -17,9 +17,9 @@ func TestCompletionCmd(t *testing.T) {
 			[]string{"zsh"},
 			nil,
 		},
-		"invalid bash arg": {
+		"bash arg": {
 			[]string{"bash"},
-			fmt.Errorf("konf currently does not support autocompletions for bash"),
+			nil,
 		},
 		"invalid arg": {
 			[]string{"fish"},
