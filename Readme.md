@@ -3,6 +3,9 @@
 - [Konf - Lightweight kubeconfig Manager](#konf---lightweight-kubeconfig-manager)
   - [Why konf?](#why-konf)
   - [Installation](#installation)
+    - [1. Install the konf-go binary](#1-install-the-konf-go-binary)
+    - [2. Install the konf shellwrapper](#2-install-the-konf-shellwrapper)
+    - [Customizations to Have a Good Time](#customizations-to-have-a-good-time)
   - [Usage](#usage)
   - [How does it work?](#how-does-it-work)
     - [kubeconfig management across shells](#kubeconfig-management-across-shells)
@@ -23,28 +26,40 @@
 
 ## Installation
 
-Run
+### 1. Install the konf-go binary
 
 ```shell
 go install github.com/simontheleg/konf-go@latest
 ```
 
-Afterwards, add the following to your `.zshrc` / `.bashrc` and restart your shell or re-source this file:
+This will install a binary called konf-go into your PATH.
+Please do not rename or alias this binary, it is not be called by the user directly. Instead alias the konf shellwrapper described in the next step!
 
-```zsh
-# mandatory konf settings. This will install a shell wrapper called "konf" for you to use.
-# Always use this wrapper, never call the konf-go binary directly!
+### 2. Install the konf shellwrapper
+
+Add the following to your `.zshrc` / `.bashrc` and restart your shell or re-source this file:
+
+```sh
 # Currently supported shells: zsh, bash
 source <(konf-go shellwrapper zsh)
+```
 
-# optional konf settings
+This will install a shellwrapper called `konf`, which you can use like any command. The wrapper can also be aliased if need be.
+
+### Customizations to Have a Good Time
+
+A collection of optional settings to improve quality of life with konf. These can be added to your `.zshrc` / `.bashrc`:
+
+```sh
+# Autocompletion. Currently supported shells: zsh, bash
+source <(konf completion zsh)
+
+# Open last konf on new shell session
+export KUBECONFIG=$(konf --silent set -)
+
 # Alias
 alias kctx="konf set"
 alias kns="konf ns"
-# Open last konf on new session (use --silent to suppress INFO log line)
-export KUBECONFIG=$(konf --silent set -)
-# Autocompletion. Currently supported shells: zsh
-source <(konf completion zsh)
 ```
 
 ## Usage
