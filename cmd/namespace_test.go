@@ -165,21 +165,9 @@ func TestSelectNamespace(t *testing.T) {
 
 	// keep these in alphabetical order for tests to work!
 	nss := []runtime.Object{
-		&v1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "first",
-			},
-		},
-		&v1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "kube-system",
-			},
-		},
-		&v1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "zebra",
-			},
-		},
+		testhelper.NamespaceFromName("first"),
+		testhelper.NamespaceFromName("kube-system"),
+		testhelper.NamespaceFromName("zebra"),
 	}
 
 	var mockClientSetCreator = func(afero.Fs) (kubernetes.Interface, error) {

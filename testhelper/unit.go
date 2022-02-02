@@ -4,8 +4,9 @@ import (
 	"github.com/simontheleg/konf-go/config"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 // EqualError reports whether errors a and b are considered equal.
 // They're equal if both are nil, or both are not nil and a.Error() == b.Error().
@@ -220,3 +221,12 @@ users:
   - name: dev-asia
     user: {}
 `
+
+// NamespaceFromName creates a simple namespace object for a name
+func NamespaceFromName(name string) *v1.Namespace {
+	return &v1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: name,
+		},
+	}
+}
