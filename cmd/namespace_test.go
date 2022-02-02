@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/manifoldco/promptui"
 	"github.com/simontheleg/konf-go/prompt"
 	"github.com/simontheleg/konf-go/testhelper"
 	"github.com/spf13/afero"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/spf13/cobra"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/yaml"
 	"k8s.io/client-go/kubernetes"
@@ -73,6 +73,46 @@ func TestNamespace(t *testing.T) {
 
 		})
 	}
+}
+
+func TestCompleteNamespace(t *testing.T) {
+	// since cobra takes care of the majority
+
+	tt := map[string]struct {
+		nss          []runtime.Object
+		expComp      []string
+		expCompDirec cobra.ShellCompDirective
+	}{
+		"normal results": {
+			[]runtime.Object{testhelper.NamespaceFromName("kube-system"), testhelper.NamespaceFromName(("public"))},
+			[]string{"kube-system", "public"},
+			cobra.ShellCompDirectiveNoFileComp,
+		},
+		"no results": {
+			[]runtime.Object{},
+			[]string{},
+			cobra.ShellCompDirectiveNoFileComp,
+		},
+	}
+
+	for name, tc := range tt {
+		t.Run(name, func(t *testing.T) {
+			nscmd := newNamespaceCmd()
+			nscmd.clientSetCreator = func(f afero.Fs) (kubernetes.Interface, error) { return fake.NewSimpleClientset(tc.nss...), nil }
+
+			res, compdirec := nscmd.completeNamespace(nscmd.cmd, []string{}, "")
+
+			if !cmp.Equal(res, tc.expComp) {
+				t.Errorf("Exp and given comps differ: \n '%s'", cmp.Diff(tc.expComp, res))
+			}
+
+			if compdirec != tc.expCompDirec {
+				t.Errorf("Exp compdirec %q, got %q", tc.expCompDirec, compdirec)
+			}
+
+		})
+	}
+
 }
 
 func TestSearchNamespace(t *testing.T) {

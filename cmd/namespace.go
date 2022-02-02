@@ -54,8 +54,9 @@ Examples:
 	-> 'ns' run namespace selection
 	-> 'ns <namespace-name' set to a specific namespace
 `,
-		RunE: cc.namespace,
-		Args: cobra.MaximumNArgs(1),
+		RunE:              cc.namespace,
+		Args:              cobra.MaximumNArgs(1),
+		ValidArgsFunction: cc.completeNamespace,
 	}
 
 	return cc
@@ -80,6 +81,34 @@ func (c *namespaceCmd) namespace(cmd *cobra.Command, args []string) error {
 	}
 
 	return nil
+}
+
+func (c *namespaceCmd) completeNamespace(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	// Note: we do not filter on our own using toComplete string as input.
+	// This is so, that shells like zsh can use their completion matching to filter the list of namespaces
+	// Essentially we are completely ignoring the toComplete argument and always return the full list
+	// This is similar to how helm does it https://github.com/helm/helm/blob/35f6196167f6b90913f3a94237825856b858a215/cmd/helm/list.go#L227
+	// Additionally, I think this makes it easier to integrate with another fuzzy parser like fzf later on
+
+	// TODO the clientSetCreator logic for this and for selectNamespace could possibly be streamlined
+	cs, err := c.clientSetCreator(c.fs)
+	if err != nil {
+		cobra.CompDebugln(err.Error(), true)
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	nsl, err := cs.CoreV1().Namespaces().List(context.Background(), v1.ListOptions{})
+	if err != nil {
+		cobra.CompDebugln(err.Error(), true)
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	nss := []string{}
+	for _, ns := range nsl.Items {
+		nss = append(nss, ns.Name)
+	}
+
+	return nss, cobra.ShellCompDirectiveNoFileComp
 }
 
 func selectNamespace(csc clientSetCreator, pf prompt.PromptFunc, fs afero.Fs) (string, error) {
