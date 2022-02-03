@@ -76,7 +76,8 @@ func TestNamespace(t *testing.T) {
 }
 
 func TestCompleteNamespace(t *testing.T) {
-	// since cobra takes care of the majority
+	// since cobra takes care of the majority of the complexity (like parsing out results that don't match completion start),
+	// we only need to test regular cases
 
 	tt := map[string]struct {
 		nss          []runtime.Object
