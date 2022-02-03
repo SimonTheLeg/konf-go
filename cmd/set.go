@@ -21,55 +21,73 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// setCmd represents the set command
-var setCmd = &cobra.Command{
-	Use:   `set`,
-	Short: "Set kubeconfig to use in current shell",
-	Args:  cobra.MaximumNArgs(1),
-	Long: `Sets kubeconfig to use or start picker dialogue.
+type setCmd struct {
+	fs afero.Fs
 
-Examples:
-	-> 'set' run konf selection
-	-> 'set <konfig id>' set a specific konf
-	-> 'set -' set to last used konf
-`,
-	RunE: func(cmd *cobra.Command, args []string) error {
-		var id string
-		f := afero.NewOsFs()
-		var err error
+	cmd *cobra.Command
+}
 
-		if len(args) == 0 {
-			id, err = selectContext(f, prompt.Terminal)
-			if err != nil {
-				return err
-			}
-		} else if args[0] == "-" {
-			id, err = selectLastKonf(f)
-			if err != nil {
-				return err
-			}
-		} else {
-			id = args[0]
-		}
+func newSetCommand() *setCmd {
 
-		context, err := setContext(id, f)
+	sc := &setCmd{
+		fs: afero.NewOsFs(),
+	}
+
+	sc.cmd = &cobra.Command{
+		Use:   `set`,
+		Short: "Set kubeconfig to use in current shell",
+		Args:  cobra.MaximumNArgs(1),
+		Long: `Sets kubeconfig to use or start picker dialogue.
+	
+	Examples:
+		-> 'set' run konf selection
+		-> 'set <konfig id>' set a specific konf
+		-> 'set -' set to last used konf
+	`,
+		RunE: sc.set,
+	}
+
+	return sc
+}
+
+func (c *setCmd) set(cmd *cobra.Command, args []string) error {
+	// TODO if I stay with the mocking approach used in commands like
+	// namespace. This part should be refactored to allow for mocking
+	// the downstream funcs in order to test the if-else logic
+	var id string
+	var err error
+
+	if len(args) == 0 {
+		id, err = selectContext(c.fs, prompt.Terminal)
 		if err != nil {
 			return err
 		}
-		err = saveLatestKonf(f, id)
+	} else if args[0] == "-" {
+		id, err = selectLastKonf(c.fs)
 		if err != nil {
-			return fmt.Errorf("could not save latest konf. As a result 'konf set -' might not work: %q ", err)
+			return err
 		}
+	} else {
+		id = args[0]
+	}
 
-		log.Info("Setting context to %q\n", id)
+	context, err := setContext(id, c.fs)
+	if err != nil {
+		return err
+	}
+	err = saveLatestKonf(c.fs, id)
+	if err != nil {
+		return fmt.Errorf("could not save latest konf. As a result 'konf set -' might not work: %q ", err)
+	}
 
-		// By printing out to stdout, we pass the value to our zsh hook, which then sets $KUBECONFIG to it
-		// Both operate on the convention to use "KUBECONFIGCHANGE:<new-path>". If you change this part in
-		// here, do not forget to update shellwraper.go
-		fmt.Println("KUBECONFIGCHANGE:" + context)
+	log.Info("Setting context to %q\n", id)
 
-		return nil
-	},
+	// By printing out to stdout, we pass the value to our zsh hook, which then sets $KUBECONFIG to it
+	// Both operate on the convention to use "KUBECONFIGCHANGE:<new-path>". If you change this part in
+	// here, do not forget to update shellwraper.go
+	fmt.Println("KUBECONFIGCHANGE:" + context)
+
+	return nil
 }
 
 type promptFunc func(*promptui.Select) (int, error)
@@ -271,5 +289,5 @@ func prepareTable(maxColumnLen int) (inactive, active, label string) {
 }
 
 func init() {
-	rootCmd.AddCommand(setCmd)
+	rootCmd.AddCommand(newSetCommand().cmd)
 }
