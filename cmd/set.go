@@ -44,7 +44,8 @@ func newSetCommand() *setCmd {
 		-> 'set <konfig id>' set a specific konf
 		-> 'set -' set to last used konf
 	`,
-		RunE: sc.set,
+		RunE:              sc.set,
+		ValidArgsFunction: sc.completeSet,
 	}
 
 	return sc
@@ -88,6 +89,28 @@ func (c *setCmd) set(cmd *cobra.Command, args []string) error {
 	fmt.Println("KUBECONFIGCHANGE:" + context)
 
 	return nil
+}
+
+func (c *setCmd) completeSet(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	konfs, err := fetchKonfs(c.fs)
+	if err != nil {
+		// if the store is just empty, return no suggestions, instead of throwing an error
+		if _, ok := err.(*EmptyStore); ok {
+			return []string{}, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		cobra.CompDebugln(err.Error(), true)
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	sug := []string{}
+	for _, konf := range konfs {
+		// with the current design of 'set', we need to return the ID here in the autocomplete as the first part of the completion
+		// as it is directly passed to set
+		sug = append(sug, utils.IDFromClusterAndContext(konf.Cluster, konf.Context))
+	}
+
+	return sug, cobra.ShellCompDirectiveNoFileComp
 }
 
 type promptFunc func(*promptui.Select) (int, error)
