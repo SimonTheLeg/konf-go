@@ -1,5 +1,8 @@
 # Konf - Lightweight kubeconfig Manager
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/simontheleg/konf-go)](https://goreportcard.com/report/github.com/simontheleg/konf-go)
+![test](https://github.com/simontheleg/konf-go/actions/workflows/test.yaml/badge.svg)
+
 - [Konf - Lightweight kubeconfig Manager](#konf---lightweight-kubeconfig-manager)
   - [Why konf?](#why-konf)
   - [Installation](#installation)
