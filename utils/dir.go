@@ -7,9 +7,13 @@ import (
 	"github.com/spf13/afero"
 )
 
-const KonfPerm fs.FileMode = 0600    // based on the standard file-permissions for .kube/config
+// KonfPerm describes the file-permissions for konf files
+const KonfPerm fs.FileMode = 0600 // based on the standard file-permissions for .kube/config
+
+// KonfDirPerm describes the file-permissions for konf directories
 const KonfDirPerm fs.FileMode = 0700 // needed so we can create folders inside
 
+// IntegrationtestDir describes the directory to place files from IntegrationTests
 const IntegrationtestDir = "/tmp/konfs"
 
 // EnsureDir makes sure that konf store and active dirs exist

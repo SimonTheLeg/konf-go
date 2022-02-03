@@ -43,7 +43,7 @@ func init() {
 
 // wrapInit is required as cobra.OnInitialize only accepts func() as interface
 func wrapInit() {
-	conf, err := config.NewDefaultConf()
+	conf, err := config.ConfFromHomeDir()
 	cobra.CheckErr(err)
 
 	if konfDir != "" {

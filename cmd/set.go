@@ -98,9 +98,8 @@ func selectLastKonf(f afero.Fs) (string, error) {
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return "", fmt.Errorf("could not select latest konf, because no konf was yet set")
-		} else {
-			return "", err
 		}
+		return "", err
 	}
 	return string(b), nil
 }

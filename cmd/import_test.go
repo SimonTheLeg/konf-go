@@ -22,7 +22,7 @@ func TestImport(t *testing.T) {
 		determineConfigsCalled = true
 		return determineConfigs(f, fpath)
 	}
-	var mockWriteConfig = func(afero.Fs, *konfFile) error { writeConfigCalledCount += 1; return nil }
+	var mockWriteConfig = func(afero.Fs, *konfFile) error { writeConfigCalledCount++; return nil }
 
 	type ExpCalls struct {
 		DetermineConfigs bool

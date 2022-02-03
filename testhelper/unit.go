@@ -16,6 +16,7 @@ func EqualError(a, b error) bool {
 
 type filefunc = func(afero.Fs)
 
+// FSWithFiles is a testhelper that can be used to quickly setup a MemMapFs with required Files
 func FSWithFiles(ff ...filefunc) afero.Fs {
 	fs := afero.NewMemMapFs()
 
@@ -25,47 +26,59 @@ func FSWithFiles(ff ...filefunc) afero.Fs {
 	return fs
 }
 
+// FilesystemManager is used to manage filefuncs. It is feature identical to
+// its string counterpart SampleKonfManager
 type FilesystemManager struct{}
 
+// StoreDir creates standard konf store
 func (*FilesystemManager) StoreDir(fs afero.Fs) {
 	fs.MkdirAll(config.StoreDir(), utils.KonfPerm)
 }
 
+// ActiveDir creates standard konf active
 func (*FilesystemManager) ActiveDir(fs afero.Fs) {
 	fs.MkdirAll(config.ActiveDir(), utils.KonfPerm)
 }
 
+// SingleClusterSingleContextEU creates a valid kubeconfig in store and active
 func (*FilesystemManager) SingleClusterSingleContextEU(fs afero.Fs) {
 	afero.WriteFile(fs, utils.StorePathForID("dev-eu_dev-eu-1"), []byte(singleClusterSingleContextEU), utils.KonfPerm)
 	afero.WriteFile(fs, utils.ActivePathForID("dev-eu_dev-eu-1"), []byte(singleClusterSingleContextEU), utils.KonfPerm)
 }
 
+// SingleClusterSingleContextASIA creates a valid kubeconfig in store and active
 func (*FilesystemManager) SingleClusterSingleContextASIA(fs afero.Fs) {
 	afero.WriteFile(fs, utils.StorePathForID("dev-asia_dev-asia-1"), []byte(singleClusterSingleContextASIA), utils.KonfPerm)
 	afero.WriteFile(fs, utils.ActivePathForID("dev-asia_dev-asia-1"), []byte(singleClusterSingleContextASIA), utils.KonfPerm)
 }
 
+// InvalidYaml creates an invalidYaml in store and active
 func (*FilesystemManager) InvalidYaml(fs afero.Fs) {
 	afero.WriteFile(fs, utils.ActivePathForID("no-konf"), []byte("I am no valid yaml"), utils.KonfPerm)
 	afero.WriteFile(fs, utils.StorePathForID("no-konf"), []byte("I am no valid yaml"), utils.KonfPerm)
 }
 
+// MultiClusterMultiContext creates a kubeconfig with multiple clusters and contexts in store, resulting in an impure konfstore
 func (*FilesystemManager) MultiClusterMultiContext(fs afero.Fs) {
 	afero.WriteFile(fs, utils.StorePathForID("multi_multi_konf"), []byte(multiClusterMultiContext), utils.KonfPerm)
 }
 
+// MultiClusterSingleContext creates a kubeconfig with multiple clusters and one context in store, resulting in an impure konfstore
 func (*FilesystemManager) MultiClusterSingleContext(fs afero.Fs) {
 	afero.WriteFile(fs, utils.StorePathForID("multi_konf"), []byte(multiClusterSingleContext), utils.KonfPerm)
 }
 
+// SingleClusterMultiContext creates a kubeconfig with one cluster and multiple contexts in store, resulting in an impure konfstore
 func (*FilesystemManager) SingleClusterMultiContext(fs afero.Fs) {
 	afero.WriteFile(fs, utils.StorePathForID("multi_konf"), []byte(singleClusterMultiContext), utils.KonfPerm)
 }
 
+// LatestKonf creates a latestKonfFile pointing to an imaginary context and cluster
 func (*FilesystemManager) LatestKonf(fs afero.Fs) {
 	afero.WriteFile(fs, config.LatestKonfFile(), []byte("context_cluster"), utils.KonfPerm)
 }
 
+// KonfWithoutContext creates a kubeconfig which has no context, but still is valid
 func (*FilesystemManager) KonfWithoutContext(fs afero.Fs) {
 	var noContext = `
 apiVersion: v1
@@ -84,20 +97,26 @@ users:
 	afero.WriteFile(fs, utils.ActivePathForID("no-context"), []byte(noContext), utils.KonfPerm)
 }
 
+// SampleKonfManager is used to manage kubeconfig strings. It is feature identical to
+// its file counterpart FilesystemManager
 type SampleKonfManager struct{}
 
+// SingleClusterSingleContextEU returns a valid kubeconfig
 func (*SampleKonfManager) SingleClusterSingleContextEU() string {
 	return singleClusterSingleContextEU
 }
 
+// SingleClusterSingleContextASIA returns a valid kubeconfig
 func (*SampleKonfManager) SingleClusterSingleContextASIA() string {
 	return singleClusterSingleContextASIA
 }
 
+// MultiClusterMultiContext returns a valid kubeconfig, that is unprocessed
 func (*SampleKonfManager) MultiClusterMultiContext() string {
 	return multiClusterMultiContext
 }
 
+// MultiClusterSingleContext returns a valid kubeconfig, that is unprocessed
 func (*SampleKonfManager) MultiClusterSingleContext() string {
 	return multiClusterSingleContext
 }

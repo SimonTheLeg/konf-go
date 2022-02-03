@@ -20,7 +20,8 @@ func init() {
 	}
 }
 
-func NewDefaultConf() (*Config, error) {
+// ConfFromHomeDir returns an initialized config based on the users HomeDir
+func ConfFromHomeDir() (*Config, error) {
 	c := &Config{}
 
 	home, err := os.UserHomeDir()
@@ -34,18 +35,25 @@ func NewDefaultConf() (*Config, error) {
 	return c, nil
 }
 
+// InitWithOverrides sets the config to the config supplied as its argument
 func InitWithOverrides(or *Config) {
 	curConf = or
 }
 
 // Currently there is no need to customize store and active configs individually.
 // Setting the konfDir should be enough
+
+// ActiveDir returns the currently configured active directory
 func ActiveDir() string {
 	return curConf.KonfDir + "/active"
 }
+
+// StoreDir returns the currently configured store directory
 func StoreDir() string {
 	return curConf.KonfDir + "/store"
 }
+
+// LatestKonfFile returns the currently configured latest konf file
 func LatestKonfFile() string {
 	return curConf.KonfDir + "/latestkonf"
 }

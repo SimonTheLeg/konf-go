@@ -23,8 +23,8 @@ type clientSetCreator = func(afero.Fs) (kubernetes.Interface, error)
 type namespaceCmd struct {
 	fs afero.Fs
 
-	promptFunc       prompt.PromptFunc
-	selectNamespace  func(clientSetCreator, prompt.PromptFunc, afero.Fs) (string, error)
+	promptFunc       prompt.RunFunc
+	selectNamespace  func(clientSetCreator, prompt.RunFunc, afero.Fs) (string, error)
 	setNamespace     func(afero.Fs, string) error
 	clientSetCreator clientSetCreator
 
@@ -111,7 +111,7 @@ func (c *namespaceCmd) completeNamespace(cmd *cobra.Command, args []string, toCo
 	return nss, cobra.ShellCompDirectiveNoFileComp
 }
 
-func selectNamespace(csc clientSetCreator, pf prompt.PromptFunc, fs afero.Fs) (string, error) {
+func selectNamespace(csc clientSetCreator, pf prompt.RunFunc, fs afero.Fs) (string, error) {
 	cs, err := csc(fs)
 	if err != nil {
 		return "", err

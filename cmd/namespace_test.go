@@ -21,7 +21,7 @@ func TestNamespace(t *testing.T) {
 
 	selectNamespaceCalled := false
 	setNamespaceCalled := false
-	var mockSelectNamespace = func(clientSetCreator, prompt.PromptFunc, afero.Fs) (string, error) {
+	var mockSelectNamespace = func(clientSetCreator, prompt.RunFunc, afero.Fs) (string, error) {
 		selectNamespaceCalled = true
 		return "", nil
 	}
@@ -214,7 +214,7 @@ func TestSelectNamespace(t *testing.T) {
 		return fake.NewSimpleClientset(nss...), nil
 	}
 
-	var mockSelect = func(sel int) prompt.PromptFunc {
+	var mockSelect = func(sel int) prompt.RunFunc {
 		return func(*promptui.Select) (int, error) {
 			return sel, nil
 		}
