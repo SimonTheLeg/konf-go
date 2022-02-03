@@ -125,7 +125,7 @@ func TestSetContext(t *testing.T) {
 					if errors.Is(err, fs.ErrNotExist) {
 						t.Errorf("Exp file %q to be present, but it is not", tc.ExpKonfPath)
 					} else {
-						t.Fatalf("Unexpected error occured: '%s'", err)
+						t.Fatalf("Unexpected error occurred: '%s'", err)
 					}
 				}
 				res, err := afero.ReadFile(f, tc.ExpKonfPath)

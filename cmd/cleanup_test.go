@@ -66,7 +66,7 @@ func TestSelfClean(t *testing.T) {
 				}
 
 				if err != nil && !errors.Is(err, fs.ErrNotExist) {
-					t.Fatalf("An unexpected error has occured")
+					t.Fatalf("An unexpected error has occurred")
 				}
 			}
 		})
@@ -135,7 +135,7 @@ func TestCleanLeftOvers(t *testing.T) {
 					if errors.Is(err, fs.ErrNotExist) {
 						t.Errorf("Exp file '%s' to be present, but it is not", fpath)
 					} else {
-						t.Fatalf("Unexpected error occured: '%s'", err)
+						t.Fatalf("Unexpected error occurred: '%s'", err)
 					}
 				}
 			}
@@ -145,7 +145,7 @@ func TestCleanLeftOvers(t *testing.T) {
 				_, err := f.Stat(fpath)
 
 				if !errors.Is(err, fs.ErrNotExist) {
-					t.Fatalf("Unexpected error occured: '%s'", err)
+					t.Fatalf("Unexpected error occurred: '%s'", err)
 				}
 
 				if err == nil {

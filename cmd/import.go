@@ -48,7 +48,7 @@ contain a single context. Import will take care of splitting if necessary.`,
 	return ic
 }
 
-// because import is a reserved word, we have to slighly rename this :)
+// because import is a reserved word, we have to slightly rename this :)
 func (c *importCmd) importf(cmd *cobra.Command, args []string) error {
 	fpath := args[0] // safe, as we specify cobra.ExactArgs(1)
 
