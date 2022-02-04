@@ -25,7 +25,7 @@
 - konf allows you to simultaneously use different kubeconfigs in different shells
 - konf executes directly in your current shell and does not start any subshell (unlike kubie). As a result it works extremely fast
 
-// TODO add little screencast
+![demo.gif](doc/demo.gif)
 
 ## Installation
 
