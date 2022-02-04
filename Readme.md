@@ -143,5 +143,4 @@ go test -run Integration ./...
 - Allow usage of other fuzzy finders like fzf
 - `konf manage` so you can rename contexts and clusters
 - `konf delete` option so you can delete konfs you don't need anymore
-- figure out auto-completion. This might be a bit tricky due to the `konf` zsh func wrapper
 - File column could be improved by either using '...' abreviation or filtering out the konfDir
