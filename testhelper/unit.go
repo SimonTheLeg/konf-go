@@ -97,6 +97,13 @@ users:
 	afero.WriteFile(fs, utils.ActivePathForID("no-context"), []byte(noContext), utils.KonfPerm)
 }
 
+// DSStore creates a .DS_Store file, that has caused quite some problems in the past
+func (*FilesystemManager) DSStore(fs afero.Fs) {
+	// in this case we cannot use StorePathForID, as this would append .yaml
+	afero.WriteFile(fs, config.StoreDir()+"/.DS_Store", nil, utils.KonfPerm)
+	afero.WriteFile(fs, config.ActiveDir()+"/.DS_Store", nil, utils.KonfPerm)
+}
+
 // SampleKonfManager is used to manage kubeconfig strings. It is feature identical to
 // its file counterpart FilesystemManager
 type SampleKonfManager struct{}

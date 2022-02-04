@@ -197,6 +197,17 @@ func fetchKonfs(f afero.Fs) ([]tableOutput, error) {
 
 	out := []tableOutput{}
 	for _, konf := range konfs {
+
+		// ignore any hidden files
+		if strings.HasPrefix(konf.Name(), ".") {
+			// I have decided to not print any log line on this, which differs from the logic
+			// for malformed kubeconfigs. I think this makese sense as konf import will never produce
+			// a hidden file and the purpose of this is check is rather to protect against
+			// automatically created files like the .DS_Store on MacOs. On the other side however
+			// it is quite easy to create a malformed kubeconfig without noticing
+			continue
+		}
+
 		id := utils.IDFromFileInfo(konf)
 		path := utils.StorePathForID(id)
 		file, err := f.Open(path)

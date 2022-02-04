@@ -312,6 +312,17 @@ func TestFetchKonfs(t *testing.T) {
 			CheckError:  expKubeConfigOverload,
 			ExpTableOut: nil,
 		},
+		"the nice MacOS .DS_Store file": {
+			FSIn:       testhelper.FSWithFiles(fm.StoreDir, fm.DSStore, fm.SingleClusterSingleContextEU),
+			CheckError: expNil,
+			ExpTableOut: []tableOutput{
+				{
+					Context: "dev-eu",
+					Cluster: "dev-eu-1",
+					File:    "./konf/store/dev-eu_dev-eu-1.yaml",
+				},
+			},
+		},
 	}
 
 	for name, tc := range tt {
