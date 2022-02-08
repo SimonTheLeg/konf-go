@@ -323,6 +323,22 @@ func TestFetchKonfs(t *testing.T) {
 				},
 			},
 		},
+		"ignore directories": {
+			FSIn:       testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.EmptyDir),
+			CheckError: expNil,
+			ExpTableOut: []tableOutput{
+				{
+					Context: "dev-eu",
+					Cluster: "dev-eu-1",
+					File:    "./konf/store/dev-eu_dev-eu-1.yaml",
+				},
+			},
+		},
+		"only directories in store": {
+			FSIn:        testhelper.FSWithFiles(fm.StoreDir, fm.EmptyDir),
+			CheckError:  expEmptyStore,
+			ExpTableOut: nil,
+		},
 	}
 
 	for name, tc := range tt {

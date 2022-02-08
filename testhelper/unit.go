@@ -104,6 +104,13 @@ func (*FilesystemManager) DSStore(fs afero.Fs) {
 	afero.WriteFile(fs, config.ActiveDir()+"/.DS_Store", nil, utils.KonfPerm)
 }
 
+// DSStore creates an EmptyDir in StoreDir and ActiveDir
+func (*FilesystemManager) EmptyDir(fs afero.Fs) {
+	// in this case we cannot use StorePathForID, as this would append .yaml
+	fs.Mkdir(config.StoreDir()+"empty-dir", utils.KonfDirPerm)
+	fs.Mkdir(config.ActiveDir()+"empty-dir", utils.KonfDirPerm)
+}
+
 // SampleKonfManager is used to manage kubeconfig strings. It is feature identical to
 // its file counterpart FilesystemManager
 type SampleKonfManager struct{}

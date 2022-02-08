@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -186,27 +188,49 @@ func (k *EmptyStore) Error() string {
 
 // fetchKonfs returns a list of all konfs currently in konfDir/store. Additionally it returns metadata on these konfs for easier usage of the information
 func fetchKonfs(f afero.Fs) ([]tableOutput, error) {
-	konfs, err := afero.ReadDir(f, config.StoreDir())
+	var konfs []fs.FileInfo
+
+	err := afero.Walk(f, config.StoreDir(), func(path string, info fs.FileInfo, err error) error {
+		// do not add directories. This is important as later we check the number of items in konf to determine whether store is empty or not
+		// without this check we would display an empty prompt if the user has only directories in their storeDir
+		if info.IsDir() && path != config.StoreDir() {
+			return filepath.SkipDir
+		}
+
+		// skip any hidden files
+		if strings.HasPrefix(info.Name(), ".") {
+			// I have decided to not print any log line on this, which differs from the logic
+			// for malformed kubeconfigs. I think this makes sense as konf import will never produce
+			// a hidden file and the purpose of this check is rather to protect against
+			// automatically created files like the .DS_Store on MacOs. On the other side however
+			// it is quite easy to create a malformed kubeconfig without noticing
+			return nil
+		}
+
+		konfs = append(konfs, info)
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
+
+	// cut out the root element, which gets added in the previous step
+	// this is safe as the element is guaranteed to be at the first position
+	konfs = konfs[1:]
+
+	// similar to fs.ReadDir, sort the entries for easier viewing for the user and to
+	// be consistent with what shells return during auto-completion
+	sort.Slice(konfs, func(i, j int) bool { return konfs[i].Name() < konfs[j].Name() })
 
 	if len(konfs) == 0 {
 		return nil, &EmptyStore{}
 	}
 
 	out := []tableOutput{}
+	// TODO the logic of this loop should be extracted into the walkFn above to avoid looping twice
+	// TODO (possibly the walkfunction should also be extracted into its own function)
 	for _, konf := range konfs {
-
-		// ignore any hidden files
-		if strings.HasPrefix(konf.Name(), ".") {
-			// I have decided to not print any log line on this, which differs from the logic
-			// for malformed kubeconfigs. I think this makese sense as konf import will never produce
-			// a hidden file and the purpose of this is check is rather to protect against
-			// automatically created files like the .DS_Store on MacOs. On the other side however
-			// it is quite easy to create a malformed kubeconfig without noticing
-			continue
-		}
 
 		id := utils.IDFromFileInfo(konf)
 		path := utils.StorePathForID(id)
