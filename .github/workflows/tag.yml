@@ -1,0 +1,23 @@
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  new_semver_tag:
+    permissions:
+      contents: write
+      pull-requests: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: "0"
+      - name: bump semVer
+        uses: simontheleg/semver-tag-from-pr-action@v1.1.0
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          label-major: merge-breaking
+          label-minor: merge-feature
+          label-patch: merge-fix
+          label-none: merge-none
