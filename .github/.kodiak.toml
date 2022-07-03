@@ -8,4 +8,4 @@ method = "rebase_fast_forward"
 
 [approve]
 # list of benevolant dictators ;)
-auto_approve_usernames = ["simontheleg"]
+auto_approve_usernames = ["SimonTheLeg"]
