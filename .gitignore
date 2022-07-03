@@ -80,3 +80,6 @@ konf-go
 retro.md
 # for now there is not really anything interesting in the launch.json, so we can ignore it
 .vscode/launch.json 
+
+# ignore builds from goreleaser
+dist

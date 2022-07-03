@@ -1,0 +1,13 @@
+builds:
+  - id: konf-go
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm
+      - arm64
+      - ppc64le
+      - s390x
+    goarm: [6, 7]
