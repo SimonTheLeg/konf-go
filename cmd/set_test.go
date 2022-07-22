@@ -13,6 +13,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/manifoldco/promptui"
 	"github.com/simontheleg/konf-go/config"
+	"github.com/simontheleg/konf-go/store"
 	"github.com/simontheleg/konf-go/testhelper"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
@@ -184,14 +185,14 @@ func TestSetContext(t *testing.T) {
 
 func TestPrepareTemplates(t *testing.T) {
 	tt := map[string]struct {
-		Values      tableOutput
+		Values      store.TableOutput
 		Trunc       int
 		ExpInactive string
 		ExpActive   string
 		ExpLabel    string
 	}{
 		"values < trunc": {
-			tableOutput{
+			store.TableOutput{
 				"kind-eu",
 				"cluster-eu",
 				"kind-eu.cluster-eu.yaml",
@@ -202,7 +203,7 @@ func TestPrepareTemplates(t *testing.T) {
 			"  Context                   | Cluster                   | File                      ",
 		},
 		"values == trunc": {
-			tableOutput{
+			store.TableOutput{
 				"0123456789",
 				"0123456789",
 				"xyz.yaml",
@@ -213,7 +214,7 @@ func TestPrepareTemplates(t *testing.T) {
 			"  Context    | Cluster    | File       ",
 		},
 		"values > trunc": {
-			tableOutput{
+			store.TableOutput{
 				"0123456789-andlotsmore",
 				"0123456789-andlotsmore",
 				"xyz.yaml",
@@ -224,7 +225,7 @@ func TestPrepareTemplates(t *testing.T) {
 			"  Context    | Cluster    | File       ",
 		},
 		"trunc is below minLength": {
-			tableOutput{
+			store.TableOutput{
 				"0123456789",
 				"0123456789",
 				"xyz.yaml",
@@ -247,7 +248,7 @@ func TestPrepareTemplates(t *testing.T) {
 	}
 }
 
-func checkTemplate(t *testing.T, stpl string, val tableOutput, exp string) {
+func checkTemplate(t *testing.T, stpl string, val store.TableOutput, exp string) {
 
 	tmpl, err := template.New("t").Funcs(newTemplateFuncMap()).Parse(stpl)
 	if err != nil {
@@ -270,87 +271,6 @@ func checkTemplate(t *testing.T, stpl string, val tableOutput, exp string) {
 	res = strings.Replace(res, normal, "", -1)
 	if exp != res {
 		t.Errorf("Exp res: '%s', got: '%s'", exp, res)
-	}
-}
-
-func TestFetchKonfs(t *testing.T) {
-	fm := testhelper.FilesystemManager{}
-
-	tt := map[string]struct {
-		FSIn        afero.Fs
-		CheckError  func(*testing.T, error) // currently this convoluted mess is needed so we can accurately check for types. errors.As does not work in our case
-		ExpTableOut []tableOutput
-	}{
-		"empty store": {
-			FSIn:        testhelper.FSWithFiles(fm.StoreDir),
-			CheckError:  expEmptyStore,
-			ExpTableOut: nil,
-		},
-		"valid konfs and a wrong konf": {
-			FSIn:       testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA, fm.InvalidYaml),
-			CheckError: expNil,
-			ExpTableOut: []tableOutput{
-				{
-					Context: "dev-asia",
-					Cluster: "dev-asia-1",
-					File:    "./konf/store/dev-asia_dev-asia-1.yaml",
-				},
-				{
-					Context: "dev-eu",
-					Cluster: "dev-eu-1",
-					File:    "./konf/store/dev-eu_dev-eu-1.yaml",
-				},
-			},
-		},
-		"overloaded konf (cluster)": {
-			FSIn:        testhelper.FSWithFiles(fm.StoreDir, fm.MultiClusterSingleContext),
-			CheckError:  expKubeConfigOverload,
-			ExpTableOut: nil,
-		},
-		"overloaded konf (context)": {
-			FSIn:        testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterMultiContext),
-			CheckError:  expKubeConfigOverload,
-			ExpTableOut: nil,
-		},
-		"the nice MacOS .DS_Store file": {
-			FSIn:       testhelper.FSWithFiles(fm.StoreDir, fm.DSStore, fm.SingleClusterSingleContextEU),
-			CheckError: expNil,
-			ExpTableOut: []tableOutput{
-				{
-					Context: "dev-eu",
-					Cluster: "dev-eu-1",
-					File:    "./konf/store/dev-eu_dev-eu-1.yaml",
-				},
-			},
-		},
-		"ignore directories": {
-			FSIn:       testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.EmptyDir),
-			CheckError: expNil,
-			ExpTableOut: []tableOutput{
-				{
-					Context: "dev-eu",
-					Cluster: "dev-eu-1",
-					File:    "./konf/store/dev-eu_dev-eu-1.yaml",
-				},
-			},
-		},
-		"only directories in store": {
-			FSIn:        testhelper.FSWithFiles(fm.StoreDir, fm.EmptyDir),
-			CheckError:  expEmptyStore,
-			ExpTableOut: nil,
-		},
-	}
-
-	for name, tc := range tt {
-		t.Run(name, func(t *testing.T) {
-			out, err := fetchKonfs(tc.FSIn)
-
-			tc.CheckError(t, err)
-
-			if !cmp.Equal(tc.ExpTableOut, out) {
-				t.Errorf("Exp and given tableoutputs differ:\n'%s'", cmp.Diff(tc.ExpTableOut, out))
-			}
-		})
 	}
 }
 
@@ -404,48 +324,30 @@ func TestSelectContext(t *testing.T) {
 	}
 }
 
-func expEmptyStore(t *testing.T, err error) {
-	if _, ok := err.(*EmptyStore); !ok {
-		t.Errorf("Expected err to be of type EmptyStore")
-	}
-}
-
-func expKubeConfigOverload(t *testing.T, err error) {
-	if _, ok := err.(*KubeConfigOverload); !ok {
-		t.Errorf("Expected err to be of type KubeConfigOverload")
-	}
-}
-
-func expNil(t *testing.T, err error) {
-	if err != nil {
-		t.Errorf("Expected err to be nil, but got %q", err)
-	}
-}
-
 func TestSearchKonf(t *testing.T) {
 	tt := map[string]struct {
 		search string
-		item   *tableOutput
+		item   *store.TableOutput
 		expRes bool
 	}{
 		"full match across all": {
 			"a b c",
-			&tableOutput{"a", "b", "c"},
+			&store.TableOutput{"a", "b", "c"},
 			true,
 		},
 		"full match across all - fuzzy": {
 			"abc",
-			&tableOutput{"a", "b", "c"},
+			&store.TableOutput{"a", "b", "c"},
 			true,
 		},
 		"partial match across fields": {
 			"textclu",
-			&tableOutput{"context", "cluster", "file"},
+			&store.TableOutput{"context", "cluster", "file"},
 			true,
 		},
 		"no match": {
 			"oranges",
-			&tableOutput{"apples", "and", "bananas"},
+			&store.TableOutput{"apples", "and", "bananas"},
 			false,
 		},
 	}
