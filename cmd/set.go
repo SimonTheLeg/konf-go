@@ -5,11 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"strings"
-	"text/template"
 
-	sprig "github.com/Masterminds/sprig/v3"
-	"github.com/lithammer/fuzzysearch/fuzzy"
 	"github.com/manifoldco/promptui"
 	"github.com/simontheleg/konf-go/config"
 	log "github.com/simontheleg/konf-go/log"
@@ -112,14 +108,12 @@ func (c *setCmd) completeSet(cmd *cobra.Command, args []string, toComplete strin
 	return sug, cobra.ShellCompDirectiveNoFileComp
 }
 
-type promptFunc func(*promptui.Select) (int, error)
-
-func selectContext(f afero.Fs, pf promptFunc) (string, error) {
+func selectContext(f afero.Fs, pf prompt.RunFunc) (string, error) {
 	k, err := store.FetchKonfs(f)
 	if err != nil {
 		return "", err
 	}
-	p := createPrompt(k)
+	p := createSetPrompt(k)
 	selPos, err := pf(p)
 	if err != nil {
 		return "", err
@@ -165,16 +159,16 @@ func saveLatestKonf(f afero.Fs, id string) error {
 	return afero.WriteFile(f, config.LatestKonfFile(), []byte(id), utils.KonfPerm)
 }
 
-func createPrompt(options []*store.TableOutput) *promptui.Select {
+func createSetPrompt(options []*store.TableOutput) *promptui.Select {
 	// TODO use ssh/terminal to get the terminalsize and set trunc accordingly https://stackoverflow.com/questions/16569433/get-terminal-size-in-go
 	trunc := 25
-	promptInactive, promptActive, label := prepareTable(trunc)
+	promptInactive, promptActive, label := prompt.NewTableOutputTemplates(trunc)
 
 	// Wrapper is required as we need access to options, but the methodSignature from promptUI
 	// requires you to only pass an index not the whole func
-	// This wrapper allows us to unit-test the searchKonf func better
-	var wrapSearchKonf = func(input string, index int) bool {
-		return searchKonf(input, options[index])
+	// This wrapper allows us to unit-test the FuzzyFilterKonf func better
+	var wrapFuzzyFilterKonf = func(input string, index int) bool {
+		return prompt.FuzzyFilterKonf(input, options[index])
 	}
 
 	prompt := promptui.Select{
@@ -183,61 +177,14 @@ func createPrompt(options []*store.TableOutput) *promptui.Select {
 		Templates: &promptui.SelectTemplates{
 			Active:   promptActive,
 			Inactive: promptInactive,
-			FuncMap:  newTemplateFuncMap(),
+			FuncMap:  prompt.NewStandardTemplateFuncs(),
 		},
 		HideSelected: true,
 		Stdout:       os.Stderr,
-		Searcher:     wrapSearchKonf,
+		Searcher:     wrapFuzzyFilterKonf,
 		Size:         15,
 	}
 	return &prompt
-}
-
-func searchKonf(searchTerm string, curItem *store.TableOutput) bool {
-	// since there is no weight on any of the table entries, we can just combine them to one string
-	// and run the contains on it, which automatically is going to match any of the three values
-	r := fmt.Sprintf("%s %s %s", curItem.Context, curItem.Cluster, curItem.File)
-	return fuzzy.Match(searchTerm, r)
-}
-
-// TODO only inject the funcs I am actually using
-func newTemplateFuncMap() template.FuncMap {
-	ret := sprig.TxtFuncMap()
-	ret["black"] = promptui.Styler(promptui.FGBlack)
-	ret["red"] = promptui.Styler(promptui.FGRed)
-	ret["green"] = promptui.Styler(promptui.FGGreen)
-	ret["yellow"] = promptui.Styler(promptui.FGYellow)
-	ret["blue"] = promptui.Styler(promptui.FGBlue)
-	ret["magenta"] = promptui.Styler(promptui.FGMagenta)
-	ret["cyan"] = promptui.Styler(promptui.FGCyan)
-	ret["white"] = promptui.Styler(promptui.FGWhite)
-	ret["bgBlack"] = promptui.Styler(promptui.BGBlack)
-	ret["bgRed"] = promptui.Styler(promptui.BGRed)
-	ret["bgGreen"] = promptui.Styler(promptui.BGGreen)
-	ret["bgYellow"] = promptui.Styler(promptui.BGYellow)
-	ret["bgBlue"] = promptui.Styler(promptui.BGBlue)
-	ret["bgMagenta"] = promptui.Styler(promptui.BGMagenta)
-	ret["bgCyan"] = promptui.Styler(promptui.BGCyan)
-	ret["bgWhite"] = promptui.Styler(promptui.BGWhite)
-	ret["bold"] = promptui.Styler(promptui.FGBold)
-	ret["faint"] = promptui.Styler(promptui.FGFaint)
-	ret["italic"] = promptui.Styler(promptui.FGItalic)
-	ret["underline"] = promptui.Styler(promptui.FGUnderline)
-	return ret
-}
-
-// prepareTable takes in the max length of each column and returns table rows for active, inactive and header
-func prepareTable(maxColumnLen int) (inactive, active, label string) {
-	// minColumnLen is determined by the length of the largest word in the label line
-	minColumnLen := 7
-	if maxColumnLen < minColumnLen {
-		maxColumnLen = minColumnLen
-	}
-	// TODO figure out if we can do abbreviation using '...' somehow
-	inactive = fmt.Sprintf(`  {{ repeat %[1]d " " | print .Context | trunc %[1]d | %[2]s }} | {{ repeat %[1]d " " | print .Cluster | trunc %[1]d | %[2]s }} | {{ repeat %[1]d  " " | print .File | trunc %[1]d | %[2]s }} |`, maxColumnLen, "")
-	active = fmt.Sprintf(`▸ {{ repeat %[1]d " " | print .Context | trunc %[1]d | %[2]s }} | {{ repeat %[1]d " " | print .Cluster | trunc %[1]d | %[2]s }} | {{ repeat %[1]d  " " | print .File | trunc %[1]d | %[2]s }} |`, maxColumnLen, "bold | cyan")
-	label = fmt.Sprint("  Context" + strings.Repeat(" ", maxColumnLen-7) + " | " + "Cluster" + strings.Repeat(" ", maxColumnLen-7) + " | " + "File" + strings.Repeat(" ", maxColumnLen-4) + " ") // repeat = trunc - length of the word before it
-	return inactive, active, label
 }
 
 func init() {

@@ -1,19 +1,16 @@
 package cmd
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"io/fs"
 	"os"
-	"strings"
 	"testing"
-	"text/template"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/manifoldco/promptui"
 	"github.com/simontheleg/konf-go/config"
-	"github.com/simontheleg/konf-go/store"
+	"github.com/simontheleg/konf-go/prompt"
 	"github.com/simontheleg/konf-go/testhelper"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
@@ -183,97 +180,6 @@ func TestSetContext(t *testing.T) {
 	}
 }
 
-func TestPrepareTemplates(t *testing.T) {
-	tt := map[string]struct {
-		Values      store.TableOutput
-		Trunc       int
-		ExpInactive string
-		ExpActive   string
-		ExpLabel    string
-	}{
-		"values < trunc": {
-			store.TableOutput{
-				"kind-eu",
-				"cluster-eu",
-				"kind-eu.cluster-eu.yaml",
-			},
-			25,
-			"  kind-eu                   | cluster-eu                | kind-eu.cluster-eu.yaml   |",
-			"▸ kind-eu                   | cluster-eu                | kind-eu.cluster-eu.yaml   |",
-			"  Context                   | Cluster                   | File                      ",
-		},
-		"values == trunc": {
-			store.TableOutput{
-				"0123456789",
-				"0123456789",
-				"xyz.yaml",
-			},
-			10,
-			"  0123456789 | 0123456789 | xyz.yaml   |",
-			"▸ 0123456789 | 0123456789 | xyz.yaml   |",
-			"  Context    | Cluster    | File       ",
-		},
-		"values > trunc": {
-			store.TableOutput{
-				"0123456789-andlotsmore",
-				"0123456789-andlotsmore",
-				"xyz.yaml",
-			},
-			10,
-			"  0123456789 | 0123456789 | xyz.yaml   |",
-			"▸ 0123456789 | 0123456789 | xyz.yaml   |",
-			"  Context    | Cluster    | File       ",
-		},
-		"trunc is below minLength": {
-			store.TableOutput{
-				"0123456789",
-				"0123456789",
-				"xyz.yaml",
-			},
-			5,
-			"  0123456 | 0123456 | xyz.yam |",
-			"▸ 0123456 | 0123456 | xyz.yam |",
-			"  Context | Cluster | File    ",
-		},
-	}
-
-	for name, tc := range tt {
-		t.Run(name, func(t *testing.T) {
-			inactive, active, label := prepareTable(tc.Trunc)
-
-			checkTemplate(t, inactive, tc.Values, tc.ExpInactive)
-			checkTemplate(t, active, tc.Values, tc.ExpActive)
-			checkTemplate(t, label, tc.Values, tc.ExpLabel)
-		})
-	}
-}
-
-func checkTemplate(t *testing.T, stpl string, val store.TableOutput, exp string) {
-
-	tmpl, err := template.New("t").Funcs(newTemplateFuncMap()).Parse(stpl)
-	if err != nil {
-		t.Fatalf("Could not create template for test '%v'. Please check test code", err)
-	}
-
-	buf := new(bytes.Buffer)
-	err = tmpl.Execute(buf, val)
-	if err != nil {
-		t.Fatalf("Could not execute template for test '%v'. Please check test code", err)
-	}
-
-	res := buf.String()
-	// remove any formatting as we do not care about that
-	cyan := "\x1b[36m"
-	bold := "\x1b[1m"
-	normal := "\x1b[0m"
-	res = strings.Replace(res, cyan, "", -1)
-	res = strings.Replace(res, bold, "", -1)
-	res = strings.Replace(res, normal, "", -1)
-	if exp != res {
-		t.Errorf("Exp res: '%s', got: '%s'", exp, res)
-	}
-}
-
 func TestSelectContext(t *testing.T) {
 	fm := testhelper.FilesystemManager{}
 	f := testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA)
@@ -282,7 +188,7 @@ func TestSelectContext(t *testing.T) {
 	// - invalid selection
 	// - prompt failure
 	tt := map[string]struct {
-		pf     promptFunc
+		pf     prompt.RunFunc
 		expID  string
 		expErr error
 	}{
@@ -319,44 +225,6 @@ func TestSelectContext(t *testing.T) {
 
 			if res != tc.expID {
 				t.Errorf("Exp id %q, got %q", tc.expID, res)
-			}
-		})
-	}
-}
-
-func TestSearchKonf(t *testing.T) {
-	tt := map[string]struct {
-		search string
-		item   *store.TableOutput
-		expRes bool
-	}{
-		"full match across all": {
-			"a b c",
-			&store.TableOutput{"a", "b", "c"},
-			true,
-		},
-		"full match across all - fuzzy": {
-			"abc",
-			&store.TableOutput{"a", "b", "c"},
-			true,
-		},
-		"partial match across fields": {
-			"textclu",
-			&store.TableOutput{"context", "cluster", "file"},
-			true,
-		},
-		"no match": {
-			"oranges",
-			&store.TableOutput{"apples", "and", "bananas"},
-			false,
-		},
-	}
-
-	for name, tc := range tt {
-		t.Run(name, func(t *testing.T) {
-			res := searchKonf(tc.search, tc.item)
-			if res != tc.expRes {
-				t.Errorf("Exp res to be %t got %t", tc.expRes, res)
 			}
 		})
 	}
