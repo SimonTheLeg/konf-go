@@ -162,7 +162,7 @@ func saveLatestKonf(f afero.Fs, id string) error {
 func createSetPrompt(options []*store.TableOutput) *promptui.Select {
 	// TODO use ssh/terminal to get the terminalsize and set trunc accordingly https://stackoverflow.com/questions/16569433/get-terminal-size-in-go
 	trunc := 25
-	promptInactive, promptActive, label := prompt.NewTableOutputTemplates(trunc)
+	promptInactive, promptActive, label, fmap := prompt.NewTableOutputTemplates(trunc)
 
 	// Wrapper is required as we need access to options, but the methodSignature from promptUI
 	// requires you to only pass an index not the whole func
@@ -177,7 +177,7 @@ func createSetPrompt(options []*store.TableOutput) *promptui.Select {
 		Templates: &promptui.SelectTemplates{
 			Active:   promptActive,
 			Inactive: promptInactive,
-			FuncMap:  prompt.NewStandardTemplateFuncs(),
+			FuncMap:  fmap,
 		},
 		HideSelected: true,
 		Stdout:       os.Stderr,

@@ -103,18 +103,18 @@ func TestPrepareTemplates(t *testing.T) {
 
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
-			inactive, active, label := NewTableOutputTemplates(tc.Trunc)
+			inactive, active, label, fmap := NewTableOutputTemplates(tc.Trunc)
 
-			checkTemplate(t, inactive, tc.Values, tc.ExpInactive)
-			checkTemplate(t, active, tc.Values, tc.ExpActive)
-			checkTemplate(t, label, tc.Values, tc.ExpLabel)
+			checkTemplate(t, inactive, tc.Values, tc.ExpInactive, fmap)
+			checkTemplate(t, active, tc.Values, tc.ExpActive, fmap)
+			checkTemplate(t, label, tc.Values, tc.ExpLabel, fmap)
 		})
 	}
 }
 
-func checkTemplate(t *testing.T, stpl string, val store.TableOutput, exp string) {
+func checkTemplate(t *testing.T, stpl string, val store.TableOutput, exp string, fmap template.FuncMap) {
 
-	tmpl, err := template.New("t").Funcs(NewStandardTemplateFuncs()).Parse(stpl)
+	tmpl, err := template.New("t").Funcs(fmap).Parse(stpl)
 	if err != nil {
 		t.Fatalf("Could not create template for test '%v'. Please check test code", err)
 	}
