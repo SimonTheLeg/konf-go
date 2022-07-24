@@ -87,7 +87,7 @@ func FetchKonfs(f afero.Fs) ([]*TableOutput, error) {
 	for _, konf := range konfs {
 
 		id := utils.IDFromFileInfo(konf)
-		path := utils.StorePathForID(id)
+		path := id.StorePath()
 		file, err := f.Open(path)
 		if err != nil {
 			return nil, err

@@ -42,40 +42,40 @@ func (*FilesystemManager) ActiveDir(fs afero.Fs) {
 
 // SingleClusterSingleContextEU creates a valid kubeconfig in store and active
 func (*FilesystemManager) SingleClusterSingleContextEU(fs afero.Fs) {
-	afero.WriteFile(fs, utils.StorePathForID("dev-eu_dev-eu-1"), []byte(singleClusterSingleContextEU), utils.KonfPerm)
-	afero.WriteFile(fs, utils.ActivePathForID("dev-eu_dev-eu-1"), []byte(singleClusterSingleContextEU), utils.KonfPerm)
+	afero.WriteFile(fs, utils.KonfID("dev-eu_dev-eu-1").StorePath(), []byte(singleClusterSingleContextEU), utils.KonfPerm)
+	afero.WriteFile(fs, utils.KonfID("dev-eu_dev-eu-1").ActivePath(), []byte(singleClusterSingleContextEU), utils.KonfPerm)
 }
 
 // SingleClusterSingleContextASIA creates a valid kubeconfig in store and active
 func (*FilesystemManager) SingleClusterSingleContextASIA(fs afero.Fs) {
-	afero.WriteFile(fs, utils.StorePathForID("dev-asia_dev-asia-1"), []byte(singleClusterSingleContextASIA), utils.KonfPerm)
-	afero.WriteFile(fs, utils.ActivePathForID("dev-asia_dev-asia-1"), []byte(singleClusterSingleContextASIA), utils.KonfPerm)
+	afero.WriteFile(fs, utils.KonfID("dev-asia_dev-asia-1").StorePath(), []byte(singleClusterSingleContextASIA), utils.KonfPerm)
+	afero.WriteFile(fs, utils.KonfID("dev-asia_dev-asia-1").ActivePath(), []byte(singleClusterSingleContextASIA), utils.KonfPerm)
 }
 
 // InvalidYaml creates an invalidYaml in store and active
 func (*FilesystemManager) InvalidYaml(fs afero.Fs) {
-	afero.WriteFile(fs, utils.ActivePathForID("no-konf"), []byte("I am no valid yaml"), utils.KonfPerm)
-	afero.WriteFile(fs, utils.StorePathForID("no-konf"), []byte("I am no valid yaml"), utils.KonfPerm)
+	afero.WriteFile(fs, utils.KonfID("no-konf").ActivePath(), []byte("I am no valid yaml"), utils.KonfPerm)
+	afero.WriteFile(fs, utils.KonfID("no-konf").StorePath(), []byte("I am no valid yaml"), utils.KonfPerm)
 }
 
 // MultiClusterMultiContext creates a kubeconfig with multiple clusters and contexts in store, resulting in an impure konfstore
 func (*FilesystemManager) MultiClusterMultiContext(fs afero.Fs) {
-	afero.WriteFile(fs, utils.StorePathForID("multi_multi_konf"), []byte(multiClusterMultiContext), utils.KonfPerm)
+	afero.WriteFile(fs, utils.KonfID("multi_multi_konf").StorePath(), []byte(multiClusterMultiContext), utils.KonfPerm)
 }
 
 // MultiClusterSingleContext creates a kubeconfig with multiple clusters and one context in store, resulting in an impure konfstore
 func (*FilesystemManager) MultiClusterSingleContext(fs afero.Fs) {
-	afero.WriteFile(fs, utils.StorePathForID("multi_konf"), []byte(multiClusterSingleContext), utils.KonfPerm)
+	afero.WriteFile(fs, utils.KonfID("multi_konf").StorePath(), []byte(multiClusterSingleContext), utils.KonfPerm)
 }
 
 // SingleClusterMultiContext creates a kubeconfig with one cluster and multiple contexts in store, resulting in an impure konfstore
 func (*FilesystemManager) SingleClusterMultiContext(fs afero.Fs) {
-	afero.WriteFile(fs, utils.StorePathForID("multi_konf"), []byte(singleClusterMultiContext), utils.KonfPerm)
+	afero.WriteFile(fs, utils.KonfID("multi_konf").StorePath(), []byte(singleClusterMultiContext), utils.KonfPerm)
 }
 
 // LatestKonf creates a latestKonfFile pointing to an imaginary context and cluster
 func (*FilesystemManager) LatestKonf(fs afero.Fs) {
-	afero.WriteFile(fs, config.LatestKonfFile(), []byte("context_cluster"), utils.KonfPerm)
+	afero.WriteFile(fs, config.LatestKonfFilePath(), []byte("context_cluster"), utils.KonfPerm)
 }
 
 // KonfWithoutContext creates a kubeconfig which has no context, but still is valid
@@ -93,8 +93,8 @@ users:
     user: {}
 `
 
-	afero.WriteFile(fs, utils.StorePathForID("no-context"), []byte(noContext), utils.KonfPerm)
-	afero.WriteFile(fs, utils.ActivePathForID("no-context"), []byte(noContext), utils.KonfPerm)
+	afero.WriteFile(fs, utils.KonfID("no-context").StorePath(), []byte(noContext), utils.KonfPerm)
+	afero.WriteFile(fs, utils.KonfID("no-context").ActivePath(), []byte(noContext), utils.KonfPerm)
 }
 
 // DSStore creates a .DS_Store file, that has caused quite some problems in the past

@@ -53,7 +53,7 @@ func StoreDir() string {
 	return curConf.KonfDir + "/store"
 }
 
-// LatestKonfFile returns the currently configured latest konf file
-func LatestKonfFile() string {
+// LatestKonfFilePath returns the currently configured latest konf file
+func LatestKonfFilePath() string {
 	return curConf.KonfDir + "/latestkonf"
 }

@@ -22,7 +22,7 @@ func TestSelectLastKonf(t *testing.T) {
 
 	tt := map[string]struct {
 		InFs     afero.Fs
-		ExpID    string
+		ExpID    utils.KonfID
 		ExpError error
 	}{
 		"latestKonf set": {
@@ -39,7 +39,7 @@ func TestSelectLastKonf(t *testing.T) {
 
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
-			id, err := selectLastKonf(tc.InFs)
+			id, err := idOfLatestKonf(tc.InFs)
 
 			if !testhelper.EqualError(tc.ExpError, err) {
 				t.Errorf("Want error %q, got %q", tc.ExpError, err)
@@ -94,7 +94,7 @@ func TestCompleteSet(t *testing.T) {
 
 func TestSaveLatestKonf(t *testing.T) {
 	expFile := "./konf/latestkonf"
-	expID := "context_cluster"
+	expID := utils.KonfID("context_cluster")
 
 	f := afero.NewMemMapFs()
 	err := saveLatestKonf(f, expID)
@@ -109,7 +109,7 @@ func TestSaveLatestKonf(t *testing.T) {
 		t.Errorf("Exp file %q to be present, but it isnt", expFile)
 	}
 	id, _ := afero.ReadFile(f, expFile)
-	if string(id) != expID {
+	if utils.KonfID(id) != expID {
 		t.Errorf("Exp id to be %q but is %q", expID, id)
 	}
 }
@@ -120,7 +120,7 @@ func TestSetContext(t *testing.T) {
 	sm := testhelper.SampleKonfManager{}
 
 	tt := map[string]struct {
-		InID        string
+		InID        utils.KonfID
 		StoreExists bool
 		ExpErr      error
 		ExpKonfPath string
@@ -129,7 +129,7 @@ func TestSetContext(t *testing.T) {
 			"dev-eu_dev-eu",
 			true,
 			nil,
-			utils.ActivePathForID(fmt.Sprint(ppid)),
+			utils.IDFromProcessID(ppid).ActivePath(),
 		},
 		"invalid id": {
 			"i-am-invalid",
@@ -145,7 +145,7 @@ func TestSetContext(t *testing.T) {
 			f := afero.NewMemMapFs()
 
 			if tc.StoreExists {
-				afero.WriteFile(f, storeDir+"/"+tc.InID+".yaml", []byte(sm.SingleClusterSingleContextEU()), utils.KonfPerm)
+				afero.WriteFile(f, storeDir+"/"+string(tc.InID)+".yaml", []byte(sm.SingleClusterSingleContextEU()), utils.KonfPerm)
 			}
 
 			resKonfPath, resError := setContext(tc.InID, f)
@@ -189,7 +189,7 @@ func TestSelectContext(t *testing.T) {
 	// - prompt failure
 	tt := map[string]struct {
 		pf     prompt.RunFunc
-		expID  string
+		expID  utils.KonfID
 		expErr error
 	}{
 		"select asia": {
@@ -217,7 +217,7 @@ func TestSelectContext(t *testing.T) {
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
 
-			res, err := selectContext(f, tc.pf)
+			res, err := selectSingleKonf(f, tc.pf)
 
 			if !testhelper.EqualError(err, tc.expErr) {
 				t.Errorf("Exp err %q, got %q", tc.expErr, err)

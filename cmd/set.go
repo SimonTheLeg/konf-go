@@ -50,21 +50,21 @@ func (c *setCmd) set(cmd *cobra.Command, args []string) error {
 	// TODO if I stay with the mocking approach used in commands like
 	// namespace. This part should be refactored to allow for mocking
 	// the downstream funcs in order to test the if-else logic
-	var id string
+	var id utils.KonfID
 	var err error
 
 	if len(args) == 0 {
-		id, err = selectContext(c.fs, prompt.Terminal)
+		id, err = selectSingleKonf(c.fs, prompt.Terminal)
 		if err != nil {
 			return err
 		}
 	} else if args[0] == "-" {
-		id, err = selectLastKonf(c.fs)
+		id, err = idOfLatestKonf(c.fs)
 		if err != nil {
 			return err
 		}
 	} else {
-		id = args[0]
+		id = utils.KonfID(args[0])
 	}
 
 	context, err := setContext(id, c.fs)
@@ -102,13 +102,13 @@ func (c *setCmd) completeSet(cmd *cobra.Command, args []string, toComplete strin
 	for _, konf := range konfs {
 		// with the current design of 'set', we need to return the ID here in the autocomplete as the first part of the completion
 		// as it is directly passed to set
-		sug = append(sug, utils.IDFromClusterAndContext(konf.Cluster, konf.Context))
+		sug = append(sug, string(utils.IDFromClusterAndContext(konf.Cluster, konf.Context)))
 	}
 
 	return sug, cobra.ShellCompDirectiveNoFileComp
 }
 
-func selectContext(f afero.Fs, pf prompt.RunFunc) (string, error) {
+func selectSingleKonf(f afero.Fs, pf prompt.RunFunc) (utils.KonfID, error) {
 	k, err := store.FetchKonfs(f)
 	if err != nil {
 		return "", err
@@ -127,25 +127,26 @@ func selectContext(f afero.Fs, pf prompt.RunFunc) (string, error) {
 	return utils.IDFromClusterAndContext(sel.Cluster, sel.Context), nil
 }
 
-func selectLastKonf(f afero.Fs) (string, error) {
-	b, err := afero.ReadFile(f, config.LatestKonfFile())
+func idOfLatestKonf(f afero.Fs) (utils.KonfID, error) {
+	b, err := afero.ReadFile(f, config.LatestKonfFilePath())
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return "", fmt.Errorf("could not select latest konf, because no konf was yet set")
 		}
 		return "", err
 	}
-	return string(b), nil
+	return utils.KonfID(b), nil
 }
 
-func setContext(id string, f afero.Fs) (string, error) {
-	konf, err := afero.ReadFile(f, utils.StorePathForID(id))
+func setContext(id utils.KonfID, f afero.Fs) (string, error) {
+	konf, err := afero.ReadFile(f, id.StorePath())
 	if err != nil {
 		return "", err
 	}
 
 	ppid := os.Getppid()
-	activeKonf := utils.ActivePathForID(fmt.Sprint(ppid))
+	konfID := utils.IDFromProcessID(ppid)
+	activeKonf := konfID.ActivePath()
 	err = afero.WriteFile(f, activeKonf, konf, utils.KonfPerm)
 	if err != nil {
 		return "", err
@@ -155,8 +156,8 @@ func setContext(id string, f afero.Fs) (string, error) {
 
 }
 
-func saveLatestKonf(f afero.Fs, id string) error {
-	return afero.WriteFile(f, config.LatestKonfFile(), []byte(id), utils.KonfPerm)
+func saveLatestKonf(f afero.Fs, id utils.KonfID) error {
+	return afero.WriteFile(f, config.LatestKonfFilePath(), []byte(id), utils.KonfPerm)
 }
 
 func createSetPrompt(options []*store.TableOutput) *promptui.Select {

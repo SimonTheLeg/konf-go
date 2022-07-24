@@ -80,7 +80,7 @@ func TestImport(t *testing.T) {
 }
 
 var devEUControlGroup = &konfFile{
-	FilePath: utils.StorePathForID(utils.IDFromClusterAndContext("dev-eu-1", "dev-eu")),
+	FilePath: utils.IDFromClusterAndContext("dev-eu-1", "dev-eu").StorePath(),
 	Content: k8s.Config{
 		APIVersion:     "v1",
 		Kind:           "Config",
@@ -112,7 +112,7 @@ var devEUControlGroup = &konfFile{
 }
 
 var devASIAControlGroup = &konfFile{
-	FilePath: utils.StorePathForID(utils.IDFromClusterAndContext("dev-asia-1", "dev-asia")),
+	FilePath: utils.IDFromClusterAndContext("dev-asia-1", "dev-asia").StorePath(),
 	Content: k8s.Config{
 		APIVersion:     "v1",
 		Kind:           "Config",

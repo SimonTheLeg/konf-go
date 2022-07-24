@@ -12,7 +12,7 @@ import (
 var validCombos = []struct {
 	context string
 	cluster string
-	id      string
+	id      KonfID
 }{
 	{"dev-eu", "dev-eu-1", "dev-eu_dev-eu-1"},
 	{"con", "mygreathost.com-443", "con_mygreathost.com-443"},
@@ -23,13 +23,13 @@ var validCombos = []struct {
 
 func TestPathForID(t *testing.T) {
 	for _, co := range validCombos {
-		resStore := StorePathForID(co.id)
+		resStore := co.id.StorePath()
 		expStore := fmt.Sprintf("./konf/store/%s.yaml", co.id)
 		if resStore != expStore {
 			t.Errorf("Exp StorePath %q, got %q", expStore, resStore)
 		}
 
-		resActive := ActivePathForID(co.id)
+		resActive := co.id.ActivePath()
 		expActive := fmt.Sprintf("./konf/active/%s.yaml", co.id)
 		if resActive != expActive {
 			t.Errorf("Exp ActivePath %q, got %q", expActive, resActive)
@@ -60,7 +60,7 @@ func TestIDFromFileInfo(t *testing.T) {
 
 	tt := map[string]struct {
 		In  fs.FileInfo
-		Exp string
+		Exp KonfID
 	}{
 		"yaml extension": {
 			&mockFileInfo{"mygreatid.yaml"},
@@ -83,6 +83,15 @@ func TestIDFromFileInfo(t *testing.T) {
 				t.Errorf("Expected ID %q, got %q", tc.Exp, res)
 			}
 		})
+	}
+}
+
+func TestIDFromProcessID(t *testing.T) {
+	in := 1234
+	expOut := KonfID("1234")
+	out := IDFromProcessID(in)
+	if out != expOut {
+		t.Errorf("Exp out to be %s, got %s", expOut, out)
 	}
 }
 

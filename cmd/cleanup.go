@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
 	"io/fs"
 	"os"
 	"strconv"
@@ -45,7 +44,7 @@ An active config is considered unused when no process points to it anymore`,
 func selfClean(f afero.Fs) error {
 	pid := os.Getppid()
 
-	fpath := utils.ActivePathForID(fmt.Sprint(pid))
+	fpath := utils.IDFromProcessID(pid).ActivePath()
 	err := f.Remove(fpath)
 
 	if errors.Is(err, fs.ErrNotExist) {
@@ -74,8 +73,8 @@ func cleanLeftOvers(f afero.Fs) error {
 
 	for _, konf := range konfs {
 		// We need to trim of the .yaml file extension to get to the PID
-		sPid := utils.IDFromFileInfo(konf)
-		pid, err := strconv.Atoi(sPid)
+		konfID := utils.IDFromFileInfo(konf)
+		pid, err := strconv.Atoi(string(konfID))
 		if err != nil {
 			log.Warn("file '%s' could not be converted into an int, and therefore cannot be a valid process id. Skip for cleanup", konf.Name())
 			continue
@@ -87,7 +86,7 @@ func cleanLeftOvers(f afero.Fs) error {
 		}
 
 		if p == nil {
-			err := f.Remove(utils.ActivePathForID(fmt.Sprint(pid)))
+			err := f.Remove(konfID.ActivePath())
 			if err != nil {
 				return err
 			}
