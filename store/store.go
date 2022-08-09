@@ -15,9 +15,9 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-// TableOutput describes a formatting of kubekonf information, that is being used to present the user a nice table selection
-type TableOutput struct {
-	// Since we have no other use for structured information, we can safely leave this in set.go for now
+// Metadata describes a formatting of kubekonf information.
+// It is mainly being used to present the user a nice table selection
+type Metadata struct {
 	Context string
 	Cluster string
 	File    string
@@ -41,7 +41,7 @@ func (k *EmptyStore) Error() string {
 	return fmt.Sprintf("The konf store at %q is empty. Please run 'konf import' to populate it", config.StoreDir())
 }
 
-func FetchKonfs(f afero.Fs) ([]*TableOutput, error) {
+func FetchKonfs(f afero.Fs) ([]*Metadata, error) {
 	var konfs []fs.FileInfo
 
 	err := afero.Walk(f, config.StoreDir(), func(path string, info fs.FileInfo, err error) error {
@@ -81,7 +81,7 @@ func FetchKonfs(f afero.Fs) ([]*TableOutput, error) {
 		return nil, &EmptyStore{}
 	}
 
-	out := []*TableOutput{}
+	out := []*Metadata{}
 	// TODO the logic of this loop should be extracted into the walkFn above to avoid looping twice
 	// TODO (possibly the walkfunction should also be extracted into its own function)
 	for _, konf := range konfs {
@@ -108,7 +108,7 @@ func FetchKonfs(f afero.Fs) ([]*TableOutput, error) {
 			return nil, &KubeConfigOverload{path}
 		}
 
-		t := TableOutput{}
+		t := Metadata{}
 		t.Context = kubeconf.Contexts[0].Name
 		t.Cluster = kubeconf.Clusters[0].Name
 		t.File = path

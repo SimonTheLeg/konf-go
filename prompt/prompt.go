@@ -26,7 +26,7 @@ func Terminal(prompt *promptui.Select) (sel int, err error) {
 }
 
 // FuzzyFilterKonf allows fuzzy searching of a list of konf metadata in the form of store.TableOutput
-func FuzzyFilterKonf(searchTerm string, curItem *store.TableOutput) bool {
+func FuzzyFilterKonf(searchTerm string, curItem *store.Metadata) bool {
 	// since there is no weight on any of the table entries, we can just combine them to one string
 	// and run the contains on it, which automatically is going to match any of the three values
 	r := fmt.Sprintf("%s %s %s", curItem.Context, curItem.Cluster, curItem.File)

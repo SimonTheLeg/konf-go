@@ -160,7 +160,7 @@ func saveLatestKonf(f afero.Fs, id utils.KonfID) error {
 	return afero.WriteFile(f, config.LatestKonfFilePath(), []byte(id), utils.KonfPerm)
 }
 
-func createSetPrompt(options []*store.TableOutput) *promptui.Select {
+func createSetPrompt(options []*store.Metadata) *promptui.Select {
 	// TODO use ssh/terminal to get the terminalsize and set trunc accordingly https://stackoverflow.com/questions/16569433/get-terminal-size-in-go
 	trunc := 25
 	promptInactive, promptActive, label, fmap := prompt.NewTableOutputTemplates(trunc)

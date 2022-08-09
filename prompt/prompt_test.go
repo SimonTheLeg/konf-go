@@ -12,27 +12,27 @@ import (
 func TestFuzzyFilterKonf(t *testing.T) {
 	tt := map[string]struct {
 		search string
-		item   *store.TableOutput
+		item   *store.Metadata
 		expRes bool
 	}{
 		"full match across all": {
 			"a b c",
-			&store.TableOutput{Context: "a", Cluster: "b", File: "c"},
+			&store.Metadata{Context: "a", Cluster: "b", File: "c"},
 			true,
 		},
 		"full match across all - fuzzy": {
 			"abc",
-			&store.TableOutput{Context: "a", Cluster: "b", File: "c"},
+			&store.Metadata{Context: "a", Cluster: "b", File: "c"},
 			true,
 		},
 		"partial match across fields": {
 			"textclu",
-			&store.TableOutput{Context: "context", Cluster: "cluster", File: "file"},
+			&store.Metadata{Context: "context", Cluster: "cluster", File: "file"},
 			true,
 		},
 		"no match": {
 			"oranges",
-			&store.TableOutput{Context: "apples", Cluster: "and", File: "bananas"},
+			&store.Metadata{Context: "apples", Cluster: "and", File: "bananas"},
 			false,
 		},
 	}
@@ -49,14 +49,14 @@ func TestFuzzyFilterKonf(t *testing.T) {
 
 func TestPrepareTemplates(t *testing.T) {
 	tt := map[string]struct {
-		Values      store.TableOutput
+		Values      store.Metadata
 		Trunc       int
 		ExpInactive string
 		ExpActive   string
 		ExpLabel    string
 	}{
 		"values < trunc": {
-			store.TableOutput{
+			store.Metadata{
 				Context: "kind-eu",
 				Cluster: "cluster-eu",
 				File:    "kind-eu.cluster-eu.yaml",
@@ -67,7 +67,7 @@ func TestPrepareTemplates(t *testing.T) {
 			"  Context                   | Cluster                   | File                      ",
 		},
 		"values == trunc": {
-			store.TableOutput{
+			store.Metadata{
 				Context: "0123456789",
 				Cluster: "0123456789",
 				File:    "xyz.yaml",
@@ -78,7 +78,7 @@ func TestPrepareTemplates(t *testing.T) {
 			"  Context    | Cluster    | File       ",
 		},
 		"values > trunc": {
-			store.TableOutput{
+			store.Metadata{
 				Context: "0123456789-andlotsmore",
 				Cluster: "0123456789-andlotsmore",
 				File:    "xyz.yaml",
@@ -89,7 +89,7 @@ func TestPrepareTemplates(t *testing.T) {
 			"  Context    | Cluster    | File       ",
 		},
 		"trunc is below minLength": {
-			store.TableOutput{
+			store.Metadata{
 				Context: "0123456789",
 				Cluster: "0123456789",
 				File:    "xyz.yaml",
@@ -112,7 +112,7 @@ func TestPrepareTemplates(t *testing.T) {
 	}
 }
 
-func checkTemplate(t *testing.T, stpl string, val store.TableOutput, exp string, fmap template.FuncMap) {
+func checkTemplate(t *testing.T, stpl string, val store.Metadata, exp string, fmap template.FuncMap) {
 
 	tmpl, err := template.New("t").Funcs(fmap).Parse(stpl)
 	if err != nil {

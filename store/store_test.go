@@ -14,7 +14,7 @@ func TestFetchKonfs(t *testing.T) {
 	tt := map[string]struct {
 		FSIn        afero.Fs
 		CheckError  func(*testing.T, error) // currently this convoluted mess is needed so we can accurately check for types. errors.As does not work in our case
-		ExpTableOut []*TableOutput
+		ExpTableOut []*Metadata
 	}{
 		"empty store": {
 			FSIn:        testhelper.FSWithFiles(fm.StoreDir),
@@ -24,7 +24,7 @@ func TestFetchKonfs(t *testing.T) {
 		"valid konfs and a wrong konf": {
 			FSIn:       testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA, fm.InvalidYaml),
 			CheckError: expNil,
-			ExpTableOut: []*TableOutput{
+			ExpTableOut: []*Metadata{
 				{
 					Context: "dev-asia",
 					Cluster: "dev-asia-1",
@@ -50,7 +50,7 @@ func TestFetchKonfs(t *testing.T) {
 		"the nice MacOS .DS_Store file": {
 			FSIn:       testhelper.FSWithFiles(fm.StoreDir, fm.DSStore, fm.SingleClusterSingleContextEU),
 			CheckError: expNil,
-			ExpTableOut: []*TableOutput{
+			ExpTableOut: []*Metadata{
 				{
 					Context: "dev-eu",
 					Cluster: "dev-eu-1",
@@ -61,7 +61,7 @@ func TestFetchKonfs(t *testing.T) {
 		"ignore directories": {
 			FSIn:       testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.EmptyDir),
 			CheckError: expNil,
-			ExpTableOut: []*TableOutput{
+			ExpTableOut: []*Metadata{
 				{
 					Context: "dev-eu",
 					Cluster: "dev-eu-1",
