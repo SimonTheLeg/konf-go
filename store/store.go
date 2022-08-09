@@ -11,8 +11,8 @@ import (
 	"github.com/simontheleg/konf-go/log"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
-	"gopkg.in/yaml.v2"
 	k8s "k8s.io/client-go/tools/clientcmd/api/v1"
+	"sigs.k8s.io/yaml"
 )
 
 // TableOutput describes a formatting of kubekonf information, that is being used to present the user a nice table selection

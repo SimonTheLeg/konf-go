@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 	"text/template"
+	"unicode/utf8"
 
-	sprig "github.com/Masterminds/sprig/v3"
 	"github.com/lithammer/fuzzysearch/fuzzy"
 	"github.com/manifoldco/promptui"
 	"github.com/simontheleg/konf-go/store"
@@ -44,7 +44,9 @@ func NewTableOutputTemplates(maxColumnLen int) (inactive, active, label string, 
 		maxColumnLen = minColumnLen
 	}
 
-	fmap = sprig.TxtFuncMap()
+	fmap = template.FuncMap{}
+	fmap["trunc"] = trunc
+	fmap["repeat"] = repeat
 	fmap["cyan"] = promptui.Styler(promptui.FGCyan)
 	fmap["bold"] = promptui.Styler(promptui.FGBold)
 	fmap["faint"] = promptui.Styler(promptui.FGFaint) // needed to display promptui tooltip https://github.com/manifoldco/promptui/blob/v0.9.0/select.go#L473
@@ -56,3 +58,19 @@ func NewTableOutputTemplates(maxColumnLen int) (inactive, active, label string, 
 	label = fmt.Sprint("  Context" + strings.Repeat(" ", maxColumnLen-7) + " | " + "Cluster" + strings.Repeat(" ", maxColumnLen-7) + " | " + "File" + strings.Repeat(" ", maxColumnLen-4) + " ") // repeat = trunc - length of the word before it
 	return inactive, active, label, fmap
 }
+
+func trunc(len int, str string) string {
+	if len <= 0 {
+		return str
+	}
+	if utf8.RuneCountInString(str) < len {
+		return str
+	}
+
+	return string([]rune(str)[:len])
+}
+
+func repeat(count int, str string) string {
+	return strings.Repeat(str, count)
+}
+

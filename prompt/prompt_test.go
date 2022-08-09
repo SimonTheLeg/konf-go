@@ -137,3 +137,42 @@ func checkTemplate(t *testing.T, stpl string, val store.TableOutput, exp string,
 		t.Errorf("Exp res: '%s', got: '%s'", exp, res)
 	}
 }
+
+func TestTrunc(t *testing.T) {
+	tt := []struct {
+		str string
+		len int
+		exp string
+	}{
+		{"12345678", 4, "1234"},
+		{"12345678", 0, "12345678"},
+		{"お前はもう死んでいる-何", 10, "お前はもう死んでいる"},
+	}
+
+	for _, tc := range tt {
+		res := trunc(tc.len, tc.str)
+		if res != tc.exp {
+			t.Errorf("Expected string %q, got %q", tc.exp, res)
+		}
+	}
+}
+
+// This is of course slightly silly, since we just use standard strings.Repeat
+// in our func, but the things we do for coverage ;)
+func TestRepeat(t *testing.T) {
+	tt := []struct {
+		str   string
+		count int
+		exp   string
+	}{
+		{"1", 4, "1111"},
+		{"1 2", 5, "1 21 21 21 21 2"},
+	}
+
+	for _, tc := range tt {
+		res := repeat(tc.count, tc.str)
+		if res != tc.exp {
+			t.Errorf("Expected string %q, got %q", tc.exp, res)
+		}
+	}
+}
