@@ -168,13 +168,13 @@ func TestNewKubeClientSet(t *testing.T) {
 	fm := testhelper.FilesystemManager{}
 
 	tt := map[string]struct {
-		kubeenv string
-		Fs      afero.Fs
-		ExpErr  bool
+		kubeenv   string
+		FSCreator func() afero.Fs
+		ExpErr    bool
 	}{
 		"no $KUBECONFIG set": {
 			"",
-			nil,
+			testhelper.FSWithFiles(),
 			true,
 		},
 		"valid kubeconfig": {
@@ -193,7 +193,7 @@ func TestNewKubeClientSet(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Setenv("KUBECONFIG", tc.kubeenv)
 
-			_, err := newKubeClientSet(tc.Fs)
+			_, err := newKubeClientSet(tc.FSCreator())
 
 			if err != nil && tc.ExpErr == false {
 				t.Errorf("Exp no error, but got: %v", err)
@@ -267,14 +267,14 @@ func TestSetNamespace(t *testing.T) {
 	fm := testhelper.FilesystemManager{}
 
 	tt := map[string]struct {
-		kubeenv string
-		Fs      afero.Fs
-		ns      string
-		ExpErr  bool
+		kubeenv   string
+		FSCreator func() afero.Fs
+		ns        string
+		ExpErr    bool
 	}{
 		"no $KUBECONFIG set": {
 			"",
-			nil,
+			testhelper.FSWithFiles(),
 			"",
 			true,
 		},
@@ -302,14 +302,16 @@ func TestSetNamespace(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			t.Setenv("KUBECONFIG", tc.kubeenv)
 
-			err := setNamespace(tc.Fs, tc.ns)
+			fs := tc.FSCreator()
+
+			err := setNamespace(fs, tc.ns)
 
 			if err != nil && tc.ExpErr == false {
 				t.Errorf("Exp no error, but got: %v", err)
 			}
 
 			if tc.ExpErr == false {
-				b, err := afero.ReadFile(tc.Fs, tc.kubeenv)
+				b, err := afero.ReadFile(fs, tc.kubeenv)
 				if err != nil {
 					t.Errorf("failed to read file %q", err)
 				}

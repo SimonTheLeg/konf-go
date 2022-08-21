@@ -21,25 +21,25 @@ func TestSelectLastKonf(t *testing.T) {
 	fm := testhelper.FilesystemManager{}
 
 	tt := map[string]struct {
-		InFs     afero.Fs
-		ExpID    utils.KonfID
-		ExpError error
+		FSCreator func() afero.Fs
+		ExpID     utils.KonfID
+		ExpError  error
 	}{
 		"latestKonf set": {
-			InFs:     testhelper.FSWithFiles(fm.LatestKonf),
-			ExpID:    "context_cluster",
-			ExpError: nil,
+			FSCreator: testhelper.FSWithFiles(fm.LatestKonf),
+			ExpID:     "context_cluster",
+			ExpError:  nil,
 		},
 		"no latestKonf": {
-			InFs:     testhelper.FSWithFiles(),
-			ExpID:    "",
-			ExpError: fmt.Errorf("could not select latest konf, because no konf was yet set"),
+			FSCreator: testhelper.FSWithFiles(),
+			ExpID:     "",
+			ExpError:  fmt.Errorf("could not select latest konf, because no konf was yet set"),
 		},
 	}
 
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
-			id, err := idOfLatestKonf(tc.InFs)
+			id, err := idOfLatestKonf(tc.FSCreator())
 
 			if !testhelper.EqualError(tc.ExpError, err) {
 				t.Errorf("Want error %q, got %q", tc.ExpError, err)
@@ -58,7 +58,7 @@ func TestCompleteSet(t *testing.T) {
 	fm := testhelper.FilesystemManager{}
 
 	tt := map[string]struct {
-		fs           afero.Fs
+		fsCreator    func() afero.Fs
 		expComp      []string
 		expCompDirec cobra.ShellCompDirective
 	}{
@@ -77,7 +77,7 @@ func TestCompleteSet(t *testing.T) {
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
 			scmd := newSetCommand()
-			scmd.fs = tc.fs
+			scmd.fs = tc.fsCreator()
 
 			res, compdirec := scmd.completeSet(scmd.cmd, []string{}, "")
 
@@ -182,7 +182,7 @@ func TestSetContext(t *testing.T) {
 
 func TestSelectContext(t *testing.T) {
 	fm := testhelper.FilesystemManager{}
-	f := testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA)
+	f := testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA)()
 
 	// cases
 	// - invalid selection
@@ -216,7 +216,6 @@ func TestSelectContext(t *testing.T) {
 
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
-
 			res, err := selectSingleKonf(f, tc.pf)
 
 			if !testhelper.EqualError(err, tc.expErr) {

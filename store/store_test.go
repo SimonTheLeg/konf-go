@@ -4,25 +4,26 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/simontheleg/konf-go/config"
 	"github.com/simontheleg/konf-go/testhelper"
 	"github.com/spf13/afero"
 )
 
-func TestFetchKonfs(t *testing.T) {
+func TestFetchAllKonfs(t *testing.T) {
 	fm := testhelper.FilesystemManager{}
 
 	tt := map[string]struct {
-		FSIn        afero.Fs
+		FSCreator   func() afero.Fs
 		CheckError  func(*testing.T, error) // currently this convoluted mess is needed so we can accurately check for types. errors.As does not work in our case
 		ExpTableOut []*Metadata
 	}{
 		"empty store": {
-			FSIn:        testhelper.FSWithFiles(fm.StoreDir),
+			FSCreator:   testhelper.FSWithFiles(fm.StoreDir),
 			CheckError:  expEmptyStore,
 			ExpTableOut: nil,
 		},
 		"valid konfs and a wrong konf": {
-			FSIn:       testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA, fm.InvalidYaml),
+			FSCreator:  testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA, fm.InvalidYaml),
 			CheckError: expNil,
 			ExpTableOut: []*Metadata{
 				{
@@ -38,17 +39,17 @@ func TestFetchKonfs(t *testing.T) {
 			},
 		},
 		"overloaded konf (cluster)": {
-			FSIn:        testhelper.FSWithFiles(fm.StoreDir, fm.MultiClusterSingleContext),
+			FSCreator:   testhelper.FSWithFiles(fm.StoreDir, fm.MultiClusterSingleContext),
 			CheckError:  expKubeConfigOverload,
 			ExpTableOut: nil,
 		},
 		"overloaded konf (context)": {
-			FSIn:        testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterMultiContext),
+			FSCreator:   testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterMultiContext),
 			CheckError:  expKubeConfigOverload,
 			ExpTableOut: nil,
 		},
 		"the nice MacOS .DS_Store file": {
-			FSIn:       testhelper.FSWithFiles(fm.StoreDir, fm.DSStore, fm.SingleClusterSingleContextEU),
+			FSCreator:  testhelper.FSWithFiles(fm.StoreDir, fm.DSStore, fm.SingleClusterSingleContextEU),
 			CheckError: expNil,
 			ExpTableOut: []*Metadata{
 				{
@@ -59,7 +60,7 @@ func TestFetchKonfs(t *testing.T) {
 			},
 		},
 		"ignore directories": {
-			FSIn:       testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.EmptyDir),
+			FSCreator:  testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.EmptyDir),
 			CheckError: expNil,
 			ExpTableOut: []*Metadata{
 				{

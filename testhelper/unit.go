@@ -17,13 +17,15 @@ func EqualError(a, b error) bool {
 type filefunc = func(afero.Fs)
 
 // FSWithFiles is a testhelper that can be used to quickly setup a MemMapFs with required Files
-func FSWithFiles(ff ...filefunc) afero.Fs {
-	fs := afero.NewMemMapFs()
+func FSWithFiles(ff ...filefunc) func() afero.Fs {
+	return func() afero.Fs {
+		fs := afero.NewMemMapFs()
 
-	for _, f := range ff {
-		f(fs)
+		for _, f := range ff {
+			f(fs)
+		}
+		return fs
 	}
-	return fs
 }
 
 // FilesystemManager is used to manage filefuncs. It is feature identical to

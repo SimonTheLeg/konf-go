@@ -29,9 +29,9 @@ func TestImport(t *testing.T) {
 		WriteConfig      int
 	}
 	tt := map[string]struct {
-		Args   []string
-		Fs     afero.Fs
-		ExpErr error
+		Args      []string
+		FsCreator func() afero.Fs
+		ExpErr    error
 		ExpCalls
 	}{
 		"single context": {
@@ -52,9 +52,10 @@ func TestImport(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			determineConfigsCalled = false
 			writeConfigCalledCount = 0
+			fs := tc.FsCreator()
 
 			icmd := newImportCmd()
-			icmd.fs = tc.Fs
+			icmd.fs = fs
 			icmd.determineConfigs = wrapDetermineConfig
 			icmd.writeConfig = mockWriteConfig
 			cmd := icmd.cmd
@@ -148,14 +149,14 @@ func TestDetermineConfigs(t *testing.T) {
 	fm := testhelper.FilesystemManager{}
 
 	tt := map[string]struct {
-		Fs                 afero.Fs
+		FSCreator          func() afero.Fs
 		konfpath           string
 		ExpError           error
 		ExpNumOfKonfigFile int
 		ExpKonfigFiles     []*konfFile
 	}{
 		"SingleClusterSingleContext": {
-			Fs:                 testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU),
+			FSCreator:          testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU),
 			konfpath:           "./konf/store/dev-eu_dev-eu-1.yaml",
 			ExpError:           nil,
 			ExpNumOfKonfigFile: 1,
@@ -164,7 +165,7 @@ func TestDetermineConfigs(t *testing.T) {
 			},
 		},
 		"multiClusterMultiContext": {
-			Fs:                 testhelper.FSWithFiles(fm.StoreDir, fm.MultiClusterMultiContext),
+			FSCreator:          testhelper.FSWithFiles(fm.StoreDir, fm.MultiClusterMultiContext),
 			konfpath:           "./konf/store/multi_multi_konf.yaml",
 			ExpError:           nil,
 			ExpNumOfKonfigFile: 2,
@@ -174,7 +175,7 @@ func TestDetermineConfigs(t *testing.T) {
 			},
 		},
 		"multiClusterSingleContext": {
-			Fs:                 testhelper.FSWithFiles(fm.StoreDir, fm.MultiClusterSingleContext),
+			FSCreator:          testhelper.FSWithFiles(fm.StoreDir, fm.MultiClusterSingleContext),
 			konfpath:           "./konf/store/multi_konf.yaml",
 			ExpError:           nil,
 			ExpNumOfKonfigFile: 1,
@@ -183,7 +184,7 @@ func TestDetermineConfigs(t *testing.T) {
 			},
 		},
 		"emptyConfig": {
-			Fs:                 testhelper.FSWithFiles(),
+			FSCreator:          testhelper.FSWithFiles(),
 			konfpath:           "i-dont-exist.yaml",
 			ExpError:           fmt.Errorf("open i-dont-exist.yaml: file does not exist"),
 			ExpNumOfKonfigFile: 0,
@@ -191,7 +192,7 @@ func TestDetermineConfigs(t *testing.T) {
 		},
 		// All for the coverage ;)
 		"invalidConfig": {
-			Fs:                 testhelper.FSWithFiles(fm.StoreDir, fm.InvalidYaml),
+			FSCreator:          testhelper.FSWithFiles(fm.StoreDir, fm.InvalidYaml),
 			konfpath:           "./konf/store/no-konf.yaml",
 			ExpError:           fmt.Errorf("error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1.Config"),
 			ExpNumOfKonfigFile: 0,
@@ -201,7 +202,7 @@ func TestDetermineConfigs(t *testing.T) {
 
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
-			res, err := determineConfigs(tc.Fs, tc.konfpath)
+			res, err := determineConfigs(tc.FSCreator(), tc.konfpath)
 
 			if !testhelper.EqualError(err, tc.ExpError) {
 				t.Errorf("Want error '%s', got '%s'", tc.ExpError, err)
@@ -222,7 +223,7 @@ func TestDetermineConfigs(t *testing.T) {
 
 func TestWriteConfig(t *testing.T) {
 	fm := testhelper.FilesystemManager{}
-	f := testhelper.FSWithFiles(fm.ActiveDir, fm.StoreDir)
+	f := testhelper.FSWithFiles(fm.ActiveDir, fm.StoreDir)()
 
 	exp := `apiVersion: v1
 clusters:
