@@ -87,7 +87,7 @@ func (c *setCmd) set(cmd *cobra.Command, args []string) error {
 }
 
 func (c *setCmd) completeSet(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	konfs, err := store.FetchKonfs(c.fs)
+	konfs, err := store.FetchAllKonfs(c.fs)
 	if err != nil {
 		// if the store is just empty, return no suggestions, instead of throwing an error
 		if _, ok := err.(*store.EmptyStore); ok {
@@ -109,7 +109,7 @@ func (c *setCmd) completeSet(cmd *cobra.Command, args []string, toComplete strin
 }
 
 func selectSingleKonf(f afero.Fs, pf prompt.RunFunc) (utils.KonfID, error) {
-	k, err := store.FetchKonfs(f)
+	k, err := store.FetchAllKonfs(f)
 	if err != nil {
 		return "", err
 	}

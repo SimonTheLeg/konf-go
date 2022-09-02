@@ -41,10 +41,20 @@ func (k *EmptyStore) Error() string {
 	return fmt.Sprintf("The konf store at %q is empty. Please run 'konf import' to populate it", config.StoreDir())
 }
 
-func FetchKonfs(f afero.Fs) ([]*Metadata, error) {
+// FetchAllKonfs retrieves metadata for all konfs currently in the store
+func FetchAllKonfs(f afero.Fs) ([]*Metadata, error) {
+	return FetchKonfsForGlob(f, "*")
+}
+
+// FetchKonfsForGlob returns all konfs whose name matches the supplied pattern. Pattern matching is done using [filepath.Match].
+// The pattern should only include the name of the file itself not its full path. All relation to the konfs StoreDir will be
+// handled automatically.
+//
+// [filepath.Match]: https://pkg.go.dev/path/filepath#Match
+func FetchKonfsForGlob(f afero.Fs, pattern string) ([]*Metadata, error) {
 	var konfs []fs.FileInfo
 
-	err := afero.Walk(f, config.StoreDir(), func(path string, info fs.FileInfo, err error) error {
+	err := afero.Walk(f, config.StoreDir(), func(path string, info fs.FileInfo, errPath error) error {
 		// do not add directories. This is important as later we check the number of items in konf to determine whether store is empty or not
 		// without this check we would display an empty prompt if the user has only directories in their storeDir
 		if info.IsDir() && path != config.StoreDir() {
@@ -61,6 +71,17 @@ func FetchKonfs(f afero.Fs) ([]*Metadata, error) {
 			return nil
 		}
 
+		// skip any files that do not match our glob
+		patternPath := config.StoreDir() + "/" + pattern
+		patternPath = strings.TrimPrefix(patternPath, "./") // we need this as afero.Walk trims out any leading "./"
+		match, err := filepath.Match(patternPath, path)
+		if err != nil {
+			return fmt.Errorf("Could not apply glob %q: %v", pattern, err)
+		}
+		if !match {
+			return nil
+		}
+
 		konfs = append(konfs, info)
 		return nil
 	})
@@ -69,9 +90,10 @@ func FetchKonfs(f afero.Fs) ([]*Metadata, error) {
 		return nil, err
 	}
 
-	// cut out the root element, which gets added in the previous step
-	// this is safe as the element is guaranteed to be at the first position
-	konfs = konfs[1:]
+	// at this point it is worth mentioning, that we do not need to remove the
+	// root element from the list of konfs anymore. This is because filepath.Match
+	// never matches for the root element, and therefore the root iself is not
+	// part of the list anymore
 
 	// similar to fs.ReadDir, sort the entries for easier viewing for the user and to
 	// be consistent with what shells return during auto-completion

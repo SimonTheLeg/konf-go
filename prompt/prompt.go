@@ -34,7 +34,7 @@ func FuzzyFilterKonf(searchTerm string, curItem *store.Metadata) bool {
 }
 
 // NewTableOutputTemplates returns templating strings for creating a nicely
-// formatted table out of an store.TableOutput. Additionally it returns a
+// formatted table out of an store.Metadata. Additionally it returns a
 // template.FuncMap with all required templating funcs for the strings. Maximum
 // length per column can be configured.
 func NewTableOutputTemplates(maxColumnLen int) (inactive, active, label string, fmap template.FuncMap) {
