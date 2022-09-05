@@ -41,7 +41,8 @@ func newDeleteCommand() *deleteCmd {
 		-> 'delete <konfig id> [<konfig id 2>]' delete specific konf(s)
 		-> 'delete "my-konf*"' delete konf matching fileglob
 	`,
-		RunE: dc.delete,
+		RunE:              dc.delete,
+		ValidArgsFunction: dc.completeDelete,
 	}
 
 	return dc
@@ -98,6 +99,28 @@ func idsForGlobs(f afero.Fs, patterns []string) ([]utils.KonfID, error) {
 		}
 	}
 	return ids, nil
+}
+
+func (c *deleteCmd) completeDelete(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+	konfs, err := store.FetchAllKonfs(c.fs)
+	if err != nil {
+		// if the store is just empty, return no suggestions, instead of throwing an error
+		if _, ok := err.(*store.EmptyStore); ok {
+			return []string{}, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		cobra.CompDebugln(err.Error(), true)
+		return nil, cobra.ShellCompDirectiveError
+	}
+
+	sug := []string{}
+	for _, konf := range konfs {
+		// with the current design of 'set', we need to return the ID here in the autocomplete as the first part of the completion
+		// as it is directly passed to set
+		sug = append(sug, string(utils.IDFromClusterAndContext(konf.Cluster, konf.Context)))
+	}
+
+	return sug, cobra.ShellCompDirectiveNoFileComp
 }
 
 func init() {

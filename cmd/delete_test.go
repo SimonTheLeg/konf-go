@@ -6,12 +6,14 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/simontheleg/konf-go/config"
 	"github.com/simontheleg/konf-go/prompt"
 	"github.com/simontheleg/konf-go/store"
 	"github.com/simontheleg/konf-go/testhelper"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
+	"github.com/spf13/cobra"
 	"k8s.io/utils/strings/slices"
 )
 
@@ -225,4 +227,44 @@ func TestDelete(t *testing.T) {
 
 	}
 
+}
+
+func TestCompleteDelete(t *testing.T) {
+	// since cobra takes care of the majority of the complexity (like parsing out results that don't match completion start),
+	// we only need to test regular cases
+	fm := testhelper.FilesystemManager{}
+
+	tt := map[string]struct {
+		fsCreator    func() afero.Fs
+		expComp      []string
+		expCompDirec cobra.ShellCompDirective
+	}{
+		"normal results": {
+			testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextASIA, fm.SingleClusterSingleContextEU),
+			[]string{"dev-asia_dev-asia-1", "dev-eu_dev-eu-1"},
+			cobra.ShellCompDirectiveNoFileComp,
+		},
+		"no results": {
+			testhelper.FSWithFiles(fm.StoreDir),
+			[]string{},
+			cobra.ShellCompDirectiveNoFileComp,
+		},
+	}
+
+	for name, tc := range tt {
+		t.Run(name, func(t *testing.T) {
+			dcmd := newDeleteCommand()
+			dcmd.fs = tc.fsCreator()
+
+			res, compdirec := dcmd.completeDelete(dcmd.cmd, []string{}, "")
+
+			if !cmp.Equal(res, tc.expComp) {
+				t.Errorf("Exp and given comps differ: \n '%s'", cmp.Diff(tc.expComp, res))
+			}
+
+			if compdirec != tc.expCompDirec {
+				t.Errorf("Exp compdirec %q, got %q", tc.expCompDirec, compdirec)
+			}
+		})
+	}
 }
