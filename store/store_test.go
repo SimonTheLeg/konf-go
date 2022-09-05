@@ -249,6 +249,12 @@ func TestFetchKonfsForGlob(t *testing.T) {
 				},
 			},
 		},
+		"no match, but valid konfs exist": {
+			fsCreator:   testhelper.FSWithFiles(fm.SingleClusterSingleContextEU),
+			checkError:  expNoMatch,
+			glob:        "no-match",
+			expTableOut: nil,
+		},
 	}
 
 	for name, tc := range tt {
@@ -280,5 +286,11 @@ func expKubeConfigOverload(t *testing.T, err error) {
 func expNil(t *testing.T, err error) {
 	if err != nil {
 		t.Errorf("Expected err to be nil, but got %q", err)
+	}
+}
+
+func expNoMatch(t *testing.T, err error) {
+	if _, ok := err.(*NoMatch); !ok {
+		t.Errorf("Expected err to be of type NoMatch")
 	}
 }

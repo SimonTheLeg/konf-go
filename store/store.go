@@ -41,6 +41,16 @@ func (k *EmptyStore) Error() string {
 	return fmt.Sprintf("The konf store at %q is empty. Please run 'konf import' to populate it", config.StoreDir())
 }
 
+// NoMatch describes a state in which no konf was found matching the supplied glob
+// It makes sense to have this in a separate case as it does not matter for some operations (e.g. importing) but detrimental for others (e.g. running the selection prompt)
+type NoMatch struct {
+	Pattern string
+}
+
+func (k *NoMatch) Error() string {
+	return fmt.Sprintf("No konf file matched your search pattern %q", k.Pattern)
+}
+
 // FetchAllKonfs retrieves metadata for all konfs currently in the store
 func FetchAllKonfs(f afero.Fs) ([]*Metadata, error) {
 	return FetchKonfsForGlob(f, "*")
@@ -55,6 +65,7 @@ func FetchAllKonfs(f afero.Fs) ([]*Metadata, error) {
 // [filepath.Match]: https://pkg.go.dev/path/filepath#Match
 func FetchKonfsForGlob(f afero.Fs, pattern string) ([]*Metadata, error) {
 	var konfs []fs.FileInfo
+	var filesChecked int
 
 	err := afero.Walk(f, config.StoreDir(), func(path string, info fs.FileInfo, errPath error) error {
 		// do not add directories. This is important as later we check the number of items in konf to determine whether store is empty or not
@@ -72,6 +83,9 @@ func FetchKonfsForGlob(f afero.Fs, pattern string) ([]*Metadata, error) {
 			// it is quite easy to create a malformed kubeconfig without noticing
 			return nil
 		}
+
+		// only increment filesChecked after we have sorted out directories and hidden files
+		filesChecked++
 
 		// skip any files that do not match our glob
 		patternPath := config.StoreDir() + "/" + pattern + ".yaml"
@@ -97,12 +111,18 @@ func FetchKonfsForGlob(f afero.Fs, pattern string) ([]*Metadata, error) {
 	// never matches for the root element, and therefore the root iself is not
 	// part of the list anymore
 
+	// if the walkfunc only ran once, it means that the storedir does not contain any file which could be a kubeconfig
+	// It will always run at least once because we do not skip the rootDir
+	if filesChecked == 1 {
+		return nil, &EmptyStore{}
+	}
+
 	// similar to fs.ReadDir, sort the entries for easier viewing for the user and to
 	// be consistent with what shells return during auto-completion
 	sort.Slice(konfs, func(i, j int) bool { return konfs[i].Name() < konfs[j].Name() })
 
 	if len(konfs) == 0 {
-		return nil, &EmptyStore{}
+		return nil, &NoMatch{Pattern: pattern}
 	}
 
 	out := []*Metadata{}
