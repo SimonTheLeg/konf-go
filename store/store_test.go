@@ -213,6 +213,18 @@ func TestFetchKonfsForGlob(t *testing.T) {
 				},
 			},
 		},
+		"match eu konf no expansion": {
+			fsCreator:  testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA, fm.InvalidYaml),
+			checkError: expNil,
+			glob:       "dev-eu_dev-eu-1",
+			expTableOut: []*Metadata{
+				{
+					Context: "dev-eu",
+					Cluster: "dev-eu-1",
+					File:    "./konf/store/dev-eu_dev-eu-1.yaml",
+				},
+			},
+		},
 		"match asia konf": {
 			fsCreator:  testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA, fm.InvalidYaml),
 			checkError: expNil,

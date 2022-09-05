@@ -46,8 +46,10 @@ func FetchAllKonfs(f afero.Fs) ([]*Metadata, error) {
 	return FetchKonfsForGlob(f, "*")
 }
 
-// FetchKonfsForGlob returns all konfs whose name matches the supplied pattern. Pattern matching is done using [filepath.Match].
-// The pattern should only include the name of the file itself not its full path. All relation to the konfs StoreDir will be
+// FetchKonfsForGlob returns all konfs whose name matches the supplied pattern.
+// Pattern matching is done using [filepath.Match]. The pattern should only
+// include the name of the file itself not its full path. Also it should not
+// include the extension of the file. All relation to the konfs StoreDir will be
 // handled automatically.
 //
 // [filepath.Match]: https://pkg.go.dev/path/filepath#Match
@@ -72,7 +74,7 @@ func FetchKonfsForGlob(f afero.Fs, pattern string) ([]*Metadata, error) {
 		}
 
 		// skip any files that do not match our glob
-		patternPath := config.StoreDir() + "/" + pattern
+		patternPath := config.StoreDir() + "/" + pattern + ".yaml"
 		patternPath = strings.TrimPrefix(patternPath, "./") // we need this as afero.Walk trims out any leading "./"
 		match, err := filepath.Match(patternPath, path)
 		if err != nil {
