@@ -108,6 +108,12 @@ func (c *setCmd) completeSet(cmd *cobra.Command, args []string, toComplete strin
 	return sug, cobra.ShellCompDirectiveNoFileComp
 }
 
+// TODO make a decision where this code should be placed. Currently it does not
+// make a lot of sense to bring it into its own package as it is at the nice
+// intersection between utilizing two packages to fulfil business logic However
+// it is also being used by two commands: "set" and "delete". But because
+// they are in the same package, we also cannot easily duplicate the code for
+// each
 func selectSingleKonf(f afero.Fs, pf prompt.RunFunc) (utils.KonfID, error) {
 	k, err := store.FetchAllKonfs(f)
 	if err != nil {

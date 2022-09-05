@@ -54,6 +54,18 @@ func (*FilesystemManager) SingleClusterSingleContextASIA(fs afero.Fs) {
 	afero.WriteFile(fs, utils.KonfID("dev-asia_dev-asia-1").ActivePath(), []byte(singleClusterSingleContextASIA), utils.KonfPerm)
 }
 
+// SingleClusterSingleContextEU2 creates a second valid kubeconfig in store and active. It is mainly used for glob testing
+func (*FilesystemManager) SingleClusterSingleContextEU2(fs afero.Fs) {
+	afero.WriteFile(fs, utils.KonfID("dev-eu_dev-eu-2").StorePath(), []byte(singleClusterSingleContextEU2), utils.KonfPerm)
+	afero.WriteFile(fs, utils.KonfID("dev-eu_dev-eu-2").ActivePath(), []byte(singleClusterSingleContextEU2), utils.KonfPerm)
+}
+
+// SingleClusterSingleContextASIA2 creates a second valid kubeconfig in store and active. It is mainly used for glob testing
+func (*FilesystemManager) SingleClusterSingleContextASIA2(fs afero.Fs) {
+	afero.WriteFile(fs, utils.KonfID("dev-asia_dev-asia-2").StorePath(), []byte(singleClusterSingleContextASIA2), utils.KonfPerm)
+	afero.WriteFile(fs, utils.KonfID("dev-asia_dev-asia-2").ActivePath(), []byte(singleClusterSingleContextASIA2), utils.KonfPerm)
+}
+
 // InvalidYaml creates an invalidYaml in store and active
 func (*FilesystemManager) InvalidYaml(fs afero.Fs) {
 	afero.WriteFile(fs, utils.KonfID("no-konf").ActivePath(), []byte("I am no valid yaml"), utils.KonfPerm)
@@ -163,6 +175,25 @@ users:
   - name: dev-eu
     user: {}
 `
+var singleClusterSingleContextEU2 = `
+apiVersion: v1
+clusters:
+  - cluster:
+      server: https://10.1.1.0
+    name: dev-eu-2
+contexts:
+  - context:
+      namespace: kube-public
+      cluster: dev-eu-2
+      user: dev-eu
+    name: dev-eu
+current-context: dev-eu
+kind: Config
+preferences: {}
+users:
+  - name: dev-eu
+    user: {}
+`
 
 var singleClusterSingleContextASIA = `
 apiVersion: v1
@@ -183,6 +214,26 @@ users:
   - name: dev-asia
     user: {}
 `
+var singleClusterSingleContextASIA2 = `
+apiVersion: v1
+clusters:
+  - cluster:
+      server: https://10.1.1.0
+    name: dev-asia-2
+contexts:
+  - context:
+      namespace: kube-public
+      cluster: dev-asia-2
+      user: dev-asia
+    name: dev-asia
+current-context: dev-asia
+kind: Config
+preferences: {}
+users:
+  - name: dev-asia
+    user: {}
+`
+
 var multiClusterMultiContext = `
 apiVersion: v1
 clusters:
