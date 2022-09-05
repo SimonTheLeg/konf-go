@@ -31,11 +31,12 @@
 
 ### 1. Install the konf-go binary
 
+Either grab a pre-compiled binary from [GH Releases](https://github.com/SimonTheLeg/konf-go/releases) page, or build it from source using:
+
 ```shell
 go install github.com/simontheleg/konf-go@latest
 ```
 
-This will install a binary called konf-go into your PATH.
 Please do not rename or alias this binary, it is not be called by the user directly. Instead alias the konf shellwrapper described in the next step!
 
 ### 2. Install the konf shellwrapper
