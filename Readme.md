@@ -31,7 +31,34 @@
 
 ### 1. Install the konf-go binary
 
-Either grab a pre-compiled binary from [GH Releases](https://github.com/SimonTheLeg/konf-go/releases) page, or build it from source using:
+#### 1.1 Pre-compiled binary Install the konf-go binary
+
+The [GH Releases](https://github.com/SimonTheLeg/konf-go/releases) provide pre-compiled binaries for common platforms.
+
+#### 1.2 Nix Package
+
+The package can be installed in the local nix-profile.
+
+```shell
+nix-env -iA nixpkgs.konf
+```
+
+For adhoc or testing purposes a shell with the package can be spawned.
+
+```
+nix-shell -p konf
+```
+
+For NixOS users it is highly recommended to install the package by adding it to the list of `systemPackages`.
+
+```nix
+environment.systemPackages = with pkgs; [
+  konf
+  # ...
+];
+```
+
+#### 1.3 Building from source
 
 ```shell
 go install github.com/simontheleg/konf-go@latest
