@@ -31,7 +31,7 @@
 
 ### 1. Install the konf-go binary
 
-#### 1.1 Pre-compiled binary Install the konf-go binary
+#### 1.1 Pre-compiled binary
 
 The [GH Releases](https://github.com/SimonTheLeg/konf-go/releases) provide pre-compiled binaries for common platforms.
 
