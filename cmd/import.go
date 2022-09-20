@@ -19,8 +19,11 @@ type konfFile struct {
 type importCmd struct {
 	fs afero.Fs
 
-	determineConfigs func(afero.Fs, string) ([]*konfFile, error)
-	writeConfig      func(afero.Fs, *konfFile) error
+	determineConfigs     func(afero.Fs, string) ([]*konfFile, error)
+	writeConfig          func(afero.Fs, *konfFile) error
+	deleteOriginalConfig func(afero.Fs, string) error
+
+	move bool
 
 	cmd *cobra.Command
 }
@@ -29,9 +32,10 @@ func newImportCmd() *importCmd {
 	fs := afero.NewOsFs()
 
 	ic := &importCmd{
-		fs:               fs,
-		determineConfigs: determineConfigs,
-		writeConfig:      writeConfig,
+		fs:                   fs,
+		determineConfigs:     determineConfigs,
+		writeConfig:          writeConfig,
+		deleteOriginalConfig: deleteOriginalConfig,
 	}
 
 	ic.cmd = &cobra.Command{
@@ -44,6 +48,8 @@ contain a single context. Import will take care of splitting if necessary.`,
 		Args: cobra.ExactArgs(1),
 		RunE: ic.importf,
 	}
+
+	ic.cmd.Flags().BoolVarP(&ic.move, "move", "m", false, "whether the original kubeconfig should be deleted after successful import (default is false)")
 
 	return ic
 }
@@ -67,6 +73,13 @@ func (c *importCmd) importf(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		log.Info("Imported konf from %q successfully into %q\n", fpath, conf.FilePath)
+	}
+
+	if c.move {
+		if err := c.deleteOriginalConfig(c.fs, fpath); err != nil {
+			return err
+		}
+		log.Info("Successfully deleted original kubeconfig at %q", fpath)
 	}
 
 	return nil
@@ -144,6 +157,14 @@ func writeConfig(f afero.Fs, kf *konfFile) error {
 		return err
 	}
 
+	return nil
+}
+
+func deleteOriginalConfig(f afero.Fs, path string) error {
+	err := f.Remove(path)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
