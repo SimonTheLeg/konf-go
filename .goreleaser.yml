@@ -11,3 +11,5 @@ builds:
       - ppc64le
       - s390x
     goarm: [6, 7]
+    ldflags:
+      - -s -w -X github.com/simontheleg/konf-go/cmd.gitversion={{.Version}} -X github.com/simontheleg/konf-go/cmd.gitcommit={{.Commit}} -X github.com/simontheleg/konf-go/cmd.builddate={{.Date}}
