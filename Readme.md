@@ -164,11 +164,3 @@ If you want to only run integration tests, simply run:
 ```sh
 go test -run Integration ./...
 ```
-
-## Ideas for Future Improvements
-
-- Make it work for fish
-- Allow usage of other fuzzy finders like fzf
-- `konf manage` so you can rename contexts and clusters
-- `konf delete` option so you can delete konfs you don't need anymore
-- File column could be improved by either using '...' abreviation or filtering out the konfDir
