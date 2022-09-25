@@ -52,10 +52,13 @@ nix-shell -p konf
 For NixOS users it is highly recommended to install the package by adding it to the list of `systemPackages`.
 
 ```nix
-environment.systemPackages = with pkgs; [
-  konf
-  # ...
-];
+{ # ...
+
+  environment.systemPackages = with pkgs; [
+    konf
+    # ...
+  ];
+}
 ```
 
 #### 1.3 Building from source
