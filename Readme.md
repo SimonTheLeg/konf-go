@@ -138,13 +138,6 @@ This includes setting an environment variable, which affects us because we want 
 The way we work around this "limitation" is by using a zsh/bash function that executes our binary and then sets `$KUBECONFIG` to the output of `konf-go`.
 With this trick we are able to set `$KUBECONFIG` and can make this project work. Since only the result of stdout will be captured by the zsh/bash-func, we can still communicate normally with the user by using stderr.
 
-### Upgrading spf13/cobra
-
-Special care should be taken before upgrading the cobra package.
-This is due to the fact that in `completion.go` we use the standard completion from the library and then apply some string insertions at certain positions.
-As a result, before any upgrade of the package, it should be checked whether the GenXYZCompletion funcs from cobra have changed.
-Unfortunately I was not able to find a more elegant solution, so for now we just have to be vigilant when upgrading the dependency.
-
 ## Contributing
 
 ### Usage of stdout and stderr
@@ -167,3 +160,10 @@ If you want to only run integration tests, simply run:
 ```sh
 go test -run Integration ./...
 ```
+
+### Upgrading spf13/cobra
+
+Special care should be taken before upgrading the cobra package.
+This is due to the fact that in `completion.go` we use the standard completion from the library and then apply some string insertions at certain positions.
+As a result, before any upgrade of the package, it should be checked whether the GenXYZCompletion funcs from cobra have changed.
+Unfortunately I was not able to find a more elegant solution, so for now we just have to be vigilant when upgrading the dependency.
