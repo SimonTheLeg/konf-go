@@ -45,7 +45,7 @@ nix-env -iA nixpkgs.konf
 
 For adhoc or testing purposes a shell with the package can be spawned.
 
-```
+```shell
 nix-shell -p konf
 ```
 
