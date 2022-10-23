@@ -8,8 +8,8 @@ import (
 
 	"github.com/mitchellh/go-ps"
 	"github.com/simontheleg/konf-go/config"
+	"github.com/simontheleg/konf-go/konf"
 	log "github.com/simontheleg/konf-go/log"
-	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 )
@@ -44,7 +44,7 @@ An active config is considered unused when no process points to it anymore`,
 func selfClean(f afero.Fs) error {
 	pid := os.Getppid()
 
-	fpath := utils.IDFromProcessID(pid).ActivePath()
+	fpath := konf.IDFromProcessID(pid).ActivePath()
 	err := f.Remove(fpath)
 
 	if errors.Is(err, fs.ErrNotExist) {
@@ -71,12 +71,12 @@ func cleanLeftOvers(f afero.Fs) error {
 		return err
 	}
 
-	for _, konf := range konfs {
+	for _, k := range konfs {
 		// We need to trim of the .yaml file extension to get to the PID
-		konfID := utils.IDFromFileInfo(konf)
+		konfID := konf.IDFromFileInfo(k)
 		pid, err := strconv.Atoi(string(konfID))
 		if err != nil {
-			log.Warn("file '%s' could not be converted into an int, and therefore cannot be a valid process id. Skip for cleanup", konf.Name())
+			log.Warn("file '%s' could not be converted into an int, and therefore cannot be a valid process id. Skip for cleanup", k.Name())
 			continue
 		}
 

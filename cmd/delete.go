@@ -1,10 +1,10 @@
 package cmd
 
 import (
+	"github.com/simontheleg/konf-go/konf"
 	"github.com/simontheleg/konf-go/log"
 	"github.com/simontheleg/konf-go/prompt"
 	"github.com/simontheleg/konf-go/store"
-	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 )
@@ -13,9 +13,9 @@ type deleteCmd struct {
 	fs afero.Fs
 
 	fetchconfs       func(afero.Fs) ([]*store.Metadata, error)
-	selectSingleKonf func(afero.Fs, prompt.RunFunc) (utils.KonfID, error)
-	deleteKonfWithID func(afero.Fs, utils.KonfID) error
-	idsForGlobs      func(afero.Fs, []string) ([]utils.KonfID, error)
+	selectSingleKonf func(afero.Fs, prompt.RunFunc) (konf.KonfID, error)
+	deleteKonfWithID func(afero.Fs, konf.KonfID) error
+	idsForGlobs      func(afero.Fs, []string) ([]konf.KonfID, error)
 	prompt           prompt.RunFunc
 
 	cmd *cobra.Command
@@ -49,11 +49,11 @@ func newDeleteCommand() *deleteCmd {
 }
 
 func (c *deleteCmd) delete(cmd *cobra.Command, args []string) error {
-	var ids []utils.KonfID
+	var ids []konf.KonfID
 	var err error
 
 	if len(args) == 0 {
-		var id utils.KonfID
+		var id konf.KonfID
 		id, err = c.selectSingleKonf(c.fs, c.prompt)
 		if err != nil {
 			return err
@@ -76,7 +76,7 @@ func (c *deleteCmd) delete(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func deleteKonfWithID(fs afero.Fs, id utils.KonfID) error {
+func deleteKonfWithID(fs afero.Fs, id konf.KonfID) error {
 	if err := fs.Remove(id.StorePath()); err != nil {
 		return err
 	}
@@ -86,15 +86,15 @@ func deleteKonfWithID(fs afero.Fs, id utils.KonfID) error {
 
 // idsForGlobs takes in a slice of patterns and returns corresponding IDs from
 // the konfStore
-func idsForGlobs(f afero.Fs, patterns []string) ([]utils.KonfID, error) {
-	var ids []utils.KonfID
+func idsForGlobs(f afero.Fs, patterns []string) ([]konf.KonfID, error) {
+	var ids []konf.KonfID
 	for _, pattern := range patterns {
 		metadata, err := store.FetchKonfsForGlob(f, pattern) // resolve any globs among the arguments
 		if err != nil {
 			return nil, err
 		}
 		for _, f := range metadata {
-			id := utils.IDFromClusterAndContext(f.Cluster, f.Context)
+			id := konf.IDFromClusterAndContext(f.Cluster, f.Context)
 			ids = append(ids, id)
 		}
 	}
@@ -114,10 +114,10 @@ func (c *deleteCmd) completeDelete(cmd *cobra.Command, args []string, toComplete
 	}
 
 	sug := []string{}
-	for _, konf := range konfs {
+	for _, k := range konfs {
 		// with the current design of 'set', we need to return the ID here in the autocomplete as the first part of the completion
 		// as it is directly passed to set
-		sug = append(sug, string(utils.IDFromClusterAndContext(konf.Cluster, konf.Context)))
+		sug = append(sug, string(konf.IDFromClusterAndContext(k.Cluster, k.Context)))
 	}
 
 	return sug, cobra.ShellCompDirectiveNoFileComp

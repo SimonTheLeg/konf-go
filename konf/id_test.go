@@ -1,4 +1,4 @@
-package utils
+package konf
 
 import (
 	"fmt"
@@ -8,6 +8,9 @@ import (
 
 	"github.com/spf13/afero"
 )
+
+// IntegrationtestDir describes the directory to place files from IntegrationTests
+const IntegrationtestDir = "/tmp/konfs"
 
 var validCombos = []struct {
 	context string
@@ -114,7 +117,9 @@ func TestIDFileValidityIntegration(t *testing.T) {
 		},
 	)
 
-	err := f.MkdirAll(dir, KonfDirPerm)
+	// should be ok to use the perm manually here, as we are inside an integration test
+	// TODO later remove this part, as ID should have nothing to do with file storage
+	err := f.MkdirAll(dir, 0700)
 	if err != nil {
 		t.Errorf("could not create dir for test %q", err)
 	}
@@ -124,7 +129,7 @@ func TestIDFileValidityIntegration(t *testing.T) {
 		fpath := fmt.Sprintf("%s/%s.yaml", dir, id)
 
 		// it should be fine to write empty
-		err := afero.WriteFile(f, fpath, []byte{}, KonfPerm)
+		err := afero.WriteFile(f, fpath, []byte{}, 0600)
 		if err != nil {
 			t.Errorf("Exp filename %q to work, but got error %q", fpath, err)
 		}

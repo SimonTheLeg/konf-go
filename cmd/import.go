@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/simontheleg/konf-go/konf"
 	log "github.com/simontheleg/konf-go/log"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
@@ -127,20 +128,20 @@ func determineConfigs(f afero.Fs, fpath string) ([]*konfFile, error) {
 			}
 		}
 
-		var konf konfFile
+		var k konfFile
 		// TODO it might make sense to build in a duplicate detection here. This would ensure that the store is trustworthy, which in return makes it easy for
 		// TODO the set command as it does not need any verification
-		id := utils.IDFromClusterAndContext(cluster.Name, curCon.Name)
-		konf.FilePath = id.StorePath()
-		konf.Content.AuthInfos = append(konf.Content.AuthInfos, user)
-		konf.Content.Clusters = append(konf.Content.Clusters, cluster)
-		konf.Content.Contexts = append(konf.Content.Contexts, curCon)
+		id := konf.IDFromClusterAndContext(cluster.Name, curCon.Name)
+		k.FilePath = id.StorePath()
+		k.Content.AuthInfos = append(k.Content.AuthInfos, user)
+		k.Content.Clusters = append(k.Content.Clusters, cluster)
+		k.Content.Contexts = append(k.Content.Contexts, curCon)
 
-		konf.Content.APIVersion = origConf.APIVersion
-		konf.Content.Kind = origConf.Kind
-		konf.Content.CurrentContext = curCon.Name
+		k.Content.APIVersion = origConf.APIVersion
+		k.Content.Kind = origConf.Kind
+		k.Content.CurrentContext = curCon.Name
 
-		konfs = append(konfs, &konf)
+		konfs = append(konfs, &k)
 	}
 
 	return konfs, nil

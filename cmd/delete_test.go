@@ -8,10 +8,10 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/simontheleg/konf-go/config"
+	"github.com/simontheleg/konf-go/konf"
 	"github.com/simontheleg/konf-go/prompt"
 	"github.com/simontheleg/konf-go/store"
 	"github.com/simontheleg/konf-go/testhelper"
-	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	"k8s.io/utils/strings/slices"
@@ -23,7 +23,7 @@ func TestDeleteKonfWithID(t *testing.T) {
 
 	tt := map[string]struct {
 		fsCreator   func() afero.Fs
-		idToDelete  utils.KonfID
+		idToDelete  konf.KonfID
 		expError    error
 		expFiles    []string
 		notExpFiles []string
@@ -157,17 +157,17 @@ func TestDelete(t *testing.T) {
 	idsForGlobsCalled := 0
 	deleteKonfWithIDCalled := 0
 
-	var mockSelectSingleKonf = func(afero.Fs, prompt.RunFunc) (utils.KonfID, error) {
+	var mockSelectSingleKonf = func(afero.Fs, prompt.RunFunc) (konf.KonfID, error) {
 		selectSingleKonfCalled++
 		return "id1", nil
 	}
 
-	var mockIDsForGlobs = func(afero.Fs, []string) ([]utils.KonfID, error) {
+	var mockIDsForGlobs = func(afero.Fs, []string) ([]konf.KonfID, error) {
 		idsForGlobsCalled++
-		return []utils.KonfID{"id1", "id2", "id3"}, nil
+		return []konf.KonfID{"id1", "id2", "id3"}, nil
 	}
 
-	var mockDeleteKonfWithID = func(afero.Fs, utils.KonfID) error {
+	var mockDeleteKonfWithID = func(afero.Fs, konf.KonfID) error {
 		deleteKonfWithIDCalled++
 		return nil
 	}

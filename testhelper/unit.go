@@ -2,6 +2,7 @@ package testhelper
 
 import (
 	"github.com/simontheleg/konf-go/config"
+	konf "github.com/simontheleg/konf-go/konf"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 	v1 "k8s.io/api/core/v1"
@@ -44,47 +45,47 @@ func (*FilesystemManager) ActiveDir(fs afero.Fs) {
 
 // SingleClusterSingleContextEU creates a valid kubeconfig in store and active
 func (*FilesystemManager) SingleClusterSingleContextEU(fs afero.Fs) {
-	afero.WriteFile(fs, utils.KonfID("dev-eu_dev-eu-1").StorePath(), []byte(singleClusterSingleContextEU), utils.KonfPerm)
-	afero.WriteFile(fs, utils.KonfID("dev-eu_dev-eu-1").ActivePath(), []byte(singleClusterSingleContextEU), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("dev-eu_dev-eu-1").StorePath(), []byte(singleClusterSingleContextEU), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("dev-eu_dev-eu-1").ActivePath(), []byte(singleClusterSingleContextEU), utils.KonfPerm)
 }
 
 // SingleClusterSingleContextASIA creates a valid kubeconfig in store and active
 func (*FilesystemManager) SingleClusterSingleContextASIA(fs afero.Fs) {
-	afero.WriteFile(fs, utils.KonfID("dev-asia_dev-asia-1").StorePath(), []byte(singleClusterSingleContextASIA), utils.KonfPerm)
-	afero.WriteFile(fs, utils.KonfID("dev-asia_dev-asia-1").ActivePath(), []byte(singleClusterSingleContextASIA), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("dev-asia_dev-asia-1").StorePath(), []byte(singleClusterSingleContextASIA), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("dev-asia_dev-asia-1").ActivePath(), []byte(singleClusterSingleContextASIA), utils.KonfPerm)
 }
 
 // SingleClusterSingleContextEU2 creates a second valid kubeconfig in store and active. It is mainly used for glob testing
 func (*FilesystemManager) SingleClusterSingleContextEU2(fs afero.Fs) {
-	afero.WriteFile(fs, utils.KonfID("dev-eu_dev-eu-2").StorePath(), []byte(singleClusterSingleContextEU2), utils.KonfPerm)
-	afero.WriteFile(fs, utils.KonfID("dev-eu_dev-eu-2").ActivePath(), []byte(singleClusterSingleContextEU2), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("dev-eu_dev-eu-2").StorePath(), []byte(singleClusterSingleContextEU2), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("dev-eu_dev-eu-2").ActivePath(), []byte(singleClusterSingleContextEU2), utils.KonfPerm)
 }
 
 // SingleClusterSingleContextASIA2 creates a second valid kubeconfig in store and active. It is mainly used for glob testing
 func (*FilesystemManager) SingleClusterSingleContextASIA2(fs afero.Fs) {
-	afero.WriteFile(fs, utils.KonfID("dev-asia_dev-asia-2").StorePath(), []byte(singleClusterSingleContextASIA2), utils.KonfPerm)
-	afero.WriteFile(fs, utils.KonfID("dev-asia_dev-asia-2").ActivePath(), []byte(singleClusterSingleContextASIA2), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("dev-asia_dev-asia-2").StorePath(), []byte(singleClusterSingleContextASIA2), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("dev-asia_dev-asia-2").ActivePath(), []byte(singleClusterSingleContextASIA2), utils.KonfPerm)
 }
 
 // InvalidYaml creates an invalidYaml in store and active
 func (*FilesystemManager) InvalidYaml(fs afero.Fs) {
-	afero.WriteFile(fs, utils.KonfID("no-konf").ActivePath(), []byte("I am no valid yaml"), utils.KonfPerm)
-	afero.WriteFile(fs, utils.KonfID("no-konf").StorePath(), []byte("I am no valid yaml"), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("no-konf").ActivePath(), []byte("I am no valid yaml"), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("no-konf").StorePath(), []byte("I am no valid yaml"), utils.KonfPerm)
 }
 
 // MultiClusterMultiContext creates a kubeconfig with multiple clusters and contexts in store, resulting in an impure konfstore
 func (*FilesystemManager) MultiClusterMultiContext(fs afero.Fs) {
-	afero.WriteFile(fs, utils.KonfID("multi_multi_konf").StorePath(), []byte(multiClusterMultiContext), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("multi_multi_konf").StorePath(), []byte(multiClusterMultiContext), utils.KonfPerm)
 }
 
 // MultiClusterSingleContext creates a kubeconfig with multiple clusters and one context in store, resulting in an impure konfstore
 func (*FilesystemManager) MultiClusterSingleContext(fs afero.Fs) {
-	afero.WriteFile(fs, utils.KonfID("multi_konf").StorePath(), []byte(multiClusterSingleContext), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("multi_konf").StorePath(), []byte(multiClusterSingleContext), utils.KonfPerm)
 }
 
 // SingleClusterMultiContext creates a kubeconfig with one cluster and multiple contexts in store, resulting in an impure konfstore
 func (*FilesystemManager) SingleClusterMultiContext(fs afero.Fs) {
-	afero.WriteFile(fs, utils.KonfID("multi_konf").StorePath(), []byte(singleClusterMultiContext), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("multi_konf").StorePath(), []byte(singleClusterMultiContext), utils.KonfPerm)
 }
 
 // LatestKonf creates a latestKonfFile pointing to an imaginary context and cluster
@@ -107,8 +108,8 @@ users:
     user: {}
 `
 
-	afero.WriteFile(fs, utils.KonfID("no-context").StorePath(), []byte(noContext), utils.KonfPerm)
-	afero.WriteFile(fs, utils.KonfID("no-context").ActivePath(), []byte(noContext), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("no-context").StorePath(), []byte(noContext), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("no-context").ActivePath(), []byte(noContext), utils.KonfPerm)
 }
 
 // DSStore creates a .DS_Store file, that has caused quite some problems in the past

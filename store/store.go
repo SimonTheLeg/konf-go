@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/simontheleg/konf-go/config"
+	"github.com/simontheleg/konf-go/konf"
 	"github.com/simontheleg/konf-go/log"
-	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 	k8s "k8s.io/client-go/tools/clientcmd/api/v1"
 	"sigs.k8s.io/yaml"
@@ -128,9 +128,9 @@ func FetchKonfsForGlob(f afero.Fs, pattern string) ([]*Metadata, error) {
 	out := []*Metadata{}
 	// TODO the logic of this loop should be extracted into the walkFn above to avoid looping twice
 	// TODO (possibly the walkfunction should also be extracted into its own function)
-	for _, konf := range konfs {
+	for _, k := range konfs {
 
-		id := utils.IDFromFileInfo(konf)
+		id := konf.IDFromFileInfo(k)
 		path := id.StorePath()
 		file, err := f.Open(path)
 		if err != nil {

@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/simontheleg/konf-go/konf"
 	"github.com/simontheleg/konf-go/testhelper"
-	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -103,7 +103,7 @@ func TestImport(t *testing.T) {
 }
 
 var devEUControlGroup = &konfFile{
-	FilePath: utils.IDFromClusterAndContext("dev-eu-1", "dev-eu").StorePath(),
+	FilePath: konf.IDFromClusterAndContext("dev-eu-1", "dev-eu").StorePath(),
 	Content: k8s.Config{
 		APIVersion:     "v1",
 		Kind:           "Config",
@@ -135,7 +135,7 @@ var devEUControlGroup = &konfFile{
 }
 
 var devASIAControlGroup = &konfFile{
-	FilePath: utils.IDFromClusterAndContext("dev-asia-1", "dev-asia").StorePath(),
+	FilePath: konf.IDFromClusterAndContext("dev-asia-1", "dev-asia").StorePath(),
 	Content: k8s.Config{
 		APIVersion:     "v1",
 		Kind:           "Config",

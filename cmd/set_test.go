@@ -10,6 +10,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/manifoldco/promptui"
 	"github.com/simontheleg/konf-go/config"
+	"github.com/simontheleg/konf-go/konf"
 	"github.com/simontheleg/konf-go/prompt"
 	"github.com/simontheleg/konf-go/testhelper"
 	"github.com/simontheleg/konf-go/utils"
@@ -22,7 +23,7 @@ func TestSelectLastKonf(t *testing.T) {
 
 	tt := map[string]struct {
 		FSCreator func() afero.Fs
-		ExpID     utils.KonfID
+		ExpID     konf.KonfID
 		ExpError  error
 	}{
 		"latestKonf set": {
@@ -94,7 +95,7 @@ func TestCompleteSet(t *testing.T) {
 
 func TestSaveLatestKonf(t *testing.T) {
 	expFile := "./konf/latestkonf"
-	expID := utils.KonfID("context_cluster")
+	expID := konf.KonfID("context_cluster")
 
 	f := afero.NewMemMapFs()
 	err := saveLatestKonf(f, expID)
@@ -109,7 +110,7 @@ func TestSaveLatestKonf(t *testing.T) {
 		t.Errorf("Exp file %q to be present, but it isnt", expFile)
 	}
 	id, _ := afero.ReadFile(f, expFile)
-	if utils.KonfID(id) != expID {
+	if konf.KonfID(id) != expID {
 		t.Errorf("Exp id to be %q but is %q", expID, id)
 	}
 }
@@ -120,7 +121,7 @@ func TestSetContext(t *testing.T) {
 	sm := testhelper.SampleKonfManager{}
 
 	tt := map[string]struct {
-		InID        utils.KonfID
+		InID        konf.KonfID
 		StoreExists bool
 		ExpErr      error
 		ExpKonfPath string
@@ -129,7 +130,7 @@ func TestSetContext(t *testing.T) {
 			"dev-eu_dev-eu",
 			true,
 			nil,
-			utils.IDFromProcessID(ppid).ActivePath(),
+			konf.IDFromProcessID(ppid).ActivePath(),
 		},
 		"invalid id": {
 			"i-am-invalid",
@@ -189,7 +190,7 @@ func TestSelectContext(t *testing.T) {
 	// - prompt failure
 	tt := map[string]struct {
 		pf     prompt.RunFunc
-		expID  utils.KonfID
+		expID  konf.KonfID
 		expErr error
 	}{
 		"select asia": {

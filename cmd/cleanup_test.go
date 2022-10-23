@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/simontheleg/konf-go/config"
+	"github.com/simontheleg/konf-go/konf"
 	"github.com/simontheleg/konf-go/testhelper"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
@@ -29,13 +30,13 @@ func TestSelfClean(t *testing.T) {
 		"PID FS": {
 			ppidFS(),
 			nil,
-			[]string{activeDir + "/abc", utils.KonfID("1234").ActivePath()},
+			[]string{activeDir + "/abc", konf.KonfID("1234").ActivePath()},
 			[]string{activeDir + "/" + fmt.Sprint(ppid) + ".yaml"},
 		},
 		"PID file deleted by external source": {
 			ppidFileMissing(),
 			nil,
-			[]string{activeDir + "/abc", utils.KonfID("1234").ActivePath()},
+			[]string{activeDir + "/abc", konf.KonfID("1234").ActivePath()},
 			[]string{},
 		},
 		// Unfortunately it was not possible with afero to test what happens if
@@ -77,7 +78,7 @@ func ppidFS() afero.Fs {
 	ppid := os.Getppid()
 	fs := ppidFileMissing()
 	sm := testhelper.SampleKonfManager{}
-	afero.WriteFile(fs, utils.IDFromProcessID(ppid).ActivePath(), []byte(sm.SingleClusterSingleContextEU()), utils.KonfPerm)
+	afero.WriteFile(fs, konf.IDFromProcessID(ppid).ActivePath(), []byte(sm.SingleClusterSingleContextEU()), utils.KonfPerm)
 	return fs
 }
 
@@ -85,7 +86,7 @@ func ppidFileMissing() afero.Fs {
 	fs := afero.NewMemMapFs()
 	sm := testhelper.SampleKonfManager{}
 	afero.WriteFile(fs, config.ActiveDir()+"/abc", []byte("I am not even a kubeconfig, what am I doing here?"), utils.KonfPerm)
-	afero.WriteFile(fs, utils.KonfID("1234").ActivePath(), []byte(sm.SingleClusterSingleContextEU()), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("1234").ActivePath(), []byte(sm.SingleClusterSingleContextEU()), utils.KonfPerm)
 	return fs
 }
 
@@ -128,7 +129,7 @@ func TestCleanLeftOvers(t *testing.T) {
 			}
 
 			for _, cmd := range cmdsRunning {
-				fpath := utils.IDFromProcessID(cmd.Process.Pid).ActivePath()
+				fpath := konf.IDFromProcessID(cmd.Process.Pid).ActivePath()
 				_, err := f.Stat(fpath)
 
 				if err != nil {
@@ -141,7 +142,7 @@ func TestCleanLeftOvers(t *testing.T) {
 			}
 
 			for _, cmd := range cmdsStopped {
-				fpath := utils.IDFromProcessID(cmd.Process.Pid).ActivePath()
+				fpath := konf.IDFromProcessID(cmd.Process.Pid).ActivePath()
 				_, err := f.Stat(fpath)
 
 				if !errors.Is(err, fs.ErrNotExist) {
@@ -175,7 +176,7 @@ func mixedFSWithAllProcs(t *testing.T) (fs afero.Fs, cmdsRunning []*exec.Cmd, cm
 		}
 		pid := cmd.Process.Pid
 		cmdsRunning = append(cmdsRunning, cmd)
-		afero.WriteFile(fs, utils.IDFromProcessID(pid).ActivePath(), []byte(sm.SingleClusterSingleContextEU()), utils.KonfPerm)
+		afero.WriteFile(fs, konf.IDFromProcessID(pid).ActivePath(), []byte(sm.SingleClusterSingleContextEU()), utils.KonfPerm)
 	}
 
 	return fs, cmdsRunning, nil
@@ -215,7 +216,7 @@ func mixedFSIncompleteProcs(t *testing.T) (fs afero.Fs, cmdsRunning []*exec.Cmd,
 func mixedFSDirtyDir(t *testing.T) (fs afero.Fs, cmdsRunning []*exec.Cmd, cmdsStopped []*exec.Cmd) {
 	fs, cmdsRunning, cmdsStopped = mixedFSIncompleteProcs(t)
 
-	afero.WriteFile(fs, utils.KonfID("/not-a-valid-process-id").ActivePath(), []byte{}, utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("/not-a-valid-process-id").ActivePath(), []byte{}, utils.KonfPerm)
 
 	return fs, cmdsRunning, cmdsStopped
 

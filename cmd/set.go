@@ -8,6 +8,7 @@ import (
 
 	"github.com/manifoldco/promptui"
 	"github.com/simontheleg/konf-go/config"
+	"github.com/simontheleg/konf-go/konf"
 	log "github.com/simontheleg/konf-go/log"
 	"github.com/simontheleg/konf-go/prompt"
 	"github.com/simontheleg/konf-go/store"
@@ -50,7 +51,7 @@ func (c *setCmd) set(cmd *cobra.Command, args []string) error {
 	// TODO if I stay with the mocking approach used in commands like
 	// namespace. This part should be refactored to allow for mocking
 	// the downstream funcs in order to test the if-else logic
-	var id utils.KonfID
+	var id konf.KonfID
 	var err error
 
 	if len(args) == 0 {
@@ -64,7 +65,7 @@ func (c *setCmd) set(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	} else {
-		id = utils.KonfID(args[0])
+		id = konf.KonfID(args[0])
 	}
 
 	context, err := setContext(id, c.fs)
@@ -99,10 +100,10 @@ func (c *setCmd) completeSet(cmd *cobra.Command, args []string, toComplete strin
 	}
 
 	sug := []string{}
-	for _, konf := range konfs {
+	for _, k := range konfs {
 		// with the current design of 'set', we need to return the ID here in the autocomplete as the first part of the completion
 		// as it is directly passed to set
-		sug = append(sug, string(utils.IDFromClusterAndContext(konf.Cluster, konf.Context)))
+		sug = append(sug, string(konf.IDFromClusterAndContext(k.Cluster, k.Context)))
 	}
 
 	return sug, cobra.ShellCompDirectiveNoFileComp
@@ -114,7 +115,7 @@ func (c *setCmd) completeSet(cmd *cobra.Command, args []string, toComplete strin
 // it is also being used by two commands: "set" and "delete". But because
 // they are in the same package, we also cannot easily duplicate the code for
 // each
-func selectSingleKonf(f afero.Fs, pf prompt.RunFunc) (utils.KonfID, error) {
+func selectSingleKonf(f afero.Fs, pf prompt.RunFunc) (konf.KonfID, error) {
 	k, err := store.FetchAllKonfs(f)
 	if err != nil {
 		return "", err
@@ -130,10 +131,10 @@ func selectSingleKonf(f afero.Fs, pf prompt.RunFunc) (utils.KonfID, error) {
 	}
 	sel := k[selPos]
 
-	return utils.IDFromClusterAndContext(sel.Cluster, sel.Context), nil
+	return konf.IDFromClusterAndContext(sel.Cluster, sel.Context), nil
 }
 
-func idOfLatestKonf(f afero.Fs) (utils.KonfID, error) {
+func idOfLatestKonf(f afero.Fs) (konf.KonfID, error) {
 	b, err := afero.ReadFile(f, config.LatestKonfFilePath())
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
@@ -141,19 +142,19 @@ func idOfLatestKonf(f afero.Fs) (utils.KonfID, error) {
 		}
 		return "", err
 	}
-	return utils.KonfID(b), nil
+	return konf.KonfID(b), nil
 }
 
-func setContext(id utils.KonfID, f afero.Fs) (string, error) {
-	konf, err := afero.ReadFile(f, id.StorePath())
+func setContext(id konf.KonfID, f afero.Fs) (string, error) {
+	k, err := afero.ReadFile(f, id.StorePath())
 	if err != nil {
 		return "", err
 	}
 
 	ppid := os.Getppid()
-	konfID := utils.IDFromProcessID(ppid)
+	konfID := konf.IDFromProcessID(ppid)
 	activeKonf := konfID.ActivePath()
-	err = afero.WriteFile(f, activeKonf, konf, utils.KonfPerm)
+	err = afero.WriteFile(f, activeKonf, k, utils.KonfPerm)
 	if err != nil {
 		return "", err
 	}
@@ -162,7 +163,7 @@ func setContext(id utils.KonfID, f afero.Fs) (string, error) {
 
 }
 
-func saveLatestKonf(f afero.Fs, id utils.KonfID) error {
+func saveLatestKonf(f afero.Fs, id konf.KonfID) error {
 	return afero.WriteFile(f, config.LatestKonfFilePath(), []byte(id), utils.KonfPerm)
 }
 
