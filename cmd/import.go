@@ -6,11 +6,10 @@ import (
 
 	"github.com/simontheleg/konf-go/konf"
 	log "github.com/simontheleg/konf-go/log"
-	"github.com/simontheleg/konf-go/utils"
+	"github.com/simontheleg/konf-go/store"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	k8s "k8s.io/client-go/tools/clientcmd/api/v1"
-	"sigs.k8s.io/yaml"
 )
 
 type konfFile struct {
@@ -22,7 +21,7 @@ type importCmd struct {
 	fs afero.Fs
 
 	determineConfigs     func(io.Reader) ([]*konf.Konfig, error)
-	writeConfig          func(afero.Fs, *konf.Konfig) error
+	writeConfig          func(afero.Fs, *konf.Konfig) (string, error)
 	deleteOriginalConfig func(afero.Fs, string) error
 
 	move bool
@@ -36,7 +35,7 @@ func newImportCmd() *importCmd {
 	ic := &importCmd{
 		fs:                   fs,
 		determineConfigs:     konf.KonfsFromKubeconfig,
-		writeConfig:          writeConfig,
+		writeConfig:          store.WriteKonfToStore,
 		deleteOriginalConfig: deleteOriginalConfig,
 	}
 
@@ -75,7 +74,7 @@ func (c *importCmd) importf(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, k := range konfs {
-		err = c.writeConfig(c.fs, k)
+		_, err = c.writeConfig(c.fs, k)
 		if err != nil {
 			return err
 		}
@@ -87,20 +86,6 @@ func (c *importCmd) importf(cmd *cobra.Command, args []string) error {
 			return err
 		}
 		log.Info("Successfully deleted original kubeconfig at %q", fpath)
-	}
-
-	return nil
-}
-
-func writeConfig(f afero.Fs, kf *konf.Konfig) error {
-	b, err := yaml.Marshal(kf.Kubeconfig)
-	if err != nil {
-		return err
-	}
-
-	err = afero.WriteFile(f, kf.StorePath, b, utils.KonfPerm)
-	if err != nil {
-		return err
 	}
 
 	return nil

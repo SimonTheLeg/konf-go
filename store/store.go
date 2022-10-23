@@ -10,6 +10,7 @@ import (
 	"github.com/simontheleg/konf-go/config"
 	"github.com/simontheleg/konf-go/konf"
 	"github.com/simontheleg/konf-go/log"
+	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 	k8s "k8s.io/client-go/tools/clientcmd/api/v1"
 	"sigs.k8s.io/yaml"
@@ -159,4 +160,20 @@ func FetchKonfsForGlob(f afero.Fs, pattern string) ([]*Metadata, error) {
 		out = append(out, &t)
 	}
 	return out, nil
+}
+
+func WriteKonfToStore(f afero.Fs, konf *konf.Konfig) (storepath string, err error) {
+	b, err := yaml.Marshal(konf.Kubeconfig)
+	if err != nil {
+		return "", err
+	}
+
+	storepath = konf.Id.StorePath()
+
+	err = afero.WriteFile(f, storepath, b, utils.KonfPerm)
+	if err != nil {
+		return "", err
+	}
+
+	return storepath, nil
 }
