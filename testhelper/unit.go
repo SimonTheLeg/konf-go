@@ -45,26 +45,26 @@ func (*FilesystemManager) ActiveDir(fs afero.Fs) {
 
 // SingleClusterSingleContextEU creates a valid kubeconfig in store and active
 func (*FilesystemManager) SingleClusterSingleContextEU(fs afero.Fs) {
-	afero.WriteFile(fs, konf.KonfID("dev-eu_dev-eu-1").StorePath(), []byte(SingleClusterSingleContextEU), utils.KonfPerm)
-	afero.WriteFile(fs, konf.KonfID("dev-eu_dev-eu-1").ActivePath(), []byte(SingleClusterSingleContextEU), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("dev-eu_dev-eu-1").StorePath(), []byte(singleClusterSingleContextEU), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("dev-eu_dev-eu-1").ActivePath(), []byte(singleClusterSingleContextEU), utils.KonfPerm)
 }
 
 // SingleClusterSingleContextASIA creates a valid kubeconfig in store and active
 func (*FilesystemManager) SingleClusterSingleContextASIA(fs afero.Fs) {
-	afero.WriteFile(fs, konf.KonfID("dev-asia_dev-asia-1").StorePath(), []byte(SingleClusterSingleContextASIA), utils.KonfPerm)
-	afero.WriteFile(fs, konf.KonfID("dev-asia_dev-asia-1").ActivePath(), []byte(SingleClusterSingleContextASIA), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("dev-asia_dev-asia-1").StorePath(), []byte(singleClusterSingleContextASIA), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("dev-asia_dev-asia-1").ActivePath(), []byte(singleClusterSingleContextASIA), utils.KonfPerm)
 }
 
 // SingleClusterSingleContextEU2 creates a second valid kubeconfig in store and active. It is mainly used for glob testing
 func (*FilesystemManager) SingleClusterSingleContextEU2(fs afero.Fs) {
-	afero.WriteFile(fs, konf.KonfID("dev-eu_dev-eu-2").StorePath(), []byte(SingleClusterSingleContextEU2), utils.KonfPerm)
-	afero.WriteFile(fs, konf.KonfID("dev-eu_dev-eu-2").ActivePath(), []byte(SingleClusterSingleContextEU2), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("dev-eu_dev-eu-2").StorePath(), []byte(singleClusterSingleContextEU2), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("dev-eu_dev-eu-2").ActivePath(), []byte(singleClusterSingleContextEU2), utils.KonfPerm)
 }
 
 // SingleClusterSingleContextASIA2 creates a second valid kubeconfig in store and active. It is mainly used for glob testing
 func (*FilesystemManager) SingleClusterSingleContextASIA2(fs afero.Fs) {
-	afero.WriteFile(fs, konf.KonfID("dev-asia_dev-asia-2").StorePath(), []byte(SingleClusterSingleContextASIA2), utils.KonfPerm)
-	afero.WriteFile(fs, konf.KonfID("dev-asia_dev-asia-2").ActivePath(), []byte(SingleClusterSingleContextASIA2), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("dev-asia_dev-asia-2").StorePath(), []byte(singleClusterSingleContextASIA2), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("dev-asia_dev-asia-2").ActivePath(), []byte(singleClusterSingleContextASIA2), utils.KonfPerm)
 }
 
 // InvalidYaml creates an invalidYaml in store and active
@@ -75,17 +75,17 @@ func (*FilesystemManager) InvalidYaml(fs afero.Fs) {
 
 // MultiClusterMultiContext creates a kubeconfig with multiple clusters and contexts in store, resulting in an impure konfstore
 func (*FilesystemManager) MultiClusterMultiContext(fs afero.Fs) {
-	afero.WriteFile(fs, konf.KonfID("multi_multi_konf").StorePath(), []byte(MultiClusterMultiContext), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("multi_multi_konf").StorePath(), []byte(multiClusterMultiContext), utils.KonfPerm)
 }
 
 // MultiClusterSingleContext creates a kubeconfig with multiple clusters and one context in store, resulting in an impure konfstore
 func (*FilesystemManager) MultiClusterSingleContext(fs afero.Fs) {
-	afero.WriteFile(fs, konf.KonfID("multi_konf").StorePath(), []byte(MultiClusterSingleContext), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("multi_konf").StorePath(), []byte(multiClusterSingleContext), utils.KonfPerm)
 }
 
 // SingleClusterMultiContext creates a kubeconfig with one cluster and multiple contexts in store, resulting in an impure konfstore
 func (*FilesystemManager) SingleClusterMultiContext(fs afero.Fs) {
-	afero.WriteFile(fs, konf.KonfID("multi_konf").StorePath(), []byte(SingleClusterMultiContext), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("multi_konf").StorePath(), []byte(singleClusterMultiContext), utils.KonfPerm)
 }
 
 // LatestKonf creates a latestKonfFile pointing to an imaginary context and cluster
@@ -139,25 +139,25 @@ type SampleKonfManager struct{}
 
 // SingleClusterSingleContextEU returns a valid kubeconfig
 func (*SampleKonfManager) SingleClusterSingleContextEU() string {
-	return SingleClusterSingleContextEU
+	return singleClusterSingleContextEU
 }
 
 // SingleClusterSingleContextASIA returns a valid kubeconfig
 func (*SampleKonfManager) SingleClusterSingleContextASIA() string {
-	return SingleClusterSingleContextASIA
+	return singleClusterSingleContextASIA
 }
 
 // MultiClusterMultiContext returns a valid kubeconfig, that is unprocessed
 func (*SampleKonfManager) MultiClusterMultiContext() string {
-	return MultiClusterMultiContext
+	return multiClusterMultiContext
 }
 
 // MultiClusterSingleContext returns a valid kubeconfig, that is unprocessed
 func (*SampleKonfManager) MultiClusterSingleContext() string {
-	return MultiClusterSingleContext
+	return multiClusterSingleContext
 }
 
-var SingleClusterSingleContextEU = `
+var singleClusterSingleContextEU = `
 apiVersion: v1
 clusters:
   - cluster:
@@ -176,7 +176,7 @@ users:
   - name: dev-eu
     user: {}
 `
-var SingleClusterSingleContextEU2 = `
+var singleClusterSingleContextEU2 = `
 apiVersion: v1
 clusters:
   - cluster:
@@ -196,7 +196,7 @@ users:
     user: {}
 `
 
-var SingleClusterSingleContextASIA = `
+var singleClusterSingleContextASIA = `
 apiVersion: v1
 clusters:
   - cluster:
@@ -215,7 +215,7 @@ users:
   - name: dev-asia
     user: {}
 `
-var SingleClusterSingleContextASIA2 = `
+var singleClusterSingleContextASIA2 = `
 apiVersion: v1
 clusters:
   - cluster:
@@ -235,7 +235,7 @@ users:
     user: {}
 `
 
-var MultiClusterMultiContext = `
+var multiClusterMultiContext = `
 apiVersion: v1
 clusters:
   - cluster:
@@ -265,7 +265,7 @@ users:
     user: {}
 `
 
-var SingleClusterMultiContext = `
+var singleClusterMultiContext = `
 apiVersion: v1
 clusters:
   - cluster:
@@ -292,7 +292,7 @@ users:
     user: {}
 `
 
-var MultiClusterSingleContext = `
+var multiClusterSingleContext = `
 apiVersion: v1
 clusters:
   - cluster:
