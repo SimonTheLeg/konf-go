@@ -3,10 +3,10 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
 	"github.com/simontheleg/konf-go/konf"
 	"github.com/simontheleg/konf-go/testhelper"
 	"github.com/spf13/afero"
@@ -21,11 +21,11 @@ func TestImport(t *testing.T) {
 	var writeConfigCalledCount int
 	var deleteOriginalConfigCalled bool
 	// using just a wrapper here instead of a full mock, makes testing it slightly easier
-	var wrapDetermineConfig = func(f afero.Fs, fpath string) ([]*konfFile, error) {
+	var wrapDetermineConfig = func(r io.Reader) ([]*konf.Config, error) {
 		determineConfigsCalled = true
-		return determineConfigs(f, fpath)
+		return konf.KonfsFromKubeconfig(r)
 	}
-	var mockWriteConfig = func(afero.Fs, *konfFile) error { writeConfigCalledCount++; return nil }
+	var mockWriteConfig = func(afero.Fs, *konf.Config) error { writeConfigCalledCount++; return nil }
 	var mockDeleteOriginalConfig = func(afero.Fs, string) error { deleteOriginalConfigCalled = true; return nil }
 
 	type ExpCalls struct {
@@ -102,9 +102,9 @@ func TestImport(t *testing.T) {
 	}
 }
 
-var devEUControlGroup = &konfFile{
-	FilePath: konf.IDFromClusterAndContext("dev-eu-1", "dev-eu").StorePath(),
-	Content: k8s.Config{
+var devEUControlGroup = &konf.Config{
+	StorePath: konf.IDFromClusterAndContext("dev-eu-1", "dev-eu").StorePath(),
+	Kubeconfig: k8s.Config{
 		APIVersion:     "v1",
 		Kind:           "Config",
 		CurrentContext: "dev-eu",
@@ -132,115 +132,6 @@ var devEUControlGroup = &konfFile{
 			},
 		},
 	},
-}
-
-var devASIAControlGroup = &konfFile{
-	FilePath: konf.IDFromClusterAndContext("dev-asia-1", "dev-asia").StorePath(),
-	Content: k8s.Config{
-		APIVersion:     "v1",
-		Kind:           "Config",
-		CurrentContext: "dev-asia",
-		Clusters: []k8s.NamedCluster{
-			{
-				Name: "dev-asia-1",
-				Cluster: k8s.Cluster{
-					Server: "https://192.168.0.1",
-				},
-			},
-		},
-		Contexts: []k8s.NamedContext{
-			{
-				Name: "dev-asia",
-				Context: k8s.Context{
-					Cluster:   "dev-asia-1",
-					Namespace: "kube-system",
-					AuthInfo:  "dev-asia",
-				},
-			},
-		},
-		AuthInfos: []k8s.NamedAuthInfo{
-			{
-				Name:     "dev-asia",
-				AuthInfo: k8s.AuthInfo{},
-			},
-		},
-	},
-}
-
-func TestDetermineConfigs(t *testing.T) {
-	fm := testhelper.FilesystemManager{}
-
-	tt := map[string]struct {
-		FSCreator          func() afero.Fs
-		konfpath           string
-		ExpError           error
-		ExpNumOfKonfigFile int
-		ExpKonfigFiles     []*konfFile
-	}{
-		"SingleClusterSingleContext": {
-			FSCreator:          testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU),
-			konfpath:           "./konf/store/dev-eu_dev-eu-1.yaml",
-			ExpError:           nil,
-			ExpNumOfKonfigFile: 1,
-			ExpKonfigFiles: []*konfFile{
-				devEUControlGroup,
-			},
-		},
-		"multiClusterMultiContext": {
-			FSCreator:          testhelper.FSWithFiles(fm.StoreDir, fm.MultiClusterMultiContext),
-			konfpath:           "./konf/store/multi_multi_konf.yaml",
-			ExpError:           nil,
-			ExpNumOfKonfigFile: 2,
-			ExpKonfigFiles: []*konfFile{
-				devASIAControlGroup,
-				devEUControlGroup,
-			},
-		},
-		"multiClusterSingleContext": {
-			FSCreator:          testhelper.FSWithFiles(fm.StoreDir, fm.MultiClusterSingleContext),
-			konfpath:           "./konf/store/multi_konf.yaml",
-			ExpError:           nil,
-			ExpNumOfKonfigFile: 1,
-			ExpKonfigFiles: []*konfFile{
-				devASIAControlGroup,
-			},
-		},
-		"emptyConfig": {
-			FSCreator:          testhelper.FSWithFiles(),
-			konfpath:           "i-dont-exist.yaml",
-			ExpError:           fmt.Errorf("open i-dont-exist.yaml: file does not exist"),
-			ExpNumOfKonfigFile: 0,
-			ExpKonfigFiles:     nil,
-		},
-		// All for the coverage ;)
-		"invalidConfig": {
-			FSCreator:          testhelper.FSWithFiles(fm.StoreDir, fm.InvalidYaml),
-			konfpath:           "./konf/store/no-konf.yaml",
-			ExpError:           fmt.Errorf("error unmarshaling JSON: while decoding JSON: json: cannot unmarshal string into Go value of type v1.Config"),
-			ExpNumOfKonfigFile: 0,
-			ExpKonfigFiles:     nil,
-		},
-	}
-
-	for name, tc := range tt {
-		t.Run(name, func(t *testing.T) {
-			res, err := determineConfigs(tc.FSCreator(), tc.konfpath)
-
-			if !testhelper.EqualError(err, tc.ExpError) {
-				t.Errorf("Want error '%s', got '%s'", tc.ExpError, err)
-			}
-
-			if len(tc.ExpKonfigFiles) != tc.ExpNumOfKonfigFile {
-				t.Errorf("Want %d, got %d kubeconfigs", tc.ExpNumOfKonfigFile, len(tc.ExpKonfigFiles))
-			}
-
-			if !cmp.Equal(tc.ExpKonfigFiles, res) {
-				t.Errorf("Exp and given KonfigFiles differ:\n'%s'", cmp.Diff(tc.ExpKonfigFiles, res))
-			}
-
-		})
-	}
-
 }
 
 func TestWriteConfig(t *testing.T) {
@@ -271,7 +162,7 @@ users:
 		t.Errorf("Exp err to be nil but got %q", err)
 	}
 
-	b, err := afero.ReadFile(f, devEUControlGroup.FilePath)
+	b, err := afero.ReadFile(f, devEUControlGroup.StorePath)
 	if err != nil {
 		t.Errorf("Exp read in file without any issues, but got %q", err)
 	}
