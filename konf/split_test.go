@@ -74,12 +74,12 @@ users:
 func TestKonfsFromKubeConfig(t *testing.T) {
 	tt := map[string]struct {
 		kubeconfig string
-		expKonfs   []*Config
+		expKonfs   []*Konfig
 	}{
 		// TODO multi-context, no context
 		"single context": {
 			kubeconfig: singleClusterSingleContext,
-			expKonfs: []*Config{
+			expKonfs: []*Konfig{
 				{
 					Id:        "dev-eu_dev-eu-1",
 					StorePath: "./konf/store/dev-eu_dev-eu-1.yaml",
@@ -116,7 +116,7 @@ func TestKonfsFromKubeConfig(t *testing.T) {
 		},
 		"multi context": {
 			kubeconfig: multiClusterMultiContext,
-			expKonfs: []*Config{
+			expKonfs: []*Konfig{
 				{
 					Id:        "dev-asia_dev-asia-1",
 					StorePath: "./konf/store/dev-asia_dev-asia-1.yaml",
@@ -185,7 +185,7 @@ func TestKonfsFromKubeConfig(t *testing.T) {
 		},
 		"no context": {
 			kubeconfig: noContext,
-			expKonfs:   []*Config{},
+			expKonfs:   []*Konfig{},
 		},
 	}
 

@@ -21,8 +21,8 @@ type konfFile struct {
 type importCmd struct {
 	fs afero.Fs
 
-	determineConfigs     func(io.Reader) ([]*konf.Config, error)
-	writeConfig          func(afero.Fs, *konf.Config) error
+	determineConfigs     func(io.Reader) ([]*konf.Konfig, error)
+	writeConfig          func(afero.Fs, *konf.Konfig) error
 	deleteOriginalConfig func(afero.Fs, string) error
 
 	move bool
@@ -92,7 +92,7 @@ func (c *importCmd) importf(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func writeConfig(f afero.Fs, kf *konf.Config) error {
+func writeConfig(f afero.Fs, kf *konf.Konfig) error {
 	b, err := yaml.Marshal(kf.Kubeconfig)
 	if err != nil {
 		return err

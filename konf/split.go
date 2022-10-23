@@ -12,8 +12,8 @@ import (
 //
 // No error is being returned if the kubeconfig contains no contexts, instead
 // konfs is simply an empty slice
-func KonfsFromKubeconfig(kubeconfig io.Reader) (konfs []*Config, err error) {
-	konfs = []*Config{}
+func KonfsFromKubeconfig(kubeconfig io.Reader) (konfs []*Konfig, err error) {
+	konfs = []*Konfig{}
 
 	b, err := io.ReadAll(kubeconfig)
 	if err != nil {
@@ -49,7 +49,7 @@ func KonfsFromKubeconfig(kubeconfig io.Reader) (konfs []*Config, err error) {
 			}
 		}
 
-		var k Config
+		var k Konfig
 		id := IDFromClusterAndContext(cluster.Name, curCon.Name)
 		// TODO need to remove this. StorePath should only be setable by store pkg later on
 		k.StorePath = id.StorePath()

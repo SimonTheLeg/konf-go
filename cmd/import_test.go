@@ -21,11 +21,11 @@ func TestImport(t *testing.T) {
 	var writeConfigCalledCount int
 	var deleteOriginalConfigCalled bool
 	// using just a wrapper here instead of a full mock, makes testing it slightly easier
-	var wrapDetermineConfig = func(r io.Reader) ([]*konf.Config, error) {
+	var wrapDetermineConfig = func(r io.Reader) ([]*konf.Konfig, error) {
 		determineConfigsCalled = true
 		return konf.KonfsFromKubeconfig(r)
 	}
-	var mockWriteConfig = func(afero.Fs, *konf.Config) error { writeConfigCalledCount++; return nil }
+	var mockWriteConfig = func(afero.Fs, *konf.Konfig) error { writeConfigCalledCount++; return nil }
 	var mockDeleteOriginalConfig = func(afero.Fs, string) error { deleteOriginalConfigCalled = true; return nil }
 
 	type ExpCalls struct {
@@ -102,7 +102,7 @@ func TestImport(t *testing.T) {
 	}
 }
 
-var devEUControlGroup = &konf.Config{
+var devEUControlGroup = &konf.Konfig{
 	StorePath: konf.IDFromClusterAndContext("dev-eu-1", "dev-eu").StorePath(),
 	Kubeconfig: k8s.Config{
 		APIVersion:     "v1",
