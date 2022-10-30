@@ -51,8 +51,8 @@ func newNamespaceCmd() *namespaceCmd {
 Can also be invoked via 'ns' alias
 
 Examples:
-	-> 'ns' run namespace selection
-	-> 'ns <namespace-name' set to a specific namespace
+-> 'ns' run namespace selection
+-> 'ns <namespace-name' set to a specific namespace
 `,
 		RunE:              cc.namespace,
 		Args:              cobra.MaximumNArgs(1),

@@ -36,11 +36,11 @@ func newDeleteCommand() *deleteCmd {
 		Short: "Delete kubeconfig",
 		Long: `Delete one or multiple kubeconfigs
 
-	Examples:
-		-> 'delete' run selection prompt for deletion
-		-> 'delete <konfig id> [<konfig id 2>]' delete specific konf(s)
-		-> 'delete "my-konf*"' delete konf matching fileglob
-	`,
+Examples:
+-> 'delete' run selection prompt for deletion
+-> 'delete <konfig id> [<konfig id 2>]' delete specific konf(s)
+-> 'delete "my-konf*"' delete konf matching fileglob
+`,
 		RunE:              dc.delete,
 		ValidArgsFunction: dc.completeDelete,
 	}

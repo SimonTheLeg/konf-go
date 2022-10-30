@@ -35,11 +35,11 @@ func newSetCommand() *setCmd {
 		Args:  cobra.MaximumNArgs(1),
 		Long: `Sets kubeconfig to use or start picker dialogue.
 	
-	Examples:
-		-> 'set' run konf selection
-		-> 'set <konfig id>' set a specific konf
-		-> 'set -' set to last used konf
-	`,
+Examples:
+-> 'set' run konf selection
+-> 'set <konfig id>' set a specific konf
+-> 'set -' set to last used konf
+`,
 		RunE:              sc.set,
 		ValidArgsFunction: sc.completeSet,
 	}
