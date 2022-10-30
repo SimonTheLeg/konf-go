@@ -11,13 +11,7 @@ import (
 	"github.com/simontheleg/konf-go/store"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
-	k8s "k8s.io/client-go/tools/clientcmd/api/v1"
 )
-
-type konfFile struct {
-	FilePath string
-	Content  k8s.Config
-}
 
 type importCmd struct {
 	fs afero.Fs
