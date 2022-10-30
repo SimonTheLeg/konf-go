@@ -112,6 +112,25 @@ users:
 	afero.WriteFile(fs, konf.KonfID("no-context").ActivePath(), []byte(noContext), utils.KonfPerm)
 }
 
+// KonfWithoutContext2 creates a kubeconfig which has no context, but still is valid
+func (*FilesystemManager) KonfWithoutContext2(fs afero.Fs) {
+	var noContext = `
+apiVersion: v1
+clusters:
+  - cluster:
+      server: https://10.1.1.0
+    name: dev-eu-2
+kind: Config
+preferences: {}
+users:
+  - name: dev-eu
+    user: {}
+`
+
+	afero.WriteFile(fs, konf.KonfID("no-context-2").StorePath(), []byte(noContext), utils.KonfPerm)
+	afero.WriteFile(fs, konf.KonfID("no-context-2").ActivePath(), []byte(noContext), utils.KonfPerm)
+}
+
 // DSStore creates a .DS_Store file, that has caused quite some problems in the past
 func (*FilesystemManager) DSStore(fs afero.Fs) {
 	// in this case we cannot use StorePathForID, as this would append .yaml
