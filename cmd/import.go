@@ -40,7 +40,11 @@ func newImportCmd() *importCmd {
 	ic.cmd = &cobra.Command{
 		Use:   "import",
 		Short: "Import kubeconfigs into konf store",
-		Long: `Import kubeconfigs into konf store
+		Long: `Import one or multiple kubeconfigs
+
+Examples:
+-> 'konf import /mydir/myfile.yaml' will import a single kubeconfig
+-> 'konf import /mydir' will import all files in that directory
 
 It is important that you import all configs first, as konf requires each config to only
 contain a single context. Import will take care of splitting if necessary.`,
