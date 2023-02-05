@@ -9,8 +9,6 @@ import (
 	"github.com/lithammer/fuzzysearch/fuzzy"
 	"github.com/manifoldco/promptui"
 	"github.com/simontheleg/konf-go/store"
-	// to replace promptui
-	// "github.com/AlecAivazis/survey/v2"
 )
 
 // RunFunc describes a generic function of a prompt. It returns the selected item.
