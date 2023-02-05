@@ -23,6 +23,8 @@ type setCmd struct {
 	cmd *cobra.Command
 }
 
+var showClusterOnly bool
+
 func newSetCommand() *setCmd {
 
 	sc := &setCmd{
@@ -34,7 +36,7 @@ func newSetCommand() *setCmd {
 		Short: "Set kubeconfig to use in current shell",
 		Args:  cobra.MaximumNArgs(1),
 		Long: `Sets kubeconfig to use or start picker dialogue.
-	
+
 Examples:
 -> 'set' run konf selection
 -> 'set <konfig id>' set a specific konf
@@ -43,6 +45,8 @@ Examples:
 		RunE:              sc.set,
 		ValidArgsFunction: sc.completeSet,
 	}
+
+	sc.cmd.Flags().BoolVar(&showClusterOnly, "show-cluster-only", false, "show only cluster column")
 
 	return sc
 }
@@ -170,13 +174,13 @@ func saveLatestKonf(f afero.Fs, id konf.KonfID) error {
 func createSetPrompt(options []*store.Metadata) *promptui.Select {
 	// TODO use ssh/terminal to get the terminalsize and set trunc accordingly https://stackoverflow.com/questions/16569433/get-terminal-size-in-go
 	trunc := 25
-	promptInactive, promptActive, label, fmap := prompt.NewTableOutputTemplates(trunc)
+	promptInactive, promptActive, label, fmap := prompt.NewTableOutputTemplates(trunc, showClusterOnly)
 
 	// Wrapper is required as we need access to options, but the methodSignature from promptUI
 	// requires you to only pass an index not the whole func
 	// This wrapper allows us to unit-test the FuzzyFilterKonf func better
 	var wrapFuzzyFilterKonf = func(input string, index int) bool {
-		return prompt.FuzzyFilterKonf(input, options[index])
+		return prompt.FuzzyFilterKonf(input, options[index], showClusterOnly)
 	}
 
 	prompt := promptui.Select{

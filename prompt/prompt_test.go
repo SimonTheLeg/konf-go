@@ -39,7 +39,7 @@ func TestFuzzyFilterKonf(t *testing.T) {
 
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
-			res := FuzzyFilterKonf(tc.search, tc.item)
+			res := FuzzyFilterKonf(tc.search, tc.item, false)
 			if res != tc.expRes {
 				t.Errorf("Exp res to be %t got %t", tc.expRes, res)
 			}
@@ -47,7 +47,7 @@ func TestFuzzyFilterKonf(t *testing.T) {
 	}
 }
 
-func TestPrepareTemplates(t *testing.T) {
+func TestPrepareTemplatesFull(t *testing.T) {
 	tt := map[string]struct {
 		Values      store.Metadata
 		Trunc       int
@@ -103,7 +103,37 @@ func TestPrepareTemplates(t *testing.T) {
 
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
-			inactive, active, label, fmap := NewTableOutputTemplates(tc.Trunc)
+			inactive, active, label, fmap := NewTableOutputTemplates(tc.Trunc, false)
+
+			checkTemplate(t, inactive, tc.Values, tc.ExpInactive, fmap)
+			checkTemplate(t, active, tc.Values, tc.ExpActive, fmap)
+			checkTemplate(t, label, tc.Values, tc.ExpLabel, fmap)
+		})
+	}
+}
+
+func TestPrepareTemplatesClusterOnly(t *testing.T) {
+	tt := map[string]struct {
+		Values      store.Metadata
+		Trunc       int
+		ExpInactive string
+		ExpActive   string
+		ExpLabel    string
+	}{
+		"values": {
+			store.Metadata{
+				Cluster: "0123456789",
+			},
+			10,
+			"  0123456789",
+			"▸ 0123456789",
+			"  Cluster ",
+		},
+	}
+
+	for name, tc := range tt {
+		t.Run(name, func(t *testing.T) {
+			inactive, active, label, fmap := NewTableOutputTemplates(tc.Trunc, true)
 
 			checkTemplate(t, inactive, tc.Values, tc.ExpInactive, fmap)
 			checkTemplate(t, active, tc.Values, tc.ExpActive, fmap)
