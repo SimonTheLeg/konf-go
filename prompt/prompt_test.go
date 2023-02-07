@@ -122,12 +122,12 @@ func TestPrepareTemplatesClusterOnly(t *testing.T) {
 	}{
 		"values": {
 			store.Metadata{
-				Cluster: "0123456789",
+				Context: "0123456789",
 			},
 			10,
 			"  0123456789",
 			"▸ 0123456789",
-			"  Cluster ",
+			"  Context ",
 		},
 	}
 
