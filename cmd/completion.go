@@ -21,7 +21,7 @@ func newCompletionCmd() *completionCmd {
 	cc := completionCmd{}
 
 	cc.cmd = &cobra.Command{
-		Use:   "completion [bash|zsh]",
+		Use:   "completion [bash|zsh|fish]",
 		Short: "Generate completion script",
 		Long: `To load completions:
 
@@ -43,7 +43,7 @@ Zsh:
 
 `,
 		DisableFlagsInUseLine: true,
-		ValidArgs:             []string{"bash", "zsh"},
+		ValidArgs:             []string{"bash", "zsh", "fish"},
 		Args:                  cobra.ExactValidArgs(1),
 		RunE:                  cc.completion,
 	}
@@ -87,6 +87,19 @@ func (c *completionCmd) completion(cmd *cobra.Command, args []string) error {
 		genBash := strings.Replace(b.String(), anchor, anchor+"\n    words[0]=\"konf-go\"", 1) // basically the same as for zsh, but this words[] is zero-indexed
 
 		os.Stdout.WriteString(genBash)
+
+	case "fish":
+		const name = "konf-go"
+		var b bytes.Buffer
+		rootCmd.Use = name
+		err := rootCmd.GenFishCompletion(&b, true)
+		if err != nil {
+			return err
+		}
+		anchor := "complete -c " + name
+		genFish := strings.Replace(b.String(), anchor, anchor+" -w konf", 2) // this is a bit different as we have to replace two occurrences of the anchor
+
+		os.Stdout.WriteString(genFish)
 
 	default:
 		return fmt.Errorf("konf currently does not support autocompletions for %s", args[0])
