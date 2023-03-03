@@ -70,11 +70,33 @@ konf_cleanup() {
 trap konf_cleanup EXIT
 `
 
+	var fish = `
+function konf -w konf-go
+    set -f res (konf-go $argv)
+    # only change $KUBECONFIG if instructed by konf-go
+    if string match -q 'KUBECONFIGCHANGE:*' $res
+        # this basically takes the line and cuts out the KUBECONFIGCHANGE Part
+        set -gx KUBECONFIG (string replace -r '^KUBECONFIGCHANGE:' '' $res)
+    else
+        # this makes --help work
+        printf "%s\n" $res
+    end
+end
+
+function konf_cleanup
+    konf-go cleanup
+end
+
+trap konf_cleanup EXIT
+`
+
 	switch args[0] {
 	case "zsh":
 		wrapper = zsh
 	case "bash":
 		wrapper = bash
+	case "fish":
+		wrapper = fish
 	default:
 		return fmt.Errorf("konf currently does not support %s", args[0])
 	}
