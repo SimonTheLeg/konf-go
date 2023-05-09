@@ -23,7 +23,7 @@ type setCmd struct {
 	cmd *cobra.Command
 }
 
-var showContextOnly bool
+var showAll bool
 
 func newSetCommand() *setCmd {
 
@@ -46,7 +46,7 @@ Examples:
 		ValidArgsFunction: sc.completeSet,
 	}
 
-	sc.cmd.Flags().BoolVar(&showContextOnly, "show-context-only", false, "show only context column")
+	sc.cmd.Flags().BoolVar(&showAll, "show-all", false, "show all columns, not only context")
 
 	return sc
 }
@@ -174,13 +174,13 @@ func saveLatestKonf(f afero.Fs, id konf.KonfID) error {
 func createSetPrompt(options []*store.Metadata) *promptui.Select {
 	// TODO use ssh/terminal to get the terminalsize and set trunc accordingly https://stackoverflow.com/questions/16569433/get-terminal-size-in-go
 	trunc := 25
-	promptInactive, promptActive, label, fmap := prompt.NewTableOutputTemplates(trunc, showContextOnly)
+	promptInactive, promptActive, label, fmap := prompt.NewTableOutputTemplates(trunc, showAll)
 
 	// Wrapper is required as we need access to options, but the methodSignature from promptUI
 	// requires you to only pass an index not the whole func
 	// This wrapper allows us to unit-test the FuzzyFilterKonf func better
 	var wrapFuzzyFilterKonf = func(input string, index int) bool {
-		return prompt.FuzzyFilterKonf(input, options[index], showContextOnly)
+		return prompt.FuzzyFilterKonf(input, options[index], showAll)
 	}
 
 	prompt := promptui.Select{
