@@ -71,6 +71,10 @@ Please do not rename or alias this binary, it is not be called by the user direc
 
 ### 2. Install the konf shellwrapper
 
+Depending on whether you are using zsh/bash or fish, please use the following:
+
+#### A) zsh/bash
+
 Add the following to your `.zshrc` / `.bashrc` and restart your shell or re-source this file:
 
 ```sh
@@ -78,11 +82,23 @@ Add the following to your `.zshrc` / `.bashrc` and restart your shell or re-sour
 source <(konf-go shellwrapper zsh)
 ```
 
+#### B) fish
+
+Add the following to your `config.fish` and restart your shell or re-source this file:
+
+```sh
+konf-go shellwrapper fish | source
+```
+
 This will install a shellwrapper called `konf`, which you can use like any command. The wrapper can also be aliased if need be.
 
 ### Customizations to Have a Good Time
 
-A collection of optional settings to improve quality of life with konf. These can be added to your `.zshrc` / `.bashrc`:
+A collection of optional settings to improve quality of life with konf.
+
+#### A) zsh/bash
+
+These can be added to your `.zshrc` / `.bashrc`:
 
 ```sh
 # Autocompletion. Currently supported shells: zsh, bash
@@ -94,6 +110,22 @@ export KUBECONFIG=$(konf --silent set -)
 # Alias
 alias kctx="konf set"
 alias kns="konf ns"
+```
+
+#### B) fish
+
+These can be added to your `config.fish`:
+
+```sh
+# Autocompletion
+konf completion fish | source
+
+# Open last konf on new shell session
+set -x KUBECONFIG (konf --silent set -)
+
+# Alias
+abbr --add --global -- kctx 'konf set'
+abbr --add --global -- kns 'konf ns'
 ```
 
 ## Usage

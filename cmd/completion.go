@@ -41,6 +41,13 @@ Zsh:
   # To load completions for each session, add this to your zshrc:
 	source <(konf completion zsh)
 
+fish:
+
+  $ konf completion fish | source
+  
+  # To load completions for each session, execute once:
+  $ konf completion fish > ~/.config/fish/completions/konf.fish
+
 `,
 		DisableFlagsInUseLine: true,
 		ValidArgs:             []string{"bash", "zsh", "fish"},

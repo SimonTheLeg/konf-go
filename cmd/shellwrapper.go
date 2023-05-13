@@ -79,6 +79,7 @@ function konf -w konf-go
         set -gx KUBECONFIG (string replace -r '^KUBECONFIGCHANGE:' '' $res)
     else
         # this makes --help work
+        # because fish does not support bracketed vars, we use printf instead
         printf "%s\n" $res
     end
 end
