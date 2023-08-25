@@ -89,7 +89,7 @@ A collection of optional settings to improve quality of life with konf. These ca
 source <(konf completion zsh)
 
 # Open last konf on new shell session
-export KUBECONFIG=$(konf --silent set -)
+konf --silent set -
 
 # Alias
 alias kctx="konf set"
