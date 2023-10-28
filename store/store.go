@@ -87,7 +87,7 @@ func FetchKonfsForGlob(f afero.Fs, pattern string) ([]*Metadata, error) {
 	// if the walkfunc only ran once, it means that the storedir does not contain any file which could be a kubeconfig
 	// It will always run at least once because we do not skip the rootDir
 	if filesChecked == 1 {
-		return nil, &EmptyStore{}
+		return nil, &EmptyStore{storepath: config.StoreDir()}
 	}
 
 	// similar to fs.ReadDir, sort the entries for easier viewing for the user and to
