@@ -2,8 +2,6 @@ package store
 
 import (
 	"fmt"
-
-	"github.com/simontheleg/konf-go/config"
 )
 
 // KubeConfigOverload describes a state in which a kubeconfig has multiple Contexts or Clusters
@@ -18,10 +16,12 @@ func (k *KubeConfigOverload) Error() string {
 
 // EmptyStore describes a state in which no kubeconfig is inside the store
 // It makes sense to have this in a separate case as it does not matter for some operations (e.g. importing) but detrimental for others (e.g. running the selection prompt)
-type EmptyStore struct{}
+type EmptyStore struct {
+	storepath string
+}
 
-func (k *EmptyStore) Error() string {
-	return fmt.Sprintf("The konf store at %q is empty. Please run 'konf import' to populate it", config.StoreDir())
+func (e *EmptyStore) Error() string {
+	return fmt.Sprintf("The konf store at %q is empty. Please run 'konf import' to populate it", e.storepath)
 }
 
 // NoMatch describes a state in which no konf was found matching the supplied glob
