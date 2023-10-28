@@ -165,7 +165,9 @@ func TestSearchNamespace(t *testing.T) {
 }
 
 func TestNewKubeClientSet(t *testing.T) {
-	fm := testhelper.FilesystemManager{}
+	storeDir := "./konf/store"
+	activeDir := "./konf/active"
+	fm := testhelper.FilesystemManager{Storedir: storeDir, Activedir: activeDir}
 
 	tt := map[string]struct {
 		kubeenv   string
@@ -264,7 +266,9 @@ func TestSelectNamespace(t *testing.T) {
 }
 
 func TestSetNamespace(t *testing.T) {
-	fm := testhelper.FilesystemManager{}
+	storeDir := "./konf/store"
+	activeDir := "./konf/active"
+	fm := testhelper.FilesystemManager{Storedir: storeDir, Activedir: activeDir}
 
 	tt := map[string]struct {
 		kubeenv   string

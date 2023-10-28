@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/simontheleg/konf-go/config"
 	"github.com/simontheleg/konf-go/konf"
 	"github.com/simontheleg/konf-go/testhelper"
 	"github.com/spf13/afero"
@@ -14,12 +13,9 @@ import (
 )
 
 func TestFetchAllKonfs(t *testing.T) {
-	fm := testhelper.FilesystemManager{}
-	config.InitWithOverrides(
-		&config.Config{
-			KonfDir: "./konf",
-		},
-	)
+	storeDir := "./konf/store"
+	activeDir := "./konf/active"
+	fm := testhelper.FilesystemManager{Storedir: storeDir, Activedir: activeDir}
 
 	tt := map[string]struct {
 		fsCreator   func() afero.Fs
@@ -89,7 +85,8 @@ func TestFetchAllKonfs(t *testing.T) {
 	for name, tc := range tt {
 
 		t.Run(name, func(t *testing.T) {
-			out, err := FetchAllKonfs(tc.fsCreator())
+			sm := Storemanager{Activedir: activeDir, Storedir: storeDir, Fs: tc.fsCreator()}
+			out, err := sm.FetchAllKonfs()
 
 			tc.checkError(t, err)
 
@@ -105,11 +102,9 @@ func TestFetchAllKonfs(t *testing.T) {
 // element itself. But because konfDir can be configured to anything we want, we need to test
 // for these cases as well
 func TestFetchAllKonfsCustomKonfDir(t *testing.T) {
-	fm := testhelper.FilesystemManager{}
-	conf := &config.Config{
-		KonfDir: "konf", // override with custom dir here
-	}
-	config.InitWithOverrides(conf)
+	storeDir := "konf/store"
+	activeDir := "konf/active"
+	fm := testhelper.FilesystemManager{Storedir: storeDir, Activedir: activeDir}
 
 	tt := map[string]struct {
 		fsCreator      func() afero.Fs
@@ -179,7 +174,8 @@ func TestFetchAllKonfsCustomKonfDir(t *testing.T) {
 	for name, tc := range tt {
 
 		t.Run(name, func(t *testing.T) {
-			out, err := FetchAllKonfs(tc.fsCreator())
+			sm := Storemanager{Activedir: activeDir, Storedir: storeDir, Fs: tc.fsCreator()}
+			out, err := sm.FetchAllKonfs()
 
 			tc.checkError(t, err)
 
@@ -191,13 +187,9 @@ func TestFetchAllKonfsCustomKonfDir(t *testing.T) {
 }
 
 func TestFetchKonfsForGlob(t *testing.T) {
-	fm := testhelper.FilesystemManager{}
-	// TODO figure out if there is a better way to handle configuration, so we don't have to set the konfdir every time
-	config.InitWithOverrides(
-		&config.Config{
-			KonfDir: "./konf",
-		},
-	)
+	storeDir := "./konf/store"
+	activeDir := "./konf/active"
+	fm := testhelper.FilesystemManager{Storedir: storeDir, Activedir: activeDir}
 
 	tt := map[string]struct {
 		fsCreator   func() afero.Fs
@@ -264,7 +256,10 @@ func TestFetchKonfsForGlob(t *testing.T) {
 	for name, tc := range tt {
 
 		t.Run(name, func(t *testing.T) {
-			out, err := FetchKonfsForGlob(tc.fsCreator(), tc.glob)
+			fs := tc.fsCreator()
+			sm := &Storemanager{Activedir: activeDir, Storedir: storeDir, Fs: fs}
+
+			out, err := sm.FetchKonfsForGlob(tc.glob)
 
 			tc.checkError(t, err)
 
@@ -300,8 +295,11 @@ func expNoMatch(t *testing.T, err error) {
 }
 
 func TestWriteKonfToStore(t *testing.T) {
-	fm := testhelper.FilesystemManager{}
+	storeDir := "./konf/store"
+	activeDir := "./konf/active"
+	fm := testhelper.FilesystemManager{Storedir: storeDir, Activedir: activeDir}
 	f := testhelper.FSWithFiles(fm.ActiveDir, fm.StoreDir)()
+	sm := &Storemanager{Activedir: activeDir, Storedir: storeDir, Fs: f}
 
 	expContent := `apiVersion: v1
 clusters:
@@ -357,7 +355,7 @@ users:
 		},
 	}
 
-	p, err := WriteKonfToStore(f, devEUControlGroup)
+	p, err := sm.WriteKonfToStore(devEUControlGroup)
 	if err != nil {
 		t.Errorf("Exp err to be nil but got %q", err)
 	}
@@ -390,4 +388,24 @@ users:
 		t.Errorf("Exp to create clientset, but got %q", err)
 	}
 
+}
+
+func TestActivePathFromID(t *testing.T) {
+	sm := Storemanager{Activedir: "something/active", Storedir: "something/store"}
+	konfID := konf.IDFromClusterAndContext("mycluster", "mycontext")
+	res := sm.ActivePathFromID(konfID)
+	expRes := "something/active/mycontext_mycluster.yaml"
+	if res != expRes {
+		t.Errorf("wanted id %q, got %q", expRes, res)
+	}
+}
+
+func TestStorePathFromID(t *testing.T) {
+	sm := Storemanager{Activedir: "something/active", Storedir: "something/store"}
+	konfID := konf.IDFromClusterAndContext("mycluster", "mycontext")
+	res := sm.StorePathFromID(konfID)
+	expRes := "something/store/mycontext_mycluster.yaml"
+	if res != expRes {
+		t.Errorf("wanted id %q, got %q", expRes, res)
+	}
 }

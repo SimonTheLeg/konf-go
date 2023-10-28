@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/simontheleg/konf-go/config"
 	"github.com/simontheleg/konf-go/konf"
 	"github.com/simontheleg/konf-go/prompt"
 	"github.com/simontheleg/konf-go/store"
@@ -18,8 +17,9 @@ import (
 )
 
 func TestDeleteKonfWithID(t *testing.T) {
-	fm := testhelper.FilesystemManager{}
-	storeDir := config.StoreDir()
+	storeDir := "./konf/store"
+	activeDir := "./konf/active"
+	fm := testhelper.FilesystemManager{Storedir: storeDir, Activedir: activeDir}
 
 	tt := map[string]struct {
 		fsCreator   func() afero.Fs
@@ -48,8 +48,9 @@ func TestDeleteKonfWithID(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 
 			fsm := tc.fsCreator()
+			sm := &store.Storemanager{Fs: fsm, Activedir: activeDir, Storedir: storeDir}
 
-			err := deleteKonfWithID(fsm, tc.idToDelete)
+			err := deleteKonfWithID(sm, tc.idToDelete)
 
 			if !errors.Is(err, tc.expError) {
 				t.Errorf("Exp err to be %q, got %q", tc.expError, err)
@@ -78,7 +79,9 @@ func TestDeleteKonfWithID(t *testing.T) {
 }
 
 func TestIDsForGlobs(t *testing.T) {
-	fm := testhelper.FilesystemManager{}
+	storeDir := "./konf/store"
+	activeDir := "./konf/active"
+	fm := testhelper.FilesystemManager{Storedir: storeDir, Activedir: activeDir}
 
 	tt := map[string]struct {
 		fsCreator func() afero.Fs
@@ -127,9 +130,10 @@ func TestIDsForGlobs(t *testing.T) {
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
 
-			fsm := tc.fsCreator()
+			fs := tc.fsCreator()
+			sm := &store.Storemanager{Activedir: activeDir, Storedir: storeDir, Fs: fs}
 
-			res, err := idsForGlobs(fsm, tc.patterns)
+			res, err := idsForGlobs(sm, tc.patterns)
 
 			if !testhelper.EqualError(tc.expError, err) {
 				t.Errorf("Exp error %q, got %q", tc.expError, err)
@@ -157,17 +161,17 @@ func TestDelete(t *testing.T) {
 	idsForGlobsCalled := 0
 	deleteKonfWithIDCalled := 0
 
-	var mockSelectSingleKonf = func(afero.Fs, prompt.RunFunc) (konf.KonfID, error) {
+	var mockSelectSingleKonf = func(*store.Storemanager, prompt.RunFunc) (konf.KonfID, error) {
 		selectSingleKonfCalled++
 		return "id1", nil
 	}
 
-	var mockIDsForGlobs = func(afero.Fs, []string) ([]konf.KonfID, error) {
+	var mockIDsForGlobs = func(*store.Storemanager, []string) ([]konf.KonfID, error) {
 		idsForGlobsCalled++
 		return []konf.KonfID{"id1", "id2", "id3"}, nil
 	}
 
-	var mockDeleteKonfWithID = func(afero.Fs, konf.KonfID) error {
+	var mockDeleteKonfWithID = func(*store.Storemanager, konf.KonfID) error {
 		deleteKonfWithIDCalled++
 		return nil
 	}
@@ -232,7 +236,9 @@ func TestDelete(t *testing.T) {
 func TestCompleteDelete(t *testing.T) {
 	// since cobra takes care of the majority of the complexity (like parsing out results that don't match completion start),
 	// we only need to test regular cases
-	fm := testhelper.FilesystemManager{}
+	storeDir := "./konf/store"
+	activeDir := "./konf/active"
+	fm := testhelper.FilesystemManager{Storedir: storeDir, Activedir: activeDir}
 
 	tt := map[string]struct {
 		fsCreator    func() afero.Fs
@@ -253,8 +259,12 @@ func TestCompleteDelete(t *testing.T) {
 
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
+			fs := tc.fsCreator()
+			sm := &store.Storemanager{Activedir: activeDir, Storedir: storeDir, Fs: fs}
+
 			dcmd := newDeleteCommand()
-			dcmd.fs = tc.fsCreator()
+			dcmd.sm = sm
+			dcmd.fetchconfs = sm.FetchAllKonfs
 
 			res, compdirec := dcmd.completeDelete(dcmd.cmd, []string{}, "")
 

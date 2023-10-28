@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"github.com/simontheleg/konf-go/config"
 	"github.com/simontheleg/konf-go/konf"
 	"github.com/simontheleg/konf-go/log"
 	"github.com/simontheleg/konf-go/prompt"
@@ -10,21 +11,22 @@ import (
 )
 
 type deleteCmd struct {
-	fs afero.Fs
-
-	fetchconfs       func(afero.Fs) ([]*store.Metadata, error)
-	selectSingleKonf func(afero.Fs, prompt.RunFunc) (konf.KonfID, error)
-	deleteKonfWithID func(afero.Fs, konf.KonfID) error
-	idsForGlobs      func(afero.Fs, []string) ([]konf.KonfID, error)
+	sm               *store.Storemanager
+	fetchconfs       func() ([]*store.Metadata, error)
+	selectSingleKonf func(*store.Storemanager, prompt.RunFunc) (konf.KonfID, error)
+	deleteKonfWithID func(*store.Storemanager, konf.KonfID) error
+	idsForGlobs      func(*store.Storemanager, []string) ([]konf.KonfID, error)
 	prompt           prompt.RunFunc
 
 	cmd *cobra.Command
 }
 
 func newDeleteCommand() *deleteCmd {
+	fs := afero.NewOsFs()
+	sm := &store.Storemanager{Fs: fs, Activedir: config.ActiveDir(), Storedir: config.StoreDir()}
 	dc := &deleteCmd{
-		fs:               afero.NewOsFs(),
-		fetchconfs:       store.FetchAllKonfs,
+		sm:               sm,
+		fetchconfs:       sm.FetchAllKonfs,
 		selectSingleKonf: selectSingleKonf,
 		deleteKonfWithID: deleteKonfWithID,
 		idsForGlobs:      idsForGlobs,
@@ -54,20 +56,20 @@ func (c *deleteCmd) delete(cmd *cobra.Command, args []string) error {
 
 	if len(args) == 0 {
 		var id konf.KonfID
-		id, err = c.selectSingleKonf(c.fs, c.prompt)
+		id, err = c.selectSingleKonf(c.sm, c.prompt)
 		if err != nil {
 			return err
 		}
 		ids = append(ids, id)
 	} else {
-		ids, err = c.idsForGlobs(c.fs, args)
+		ids, err = c.idsForGlobs(c.sm, args)
 		if err != nil {
 			return err
 		}
 	}
 
 	for _, id := range ids {
-		if err := c.deleteKonfWithID(c.fs, id); err != nil {
+		if err := c.deleteKonfWithID(c.sm, id); err != nil {
 			return err
 		}
 	}
@@ -76,8 +78,8 @@ func (c *deleteCmd) delete(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func deleteKonfWithID(fs afero.Fs, id konf.KonfID) error {
-	if err := fs.Remove(id.StorePath()); err != nil {
+func deleteKonfWithID(sm *store.Storemanager, id konf.KonfID) error {
+	if err := sm.Fs.Remove(id.StorePath()); err != nil {
 		return err
 	}
 	log.Info("Successfully deleted konf %q at %q", id, id.StorePath())
@@ -86,10 +88,10 @@ func deleteKonfWithID(fs afero.Fs, id konf.KonfID) error {
 
 // idsForGlobs takes in a slice of patterns and returns corresponding IDs from
 // the konfStore
-func idsForGlobs(f afero.Fs, patterns []string) ([]konf.KonfID, error) {
+func idsForGlobs(sm *store.Storemanager, patterns []string) ([]konf.KonfID, error) {
 	var ids []konf.KonfID
 	for _, pattern := range patterns {
-		metadata, err := store.FetchKonfsForGlob(f, pattern) // resolve any globs among the arguments
+		metadata, err := sm.FetchKonfsForGlob(pattern) // resolve any globs among the arguments
 		if err != nil {
 			return nil, err
 		}
@@ -102,7 +104,7 @@ func idsForGlobs(f afero.Fs, patterns []string) ([]konf.KonfID, error) {
 }
 
 func (c *deleteCmd) completeDelete(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	konfs, err := store.FetchAllKonfs(c.fs)
+	konfs, err := c.fetchconfs()
 	if err != nil {
 		// if the store is just empty, return no suggestions, instead of throwing an error
 		if _, ok := err.(*store.EmptyStore); ok {
