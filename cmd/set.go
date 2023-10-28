@@ -18,15 +18,16 @@ import (
 )
 
 type setCmd struct {
-	fs afero.Fs
+	sm *store.Storemanager
 
 	cmd *cobra.Command
 }
 
 func newSetCommand() *setCmd {
-
+	fs := afero.NewOsFs()
+	sm := &store.Storemanager{Fs: fs, Activedir: config.ActiveDir(), Storedir: config.StoreDir()}
 	sc := &setCmd{
-		fs: afero.NewOsFs(),
+		sm: sm,
 	}
 
 	sc.cmd = &cobra.Command{
@@ -55,12 +56,12 @@ func (c *setCmd) set(cmd *cobra.Command, args []string) error {
 	var err error
 
 	if len(args) == 0 {
-		id, err = selectSingleKonf(c.fs, prompt.Terminal)
+		id, err = selectSingleKonf(c.sm, prompt.Terminal)
 		if err != nil {
 			return err
 		}
 	} else if args[0] == "-" {
-		id, err = idOfLatestKonf(c.fs)
+		id, err = idOfLatestKonf(c.sm.Fs)
 		if err != nil {
 			return err
 		}
@@ -68,11 +69,11 @@ func (c *setCmd) set(cmd *cobra.Command, args []string) error {
 		id = konf.KonfID(args[0])
 	}
 
-	context, err := setContext(id, c.fs)
+	context, err := setContext(id, c.sm.Fs)
 	if err != nil {
 		return err
 	}
-	err = saveLatestKonf(c.fs, id)
+	err = saveLatestKonf(c.sm.Fs, id)
 	if err != nil {
 		return fmt.Errorf("could not save latest konf. As a result 'konf set -' might not work: %q ", err)
 	}
@@ -88,7 +89,7 @@ func (c *setCmd) set(cmd *cobra.Command, args []string) error {
 }
 
 func (c *setCmd) completeSet(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	konfs, err := store.FetchAllKonfs(c.fs)
+	konfs, err := c.sm.FetchAllKonfs()
 	if err != nil {
 		// if the store is just empty, return no suggestions, instead of throwing an error
 		if _, ok := err.(*store.EmptyStore); ok {
@@ -115,8 +116,8 @@ func (c *setCmd) completeSet(cmd *cobra.Command, args []string, toComplete strin
 // it is also being used by two commands: "set" and "delete". But because
 // they are in the same package, we also cannot easily duplicate the code for
 // each
-func selectSingleKonf(f afero.Fs, pf prompt.RunFunc) (konf.KonfID, error) {
-	k, err := store.FetchAllKonfs(f)
+func selectSingleKonf(sm *store.Storemanager, pf prompt.RunFunc) (konf.KonfID, error) {
+	k, err := sm.FetchAllKonfs()
 	if err != nil {
 		return "", err
 	}

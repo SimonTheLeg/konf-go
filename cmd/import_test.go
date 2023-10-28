@@ -10,12 +10,15 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/simontheleg/konf-go/konf"
+	"github.com/simontheleg/konf-go/store"
 	"github.com/simontheleg/konf-go/testhelper"
 	"github.com/spf13/afero"
 )
 
 func TestImport(t *testing.T) {
-	fm := testhelper.FilesystemManager{}
+	storeDir := "./konf/store"
+	activeDir := "./konf/active"
+	fm := testhelper.FilesystemManager{Storedir: storeDir, Activedir: activeDir}
 	var determineConfigsCalled int
 	var writeConfigCalledCount int
 	var deleteOriginalConfigCalled int
@@ -25,74 +28,74 @@ func TestImport(t *testing.T) {
 		determineConfigsCalled++
 		return konf.KonfsFromKubeconfig(r)
 	}
-	var wrapFilesForDir = func(f afero.Fs, s string) ([]*FileWithPath, error) {
+	var wrapFilesForDir = func(sm *store.Storemanager, s string) ([]*FileWithPath, error) {
 		filesForDirCalled++
-		return filesForDir(f, s)
+		return filesForDir(sm, s)
 	}
-	var mockWriteConfig = func(afero.Fs, *konf.Konfig) (string, error) { writeConfigCalledCount++; return "", nil }
-	var mockDeleteOriginalConfig = func(afero.Fs, string) error { deleteOriginalConfigCalled++; return nil }
+	var mockWriteConfig = func(*konf.Konfig) (string, error) { writeConfigCalledCount++; return "", nil }
+	var mockDeleteOriginalConfig = func(*store.Storemanager, string) error { deleteOriginalConfigCalled++; return nil }
 
-	type ExpCalls struct {
+	type expCalls struct {
 		DetermineConfigs     int
 		WriteConfig          int
 		DeleteOriginalConfig int
 		FilesForDir          int
 	}
 	tt := map[string]struct {
-		Args      []string
-		FsCreator func() afero.Fs
-		ExpErr    error
-		MoveFlag  bool
-		ExpCalls
+		args      []string
+		fsCreator func() afero.Fs
+		expErr    error
+		moveFlag  bool
+		expCalls
 	}{
 		"single file, single context": {
 			[]string{"./konf/store/dev-eu_dev-eu-1.yaml"},
 			testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU),
 			nil,
 			false,
-			ExpCalls{DetermineConfigs: 1, WriteConfig: 1, FilesForDir: 1},
+			expCalls{DetermineConfigs: 1, WriteConfig: 1, FilesForDir: 1},
 		},
 		"single file, empty context": {
 			[]string{"./konf/store/no-context.yaml"},
 			testhelper.FSWithFiles(fm.StoreDir, fm.KonfWithoutContext),
 			fmt.Errorf("no contexts found in the following file(s):\n\t- \"konf/store/no-context.yaml\"\n"),
 			false,
-			ExpCalls{DetermineConfigs: 1, WriteConfig: 0, FilesForDir: 1},
+			expCalls{DetermineConfigs: 1, WriteConfig: 0, FilesForDir: 1},
 		},
 		"single file, move flag provided": {
 			[]string{"./konf/store/dev-eu_dev-eu-1.yaml"},
 			testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU),
 			nil,
 			true,
-			ExpCalls{DetermineConfigs: 1, WriteConfig: 1, DeleteOriginalConfig: 1, FilesForDir: 1},
+			expCalls{DetermineConfigs: 1, WriteConfig: 1, DeleteOriginalConfig: 1, FilesForDir: 1},
 		},
 		"directory with single file": {
 			[]string{"./konf/store"},
 			testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU),
 			nil,
 			false,
-			ExpCalls{DetermineConfigs: 1, WriteConfig: 1, DeleteOriginalConfig: 0, FilesForDir: 1},
+			expCalls{DetermineConfigs: 1, WriteConfig: 1, DeleteOriginalConfig: 0, FilesForDir: 1},
 		},
 		"directory with multiple files": {
 			[]string{"./konf/store"},
 			testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA),
 			nil,
 			false,
-			ExpCalls{DetermineConfigs: 2, WriteConfig: 2, DeleteOriginalConfig: 0, FilesForDir: 1},
+			expCalls{DetermineConfigs: 2, WriteConfig: 2, DeleteOriginalConfig: 0, FilesForDir: 1},
 		},
 		"directory with multiple files, move flag provided": {
 			[]string{"./konf/store"},
 			testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA),
 			nil,
 			true,
-			ExpCalls{DetermineConfigs: 2, WriteConfig: 2, DeleteOriginalConfig: 2, FilesForDir: 1},
+			expCalls{DetermineConfigs: 2, WriteConfig: 2, DeleteOriginalConfig: 2, FilesForDir: 1},
 		},
 		"directory with multiple files, empty context": {
 			[]string{"./konf/store"},
 			testhelper.FSWithFiles(fm.StoreDir, fm.KonfWithoutContext, fm.KonfWithoutContext2),
 			fmt.Errorf("no contexts found in the following file(s):\n\t- \"konf/store/no-context-2.yaml\"\n\t- \"konf/store/no-context.yaml\"\n"),
 			false,
-			ExpCalls{DetermineConfigs: 2, WriteConfig: 0, FilesForDir: 1},
+			expCalls{DetermineConfigs: 2, WriteConfig: 0, FilesForDir: 1},
 		},
 	}
 
@@ -102,39 +105,39 @@ func TestImport(t *testing.T) {
 			writeConfigCalledCount = 0
 			deleteOriginalConfigCalled = 0
 			filesForDirCalled = 0
-			fs := tc.FsCreator()
+			sm := &store.Storemanager{Activedir: activeDir, Storedir: storeDir, Fs: tc.fsCreator()}
 
 			icmd := newImportCmd()
-			icmd.fs = fs
+			icmd.sm = sm
 			icmd.determineConfigs = wrapDetermineConfig
 			icmd.writeConfig = mockWriteConfig
 			icmd.deleteOriginalConfig = mockDeleteOriginalConfig
 			icmd.filesForDir = wrapFilesForDir
-			icmd.move = tc.MoveFlag
+			icmd.move = tc.moveFlag
 			cmd := icmd.cmd
 
 			// TODO unfortunately I was not able to use ExecuteC here as this would run
 			// the cobra.OnInitialize, which sets the filesystem to OS. It should be investigated
 			// if there is another way
-			err := cmd.RunE(cmd, tc.Args)
-			if !testhelper.EqualError(tc.ExpErr, err) {
-				t.Errorf("Exp error %q, got %q", tc.ExpErr, err)
+			err := cmd.RunE(cmd, tc.args)
+			if !testhelper.EqualError(tc.expErr, err) {
+				t.Errorf("Exp error %q, got %q", tc.expErr, err)
 			}
 
-			if tc.ExpCalls.DetermineConfigs != determineConfigsCalled {
-				t.Errorf("Exp DetermineConfigsCalled to be %d, but got %d", tc.ExpCalls.DetermineConfigs, determineConfigsCalled)
+			if tc.expCalls.DetermineConfigs != determineConfigsCalled {
+				t.Errorf("Exp DetermineConfigsCalled to be %d, but got %d", tc.expCalls.DetermineConfigs, determineConfigsCalled)
 			}
 
-			if tc.ExpCalls.WriteConfig != writeConfigCalledCount {
-				t.Errorf("Exp WriteConfigCalled to be %d, but got %d", tc.ExpCalls.WriteConfig, writeConfigCalledCount)
+			if tc.expCalls.WriteConfig != writeConfigCalledCount {
+				t.Errorf("Exp WriteConfigCalled to be %d, but got %d", tc.expCalls.WriteConfig, writeConfigCalledCount)
 			}
 
-			if tc.ExpCalls.DeleteOriginalConfig != deleteOriginalConfigCalled {
-				t.Errorf("Exp DeleteOriginalConfigCalled to be %d, but got %d", tc.ExpCalls.DeleteOriginalConfig, deleteOriginalConfigCalled)
+			if tc.expCalls.DeleteOriginalConfig != deleteOriginalConfigCalled {
+				t.Errorf("Exp DeleteOriginalConfigCalled to be %d, but got %d", tc.expCalls.DeleteOriginalConfig, deleteOriginalConfigCalled)
 			}
 
-			if tc.ExpCalls.FilesForDir != filesForDirCalled {
-				t.Errorf("Exp FilesForDirCalled to be %d, but got %d", tc.ExpCalls.FilesForDir, filesForDirCalled)
+			if tc.expCalls.FilesForDir != filesForDirCalled {
+				t.Errorf("Exp FilesForDirCalled to be %d, but got %d", tc.expCalls.FilesForDir, filesForDirCalled)
 			}
 
 		})
@@ -146,8 +149,9 @@ func TestDeleteOriginalConfig(t *testing.T) {
 
 	f := afero.NewMemMapFs()
 	afero.WriteFile(f, fpath, nil, 0664)
+	sm := &store.Storemanager{Fs: f} // for this simple case we do not need to set ActiveDir and StoreDir
 
-	if err := deleteOriginalConfig(f, fpath); err != nil {
+	if err := deleteOriginalConfig(sm, fpath); err != nil {
 		t.Fatalf("Could not delete original kubeconfig %q: '%v'", fpath, err)
 	}
 
@@ -162,8 +166,11 @@ func TestDeleteOriginalConfig(t *testing.T) {
 // - a file
 // - dir without any files
 func TestFilesForDir(t *testing.T) {
-	fm := testhelper.FilesystemManager{}
+	storeDir := "./konf/store"
+	activeDir := "./konf/active"
+	fm := testhelper.FilesystemManager{Storedir: storeDir, Activedir: activeDir}
 	f := testhelper.FSWithFiles(fm.DSStore, fm.MultiClusterMultiContext, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA)()
+	sm := &store.Storemanager{Activedir: activeDir, Storedir: storeDir, Fs: f}
 
 	tt := map[string]struct {
 		path   string
@@ -195,7 +202,7 @@ func TestFilesForDir(t *testing.T) {
 
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
-			files, err := filesForDir(f, tc.path)
+			files, err := filesForDir(sm, tc.path)
 			if err != nil {
 				t.Fatal(err)
 			}

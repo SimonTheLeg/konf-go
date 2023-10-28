@@ -12,6 +12,7 @@ import (
 	"github.com/simontheleg/konf-go/config"
 	"github.com/simontheleg/konf-go/konf"
 	"github.com/simontheleg/konf-go/prompt"
+	"github.com/simontheleg/konf-go/store"
 	"github.com/simontheleg/konf-go/testhelper"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
@@ -19,7 +20,10 @@ import (
 )
 
 func TestSelectLastKonf(t *testing.T) {
-	fm := testhelper.FilesystemManager{}
+	storeDir := "./konf/store"
+	activeDir := "./konf/active"
+	latestKonfPath := "./konf/latestkonf" // it is fine to use an imaginary file location here
+	fm := testhelper.FilesystemManager{Storedir: storeDir, Activedir: activeDir, LatestKonfPath: latestKonfPath}
 
 	tt := map[string]struct {
 		FSCreator func() afero.Fs
@@ -56,7 +60,9 @@ func TestSelectLastKonf(t *testing.T) {
 func TestCompleteSet(t *testing.T) {
 	// since cobra takes care of the majority of the complexity (like parsing out results that don't match completion start),
 	// we only need to test regular cases
-	fm := testhelper.FilesystemManager{}
+	storeDir := "./konf/store"
+	activeDir := "./konf/active"
+	fm := testhelper.FilesystemManager{Storedir: storeDir, Activedir: activeDir}
 
 	tt := map[string]struct {
 		fsCreator    func() afero.Fs
@@ -77,8 +83,11 @@ func TestCompleteSet(t *testing.T) {
 
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
+			fs := tc.fsCreator()
+			sm := &store.Storemanager{Activedir: activeDir, Storedir: storeDir, Fs: fs}
+
 			scmd := newSetCommand()
-			scmd.fs = tc.fsCreator()
+			scmd.sm = sm
 
 			res, compdirec := scmd.completeSet(scmd.cmd, []string{}, "")
 
@@ -182,8 +191,11 @@ func TestSetContext(t *testing.T) {
 }
 
 func TestSelectContext(t *testing.T) {
-	fm := testhelper.FilesystemManager{}
+	storeDir := "./konf/store"
+	activeDir := "./konf/active"
+	fm := testhelper.FilesystemManager{Storedir: storeDir, Activedir: activeDir}
 	f := testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA)()
+	sm := &store.Storemanager{Fs: f, Activedir: config.ActiveDir(), Storedir: config.StoreDir()}
 
 	// cases
 	// - invalid selection
@@ -217,7 +229,7 @@ func TestSelectContext(t *testing.T) {
 
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
-			res, err := selectSingleKonf(f, tc.pf)
+			res, err := selectSingleKonf(sm, tc.pf)
 
 			if !testhelper.EqualError(err, tc.expErr) {
 				t.Errorf("Exp err %q, got %q", tc.expErr, err)

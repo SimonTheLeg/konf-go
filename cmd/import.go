@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/simontheleg/konf-go/config"
 	"github.com/simontheleg/konf-go/konf"
 	log "github.com/simontheleg/konf-go/log"
 	"github.com/simontheleg/konf-go/store"
@@ -14,12 +15,12 @@ import (
 )
 
 type importCmd struct {
-	fs afero.Fs
+	sm *store.Storemanager
 
-	filesForDir          func(afero.Fs, string) ([]*FileWithPath, error)
+	filesForDir          func(*store.Storemanager, string) ([]*FileWithPath, error)
 	determineConfigs     func(io.Reader) ([]*konf.Konfig, error)
-	writeConfig          func(afero.Fs, *konf.Konfig) (string, error)
-	deleteOriginalConfig func(afero.Fs, string) error
+	writeConfig          func(*konf.Konfig) (string, error)
+	deleteOriginalConfig func(*store.Storemanager, string) error
 
 	move bool
 
@@ -28,12 +29,14 @@ type importCmd struct {
 
 func newImportCmd() *importCmd {
 	fs := afero.NewOsFs()
+	sm := &store.Storemanager{Activedir: config.ActiveDir(), Storedir: config.StoreDir(), Fs: fs}
 
 	ic := &importCmd{
-		fs:                   fs,
+		sm: sm,
+
 		filesForDir:          filesForDir,
 		determineConfigs:     konf.KonfsFromKubeconfig,
-		writeConfig:          store.WriteKonfToStore,
+		writeConfig:          sm.WriteKonfToStore,
 		deleteOriginalConfig: deleteOriginalConfig,
 	}
 
@@ -61,7 +64,7 @@ contain a single context. Import will take care of splitting if necessary.`,
 func (c *importCmd) importf(cmd *cobra.Command, args []string) error {
 	searchpath := args[0] // safe, as we specify cobra.ExactArgs(1)
 
-	files, err := c.filesForDir(c.fs, searchpath)
+	files, err := c.filesForDir(c.sm, searchpath)
 	if err != nil {
 		return err
 	}
@@ -91,7 +94,7 @@ func (c *importCmd) importf(cmd *cobra.Command, args []string) error {
 	}
 
 	for _, k := range konfs {
-		_, err = c.writeConfig(c.fs, k.Konf)
+		_, err = c.writeConfig(k.Konf)
 		if err != nil {
 			return err
 		}
@@ -100,7 +103,7 @@ func (c *importCmd) importf(cmd *cobra.Command, args []string) error {
 
 	if c.move {
 		for _, f := range files {
-			if err := c.deleteOriginalConfig(c.fs, f.FilePath); err != nil {
+			if err := c.deleteOriginalConfig(c.sm, f.FilePath); err != nil {
 				return err
 			}
 			log.Info("Successfully deleted original kubeconfig file at %q", f.FilePath)
@@ -110,8 +113,9 @@ func (c *importCmd) importf(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func deleteOriginalConfig(f afero.Fs, path string) error {
-	err := f.Remove(path)
+func deleteOriginalConfig(sm *store.Storemanager, path string) error {
+	// TODO refactor: This action should be provided by a convenience func inside the store package
+	err := sm.Fs.Remove(path)
 	if err != nil {
 		return err
 	}
@@ -128,8 +132,8 @@ type FileWithPath struct {
 //
 // Relevant is defined as in no subdirectories and no hidden files. If a file
 // instead of a dir is supplied, the file will be returned
-func filesForDir(f afero.Fs, path string) ([]*FileWithPath, error) {
-	fileinfo, err := f.Stat(path)
+func filesForDir(sm *store.Storemanager, path string) ([]*FileWithPath, error) {
+	fileinfo, err := sm.Fs.Stat(path)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +141,7 @@ func filesForDir(f afero.Fs, path string) ([]*FileWithPath, error) {
 	files := []*FileWithPath{}
 
 	if fileinfo.IsDir() {
-		fileinfos, err := afero.ReadDir(f, path)
+		fileinfos, err := afero.ReadDir(sm.Fs, path)
 		if err != nil {
 			return nil, err
 		}
@@ -146,14 +150,14 @@ func filesForDir(f afero.Fs, path string) ([]*FileWithPath, error) {
 				continue // skip any directories or hidden files
 			}
 			fpath := filepath.Join(path, p.Name())
-			file, err := f.Open(fpath)
+			file, err := sm.Fs.Open(fpath)
 			if err != nil {
 				return nil, err
 			}
 			files = append(files, &FileWithPath{FilePath: fpath, File: file})
 		}
 	} else {
-		file, err := f.Open(path)
+		file, err := sm.Fs.Open(path)
 		if err != nil {
 			return nil, err
 		}
