@@ -1,7 +1,15 @@
 package main
 
-import "github.com/simontheleg/konf-go/cmd"
+import (
+	"fmt"
+	"os"
+
+	"github.com/simontheleg/konf-go/cmd"
+)
 
 func main() {
-	cmd.Execute()
+	if err := cmd.Execute(); err != nil {
+		fmt.Fprintf(os.Stderr, "konf execution has failed: %q\n", err)
+		os.Exit(1)
+	}
 }

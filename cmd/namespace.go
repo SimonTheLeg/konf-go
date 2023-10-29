@@ -228,10 +228,6 @@ func setNamespace(fs afero.Fs, ns string) error {
 	return nil
 }
 
-func init() {
-	rootCmd.AddCommand(newNamespaceCmd().cmd)
-}
-
 func kubeconfigEnv() (string, error) {
 	kPath := os.Getenv("KUBECONFIG")
 	if kPath == "" {

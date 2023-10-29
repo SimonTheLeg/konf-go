@@ -95,7 +95,3 @@ func cleanLeftOvers(f afero.Fs) error {
 
 	return nil
 }
-
-func init() {
-	rootCmd.AddCommand(cleanupCmd)
-}

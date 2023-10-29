@@ -168,7 +168,3 @@ func filesForDir(sm *store.Storemanager, path string) ([]*FileWithPath, error) {
 
 	return files, nil
 }
-
-func init() {
-	rootCmd.AddCommand(newImportCmd().cmd)
-}
