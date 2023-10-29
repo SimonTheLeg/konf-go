@@ -195,7 +195,3 @@ func createSetPrompt(options []*store.Metadata) *promptui.Select {
 	}
 	return &prompt
 }
-
-func init() {
-	rootCmd.AddCommand(newSetCommand().cmd)
-}

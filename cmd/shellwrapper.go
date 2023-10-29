@@ -83,7 +83,3 @@ trap konf_cleanup EXIT
 
 	return nil
 }
-
-func init() {
-	rootCmd.AddCommand(newShellwrapperCmd().cmd)
-}

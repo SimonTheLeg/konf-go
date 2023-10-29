@@ -124,7 +124,3 @@ func (c *deleteCmd) completeDelete(cmd *cobra.Command, args []string, toComplete
 
 	return sug, cobra.ShellCompDirectiveNoFileComp
 }
-
-func init() {
-	rootCmd.AddCommand(newDeleteCommand().cmd)
-}

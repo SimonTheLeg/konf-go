@@ -94,7 +94,3 @@ func (c *completionCmd) completion(cmd *cobra.Command, args []string) error {
 
 	return nil
 }
-
-func init() {
-	rootCmd.AddCommand(newCompletionCmd().cmd)
-}
