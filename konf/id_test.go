@@ -24,23 +24,6 @@ var validCombos = []struct {
 	{"this:would:break:on:windows", "danger", "this-would-break-on-windows_danger"},
 }
 
-func TestPathForID(t *testing.T) {
-	for _, co := range validCombos {
-		resStore := co.id.StorePath()
-		expStore := fmt.Sprintf("./konf/store/%s.yaml", co.id)
-		if resStore != expStore {
-			t.Errorf("Exp StorePath %q, got %q", expStore, resStore)
-		}
-
-		resActive := co.id.ActivePath()
-		expActive := fmt.Sprintf("./konf/active/%s.yaml", co.id)
-		if resActive != expActive {
-			t.Errorf("Exp ActivePath %q, got %q", expActive, resActive)
-		}
-	}
-
-}
-
 func TestIDFromClusterAndContext(t *testing.T) {
 	for _, co := range validCombos {
 		res := IDFromClusterAndContext(co.cluster, co.context)

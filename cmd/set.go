@@ -25,7 +25,7 @@ type setCmd struct {
 
 func newSetCommand() *setCmd {
 	fs := afero.NewOsFs()
-	sm := &store.Storemanager{Fs: fs, Activedir: config.ActiveDir(), Storedir: config.StoreDir()}
+	sm := &store.Storemanager{Fs: fs, Activedir: config.ActiveDir(), Storedir: config.StoreDir(), LatestKonfPath: config.LatestKonfFilePath()}
 	sc := &setCmd{
 		sm: sm,
 	}
@@ -61,7 +61,7 @@ func (c *setCmd) set(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	} else if args[0] == "-" {
-		id, err = idOfLatestKonf(c.sm.Fs)
+		id, err = idOfLatestKonf(c.sm)
 		if err != nil {
 			return err
 		}
@@ -73,7 +73,7 @@ func (c *setCmd) set(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	err = saveLatestKonf(c.sm.Fs, id)
+	err = saveLatestKonf(c.sm, id)
 	if err != nil {
 		return fmt.Errorf("could not save latest konf. As a result 'konf set -' might not work: %q ", err)
 	}
@@ -135,8 +135,8 @@ func selectSingleKonf(sm *store.Storemanager, pf prompt.RunFunc) (konf.KonfID, e
 	return konf.IDFromClusterAndContext(sel.Cluster, sel.Context), nil
 }
 
-func idOfLatestKonf(f afero.Fs) (konf.KonfID, error) {
-	b, err := afero.ReadFile(f, config.LatestKonfFilePath())
+func idOfLatestKonf(sm *store.Storemanager) (konf.KonfID, error) {
+	b, err := afero.ReadFile(sm.Fs, sm.LatestKonfPath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return "", fmt.Errorf("could not select latest konf, because no konf was yet set")
@@ -164,8 +164,8 @@ func setContext(id konf.KonfID, f afero.Fs) (string, error) {
 
 }
 
-func saveLatestKonf(f afero.Fs, id konf.KonfID) error {
-	return afero.WriteFile(f, config.LatestKonfFilePath(), []byte(id), utils.KonfPerm)
+func saveLatestKonf(sm *store.Storemanager, id konf.KonfID) error {
+	return afero.WriteFile(sm.Fs, sm.LatestKonfPath, []byte(id), utils.KonfPerm)
 }
 
 func createSetPrompt(options []*store.Metadata) *promptui.Select {

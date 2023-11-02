@@ -10,6 +10,7 @@ import (
 	"github.com/simontheleg/konf-go/config"
 	"github.com/simontheleg/konf-go/konf"
 	log "github.com/simontheleg/konf-go/log"
+	"github.com/simontheleg/konf-go/store"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 )
@@ -23,12 +24,14 @@ An active config is considered unused when no process points to it anymore`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 
 		fs := afero.NewOsFs()
-		err := cleanLeftOvers(fs)
+		sm := &store.Storemanager{Activedir: config.ActiveDir(), Storedir: config.StoreDir(), Fs: fs}
+
+		err := cleanLeftOvers(sm)
 		if err != nil {
 			return err
 		}
 
-		err = selfClean(fs)
+		err = selfClean(sm)
 		if err != nil {
 			return err
 		}
@@ -41,11 +44,12 @@ An active config is considered unused when no process points to it anymore`,
 // it is required as the idempotent clean would delete all files that
 // do not belong to any process anymore, but of course the current process
 // is still running at this time
-func selfClean(f afero.Fs) error {
+func selfClean(sm *store.Storemanager) error {
 	pid := os.Getppid()
 
-	fpath := konf.IDFromProcessID(pid).ActivePath()
-	err := f.Remove(fpath)
+	konfID := konf.IDFromProcessID(pid)
+	fpath := sm.ActivePathFromID(konfID)
+	err := sm.Fs.Remove(fpath)
 
 	if errors.Is(err, fs.ErrNotExist) {
 		log.Info("current konf '%s' was already deleted, nothing to self-cleanup\n", fpath)
@@ -64,8 +68,8 @@ func selfClean(f afero.Fs) error {
 // any leftovers that can occur if a previous session was not cleaned up nicely. This is
 // necessary as we cannot tell a user that a selfClean has failed if they close the shell
 // session before
-func cleanLeftOvers(f afero.Fs) error {
-	konfs, err := afero.ReadDir(f, config.ActiveDir())
+func cleanLeftOvers(sm *store.Storemanager) error {
+	konfs, err := afero.ReadDir(sm.Fs, sm.Activedir)
 
 	if err != nil {
 		return err
@@ -86,7 +90,7 @@ func cleanLeftOvers(f afero.Fs) error {
 		}
 
 		if p == nil {
-			err := f.Remove(konfID.ActivePath())
+			err := sm.Fs.Remove(sm.ActivePathFromID(konfID))
 			if err != nil {
 				return err
 			}

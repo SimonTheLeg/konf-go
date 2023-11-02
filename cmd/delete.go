@@ -79,10 +79,11 @@ func (c *deleteCmd) delete(cmd *cobra.Command, args []string) error {
 }
 
 func deleteKonfWithID(sm *store.Storemanager, id konf.KonfID) error {
-	if err := sm.Fs.Remove(id.StorePath()); err != nil {
+	path := sm.StorePathFromID(id)
+	if err := sm.Fs.Remove(path); err != nil {
 		return err
 	}
-	log.Info("Successfully deleted konf %q at %q", id, id.StorePath())
+	log.Info("Successfully deleted konf %q at %q", id, path)
 	return nil
 }
 

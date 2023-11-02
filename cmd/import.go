@@ -98,7 +98,8 @@ func (c *importCmd) importf(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-		log.Info("Imported konf from %q successfully into %q\n", k.ImportPath, k.Konf.StorePath)
+		storePath := c.sm.StorePathFromID(k.Konf.Id)
+		log.Info("Imported konf from %q successfully into %q\n", k.ImportPath, storePath)
 	}
 
 	if c.move {

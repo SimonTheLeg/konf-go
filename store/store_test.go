@@ -323,8 +323,7 @@ users:
 	expPath := "./konf/store/dev-eu_dev-eu-1.yaml"
 
 	var devEUControlGroup = &konf.Konfig{
-		Id:        konf.IDFromClusterAndContext("dev-eu-1", "dev-eu"),
-		StorePath: konf.IDFromClusterAndContext("dev-eu-1", "dev-eu").StorePath(),
+		Id: konf.IDFromClusterAndContext("dev-eu-1", "dev-eu"),
 		Kubeconfig: k8s.Config{
 			APIVersion:     "v1",
 			Kind:           "Config",
@@ -364,7 +363,7 @@ users:
 		t.Errorf("Exp path to be %q, but got %q", expPath, p)
 	}
 
-	b, err := afero.ReadFile(f, devEUControlGroup.StorePath)
+	b, err := afero.ReadFile(f, expPath)
 	if err != nil {
 		t.Errorf("Exp read in file without any issues, but got %q", err)
 	}
