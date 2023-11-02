@@ -5,8 +5,6 @@ import (
 	"io/fs"
 	"path/filepath"
 	"strings"
-
-	"github.com/simontheleg/konf-go/config"
 )
 
 // ID unifies ID management that konf uses
@@ -37,18 +35,4 @@ func IDFromProcessID(pid int) KonfID {
 // IDFromFileInfo creates an ID from the name of a file
 func IDFromFileInfo(fi fs.FileInfo) KonfID {
 	return KonfID(strings.TrimSuffix(fi.Name(), filepath.Ext(fi.Name())))
-}
-
-// StorePathForID creates a valid filepath inside the configured storeDir
-func (id KonfID) StorePath() string {
-	return genIDPath(config.StoreDir(), string(id))
-}
-
-// ActivePath creates a valid filepath inside the configured activeDir
-func (id KonfID) ActivePath() string {
-	return genIDPath(config.ActiveDir(), string(id))
-}
-
-func genIDPath(path, id string) string {
-	return path + "/" + id + ".yaml"
 }

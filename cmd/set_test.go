@@ -9,7 +9,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/manifoldco/promptui"
-	"github.com/simontheleg/konf-go/config"
 	"github.com/simontheleg/konf-go/konf"
 	"github.com/simontheleg/konf-go/prompt"
 	"github.com/simontheleg/konf-go/store"
@@ -127,9 +126,10 @@ func TestSaveLatestKonf(t *testing.T) {
 }
 
 func TestSetContext(t *testing.T) {
-	storeDir := config.StoreDir()
+	storeDir := "./konf/store"
+	activeDir := "./konf/active"
 	ppid := os.Getppid()
-	sm := testhelper.SampleKonfManager{}
+	skm := testhelper.SampleKonfManager{}
 
 	tt := map[string]struct {
 		InID        konf.KonfID
@@ -141,7 +141,7 @@ func TestSetContext(t *testing.T) {
 			"dev-eu_dev-eu",
 			true,
 			nil,
-			konf.IDFromProcessID(ppid).ActivePath(),
+			activeDir + "/" + string(konf.IDFromProcessID(ppid)) + ".yaml",
 		},
 		"invalid id": {
 			"i-am-invalid",
@@ -155,12 +155,13 @@ func TestSetContext(t *testing.T) {
 
 		t.Run(name, func(t *testing.T) {
 			f := afero.NewMemMapFs()
+			sm := &store.Storemanager{Fs: f, Storedir: storeDir, Activedir: activeDir}
 
 			if tc.StoreExists {
-				afero.WriteFile(f, storeDir+"/"+string(tc.InID)+".yaml", []byte(sm.SingleClusterSingleContextEU()), utils.KonfPerm)
+				afero.WriteFile(f, storeDir+"/"+string(tc.InID)+".yaml", []byte(skm.SingleClusterSingleContextEU()), utils.KonfPerm)
 			}
 
-			resKonfPath, resError := setContext(tc.InID, f)
+			resKonfPath, resError := setContext(tc.InID, sm)
 
 			if !errors.Is(resError, tc.ExpErr) {
 				t.Errorf("Want error '%s', got '%s'", tc.ExpErr, resError)
@@ -183,8 +184,8 @@ func TestSetContext(t *testing.T) {
 				if err != nil {
 					t.Errorf("Wanted to read file %q, but failed: %q", tc.ExpKonfPath, err)
 				}
-				if string(res) != sm.SingleClusterSingleContextEU() {
-					t.Errorf("Exp content %q, got %q", res, sm.SingleClusterSingleContextEU())
+				if string(res) != skm.SingleClusterSingleContextEU() {
+					t.Errorf("Exp content %q, got %q", res, skm.SingleClusterSingleContextEU())
 				}
 			}
 		})
