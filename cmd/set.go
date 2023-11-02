@@ -69,7 +69,7 @@ func (c *setCmd) set(cmd *cobra.Command, args []string) error {
 		id = konf.KonfID(args[0])
 	}
 
-	context, err := setContext(id, c.sm.Fs)
+	context, err := setContext(id, c.sm)
 	if err != nil {
 		return err
 	}
@@ -146,16 +146,16 @@ func idOfLatestKonf(sm *store.Storemanager) (konf.KonfID, error) {
 	return konf.KonfID(b), nil
 }
 
-func setContext(id konf.KonfID, f afero.Fs) (string, error) {
-	k, err := afero.ReadFile(f, id.StorePath())
+func setContext(id konf.KonfID, sm *store.Storemanager) (string, error) {
+	k, err := afero.ReadFile(sm.Fs, sm.StorePathFromID(id))
 	if err != nil {
 		return "", err
 	}
 
 	ppid := os.Getppid()
 	konfID := konf.IDFromProcessID(ppid)
-	activeKonf := konfID.ActivePath()
-	err = afero.WriteFile(f, activeKonf, k, utils.KonfPerm)
+	activeKonf := sm.ActivePathFromID(konfID)
+	err = afero.WriteFile(sm.Fs, activeKonf, k, utils.KonfPerm)
 	if err != nil {
 		return "", err
 	}
