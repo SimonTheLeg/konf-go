@@ -24,9 +24,10 @@ type Metadata struct {
 }
 
 type Storemanager struct {
-	Activedir string
-	Storedir  string
-	Fs        afero.Fs
+	Activedir      string
+	Storedir       string
+	LatestKonfPath string
+	Fs             afero.Fs
 }
 
 // FetchAllKonfs retrieves metadata for all konfs currently in the store

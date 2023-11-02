@@ -81,8 +81,7 @@ func TestKonfsFromKubeConfig(t *testing.T) {
 			kubeconfig: singleClusterSingleContext,
 			expKonfs: []*Konfig{
 				{
-					Id:        "dev-eu_dev-eu-1",
-					StorePath: "./konf/store/dev-eu_dev-eu-1.yaml",
+					Id: "dev-eu_dev-eu-1",
 					Kubeconfig: k8s.Config{
 						APIVersion:     "v1",
 						Kind:           "Config",
@@ -118,8 +117,7 @@ func TestKonfsFromKubeConfig(t *testing.T) {
 			kubeconfig: multiClusterMultiContext,
 			expKonfs: []*Konfig{
 				{
-					Id:        "dev-asia_dev-asia-1",
-					StorePath: "./konf/store/dev-asia_dev-asia-1.yaml",
+					Id: "dev-asia_dev-asia-1",
 					Kubeconfig: k8s.Config{
 						APIVersion:     "v1",
 						Kind:           "Config",
@@ -150,8 +148,7 @@ func TestKonfsFromKubeConfig(t *testing.T) {
 					},
 				},
 				{
-					Id:        "dev-eu_dev-eu-1",
-					StorePath: "./konf/store/dev-eu_dev-eu-1.yaml",
+					Id: "dev-eu_dev-eu-1",
 					Kubeconfig: k8s.Config{
 						APIVersion:     "v1",
 						Kind:           "Config",

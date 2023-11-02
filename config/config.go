@@ -12,12 +12,10 @@ type Config struct {
 	Silent  bool
 }
 
-// This is mainly used to provide some sane and lively defaults for unit tests
-// TODO with the new config system in place, it might make sense to rework all the test-cases and remove the "./konf" reference
+// ensure that a default config exists so we don't run into nil pointer exceptions
+// TODO remove this as soon as we got rid of id.StorePath and id.ActivePath
 func init() {
-	curConf = &Config{
-		KonfDir: "./konf",
-	}
+	curConf = &Config{}
 }
 
 // ConfFromHomeDir returns an initialized config based on the users HomeDir

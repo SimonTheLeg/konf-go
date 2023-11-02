@@ -51,8 +51,6 @@ func KonfsFromKubeconfig(kubeconfig io.Reader) (konfs []*Konfig, err error) {
 
 		var k Konfig
 		id := IDFromClusterAndContext(cluster.Name, curCon.Name)
-		// TODO need to remove this. StorePath should only be setable by store pkg later on
-		k.StorePath = id.StorePath()
 		k.Id = id
 		k.Kubeconfig.AuthInfos = append(k.Kubeconfig.AuthInfos, user)
 		k.Kubeconfig.Clusters = append(k.Kubeconfig.Clusters, cluster)

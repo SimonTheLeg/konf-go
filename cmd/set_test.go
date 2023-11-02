@@ -44,7 +44,8 @@ func TestSelectLastKonf(t *testing.T) {
 
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
-			id, err := idOfLatestKonf(tc.FSCreator())
+			sm := &store.Storemanager{Fs: tc.FSCreator(), Activedir: activeDir, Storedir: storeDir, LatestKonfPath: latestKonfPath}
+			id, err := idOfLatestKonf(sm)
 
 			if !testhelper.EqualError(tc.ExpError, err) {
 				t.Errorf("Want error %q, got %q", tc.ExpError, err)
@@ -107,7 +108,8 @@ func TestSaveLatestKonf(t *testing.T) {
 	expID := konf.KonfID("context_cluster")
 
 	f := afero.NewMemMapFs()
-	err := saveLatestKonf(f, expID)
+	sm := &store.Storemanager{Fs: f, LatestKonfPath: expFile}
+	err := saveLatestKonf(sm, expID)
 	if err != nil {
 		t.Errorf("Could not save last konf: %q", err)
 	}
@@ -195,7 +197,7 @@ func TestSelectContext(t *testing.T) {
 	activeDir := "./konf/active"
 	fm := testhelper.FilesystemManager{Storedir: storeDir, Activedir: activeDir}
 	f := testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA)()
-	sm := &store.Storemanager{Fs: f, Activedir: config.ActiveDir(), Storedir: config.StoreDir()}
+	sm := &store.Storemanager{Fs: f, Activedir: activeDir, Storedir: storeDir}
 
 	// cases
 	// - invalid selection
