@@ -105,7 +105,7 @@ These can be added to your `.zshrc` / `.bashrc`:
 source <(konf completion zsh)
 
 # Open last konf on new shell session
-export KUBECONFIG=$(konf --silent set -)
+konf --silent set -
 
 # Alias
 alias kctx="konf set"
