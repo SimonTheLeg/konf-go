@@ -4,18 +4,12 @@ import (
 	"os"
 )
 
-var curConf *Config
+var curConf *Config = &Config{}
 
 // Config describes all values that can currently be configured for konf
 type Config struct {
 	KonfDir string
 	Silent  bool
-}
-
-// ensure that a default config exists so we don't run into nil pointer exceptions
-// TODO remove this as soon as we got rid of id.StorePath and id.ActivePath
-func init() {
-	curConf = &Config{}
 }
 
 // ConfFromHomeDir returns an initialized config based on the users HomeDir
