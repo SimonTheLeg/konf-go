@@ -21,9 +21,13 @@ func TestShellWrapperCmd(t *testing.T) {
 			[]string{"bash"},
 			nil,
 		},
-		"invalid arg": {
+		"fish arg": {
 			[]string{"fish"},
-			fmt.Errorf("konf currently does not support fish"),
+			nil,
+		},
+		"invalid arg": {
+			[]string{"invalid"},
+			fmt.Errorf("konf currently does not support invalid"),
 		},
 	}
 
