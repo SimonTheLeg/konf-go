@@ -4,20 +4,12 @@ import (
 	"os"
 )
 
-var curConf *Config
+var curConf *Config = &Config{}
 
 // Config describes all values that can currently be configured for konf
 type Config struct {
 	KonfDir string
 	Silent  bool
-}
-
-// This is mainly used to provide some sane and lively defaults for unit tests
-// TODO with the new config system in place, it might make sense to rework all the test-cases and remove the "./konf" reference
-func init() {
-	curConf = &Config{
-		KonfDir: "./konf",
-	}
 }
 
 // ConfFromHomeDir returns an initialized config based on the users HomeDir

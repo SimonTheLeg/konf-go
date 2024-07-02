@@ -9,15 +9,16 @@ import (
 	"syscall"
 	"testing"
 
-	"github.com/simontheleg/konf-go/config"
 	"github.com/simontheleg/konf-go/konf"
+	"github.com/simontheleg/konf-go/store"
 	"github.com/simontheleg/konf-go/testhelper"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
 )
 
 func TestSelfClean(t *testing.T) {
-	activeDir := config.ActiveDir()
+	activeDir := "./konf/active"
+	storeDir := "./konf/store"
 
 	ppid := os.Getppid()
 
@@ -28,26 +29,28 @@ func TestSelfClean(t *testing.T) {
 		NotExpFiles []string
 	}{
 		"PID FS": {
-			ppidFS(),
+			ppidFS(activeDir),
 			nil,
-			[]string{activeDir + "/abc", konf.KonfID("1234").ActivePath()},
+			[]string{activeDir + "/abc", activeDir + "/1234"},
 			[]string{activeDir + "/" + fmt.Sprint(ppid) + ".yaml"},
 		},
 		"PID file deleted by external source": {
-			ppidFileMissing(),
+			ppidFileMissing(activeDir),
 			nil,
-			[]string{activeDir + "/abc", konf.KonfID("1234").ActivePath()},
+			[]string{activeDir + "/abc", activeDir + "/1234"},
 			[]string{},
 		},
-		// Unfortunately it was not possible with afero to test what happens if
-		// someone changes the active dir permissions an we cannot delete it anymore
-		// apparently in the memFS afero can just delete these files
+		// Unfortunately it was not possible with afero memFS to test what happens if
+		// someone changes the active dir permissions and we cannot delete it anymore.
+		// Apparently in the memFS afero can just delete these files, regardless of
+		// permissions :D
 	}
 
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
 
-			err := selfClean(tc.Fs)
+			sm := &store.Storemanager{Fs: tc.Fs, Activedir: activeDir, Storedir: storeDir}
+			err := selfClean(sm)
 
 			if !testhelper.EqualError(err, tc.ExpError) {
 				t.Errorf("Want error '%s', got '%s'", tc.ExpError, err)
@@ -74,26 +77,26 @@ func TestSelfClean(t *testing.T) {
 	}
 }
 
-func ppidFS() afero.Fs {
+func ppidFS(activeDir string) afero.Fs {
 	ppid := os.Getppid()
-	fs := ppidFileMissing()
+	fs := ppidFileMissing(activeDir)
 	sm := testhelper.SampleKonfManager{}
-	afero.WriteFile(fs, konf.IDFromProcessID(ppid).ActivePath(), []byte(sm.SingleClusterSingleContextEU()), utils.KonfPerm)
+	afero.WriteFile(fs, activeDir+"/"+fmt.Sprint(ppid), []byte(sm.SingleClusterSingleContextEU()), utils.KonfPerm)
 	return fs
 }
 
-func ppidFileMissing() afero.Fs {
+func ppidFileMissing(activeDir string) afero.Fs {
 	fs := afero.NewMemMapFs()
 	sm := testhelper.SampleKonfManager{}
-	afero.WriteFile(fs, config.ActiveDir()+"/abc", []byte("I am not even a kubeconfig, what am I doing here?"), utils.KonfPerm)
-	afero.WriteFile(fs, konf.KonfID("1234").ActivePath(), []byte(sm.SingleClusterSingleContextEU()), utils.KonfPerm)
+	afero.WriteFile(fs, activeDir+"/abc", []byte("I am not even a kubeconfig, what am I doing here?"), utils.KonfPerm)
+	afero.WriteFile(fs, activeDir+"/1234", []byte(sm.SingleClusterSingleContextEU()), utils.KonfPerm)
 	return fs
 }
 
 func TestCleanLeftOvers(t *testing.T) {
 
 	tt := map[string]struct {
-		Setup  func(t *testing.T) (afero.Fs, []*exec.Cmd, []*exec.Cmd)
+		Setup  func(t *testing.T, sm *store.Storemanager) ([]*exec.Cmd, []*exec.Cmd)
 		ExpErr error
 	}{
 		"all procs still running": {
@@ -116,21 +119,23 @@ func TestCleanLeftOvers(t *testing.T) {
 
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
-			f, cmdsRunning, cmdsStopped := tc.Setup(t)
+			sm := &store.Storemanager{Fs: afero.NewMemMapFs(), Activedir: "./konf/active", Storedir: "./konf/store"}
+			cmdsRunning, cmdsStopped := tc.Setup(t, sm)
 
 			t.Cleanup(func() {
 				cleanUpRunningCmds(t, cmdsRunning)
 			})
 
-			err := cleanLeftOvers(f)
+			err := cleanLeftOvers(sm)
 
 			if !errors.Is(err, tc.ExpErr) {
 				t.Errorf("Want error '%s', got '%s'", tc.ExpErr, err)
 			}
 
 			for _, cmd := range cmdsRunning {
-				fpath := konf.IDFromProcessID(cmd.Process.Pid).ActivePath()
-				_, err := f.Stat(fpath)
+				id := konf.IDFromProcessID(cmd.Process.Pid)
+				fpath := sm.ActivePathFromID(id)
+				_, err := sm.Fs.Stat(fpath)
 
 				if err != nil {
 					if errors.Is(err, fs.ErrNotExist) {
@@ -142,8 +147,9 @@ func TestCleanLeftOvers(t *testing.T) {
 			}
 
 			for _, cmd := range cmdsStopped {
-				fpath := konf.IDFromProcessID(cmd.Process.Pid).ActivePath()
-				_, err := f.Stat(fpath)
+				id := konf.IDFromProcessID(cmd.Process.Pid)
+				fpath := sm.ActivePathFromID(id)
+				_, err := sm.Fs.Stat(fpath)
 
 				if !errors.Is(err, fs.ErrNotExist) {
 					t.Fatalf("Unexpected error occurred: '%s'", err)
@@ -159,12 +165,11 @@ func TestCleanLeftOvers(t *testing.T) {
 
 }
 
-func mixedFSWithAllProcs(t *testing.T) (fs afero.Fs, cmdsRunning []*exec.Cmd, cmdsStopped []*exec.Cmd) {
+func mixedFSWithAllProcs(t *testing.T, sm *store.Storemanager) (cmdsRunning []*exec.Cmd, cmdsStopped []*exec.Cmd) {
 	// we are simulating other instances of konf here
 	numOfConfs := 3
 
-	fs = afero.NewMemMapFs()
-	sm := testhelper.SampleKonfManager{}
+	skm := testhelper.SampleKonfManager{}
 
 	for i := 1; i <= numOfConfs; i++ {
 		// set sleep to an extremely high number as the argument "infinity" does not exist in all versions of the util
@@ -176,15 +181,15 @@ func mixedFSWithAllProcs(t *testing.T) (fs afero.Fs, cmdsRunning []*exec.Cmd, cm
 		}
 		pid := cmd.Process.Pid
 		cmdsRunning = append(cmdsRunning, cmd)
-		afero.WriteFile(fs, konf.IDFromProcessID(pid).ActivePath(), []byte(sm.SingleClusterSingleContextEU()), utils.KonfPerm)
+		afero.WriteFile(sm.Fs, sm.ActivePathFromID(konf.IDFromProcessID(pid)), []byte(skm.SingleClusterSingleContextEU()), utils.KonfPerm)
 	}
 
-	return fs, cmdsRunning, nil
+	return cmdsRunning, nil
 }
 
 // returns a state where there are more fs files than cmds
-func mixedFSIncompleteProcs(t *testing.T) (fs afero.Fs, cmdsRunning []*exec.Cmd, cmdsStopped []*exec.Cmd) {
-	fs, cmdsRunning, cmdsStopped = mixedFSWithAllProcs(t)
+func mixedFSIncompleteProcs(t *testing.T, sm *store.Storemanager) (cmdsRunning []*exec.Cmd, cmdsStopped []*exec.Cmd) {
+	cmdsRunning, cmdsStopped = mixedFSWithAllProcs(t, sm)
 
 	cmdToKill := cmdsRunning[0]
 	origPID := cmdToKill.Process.Pid
@@ -210,22 +215,22 @@ func mixedFSIncompleteProcs(t *testing.T) (fs afero.Fs, cmdsRunning []*exec.Cmd,
 	cmdsStopped = append(cmdsStopped, cmdsRunning[0])
 	cmdsRunning = cmdsRunning[1:]
 
-	return fs, cmdsRunning, cmdsStopped
+	return cmdsRunning, cmdsStopped
 }
 
-func mixedFSDirtyDir(t *testing.T) (fs afero.Fs, cmdsRunning []*exec.Cmd, cmdsStopped []*exec.Cmd) {
-	fs, cmdsRunning, cmdsStopped = mixedFSIncompleteProcs(t)
+func mixedFSDirtyDir(t *testing.T, sm *store.Storemanager) (cmdsRunning []*exec.Cmd, cmdsStopped []*exec.Cmd) {
+	cmdsRunning, cmdsStopped = mixedFSIncompleteProcs(t, sm)
 
-	afero.WriteFile(fs, konf.KonfID("/not-a-valid-process-id").ActivePath(), []byte{}, utils.KonfPerm)
+	id := konf.KonfID("/not-a-valid-process-id")
+	afero.WriteFile(sm.Fs, sm.ActivePathFromID(id), []byte{}, utils.KonfPerm)
 
-	return fs, cmdsRunning, cmdsStopped
+	return cmdsRunning, cmdsStopped
 
 }
 
-func emptyFS(t *testing.T) (fs afero.Fs, cmdsRunning []*exec.Cmd, cmdsStopped []*exec.Cmd) {
-	fs = afero.NewMemMapFs()
-
-	return fs, nil, nil
+func emptyFS(t *testing.T, sm *store.Storemanager) (cmdsRunning []*exec.Cmd, cmdsStopped []*exec.Cmd) {
+	// no op
+	return nil, nil
 }
 
 func cleanUpRunningCmds(t *testing.T, cmds []*exec.Cmd) {

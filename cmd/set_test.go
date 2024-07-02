@@ -9,9 +9,9 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/manifoldco/promptui"
-	"github.com/simontheleg/konf-go/config"
 	"github.com/simontheleg/konf-go/konf"
 	"github.com/simontheleg/konf-go/prompt"
+	"github.com/simontheleg/konf-go/store"
 	"github.com/simontheleg/konf-go/testhelper"
 	"github.com/simontheleg/konf-go/utils"
 	"github.com/spf13/afero"
@@ -19,7 +19,10 @@ import (
 )
 
 func TestSelectLastKonf(t *testing.T) {
-	fm := testhelper.FilesystemManager{}
+	storeDir := "./konf/store"
+	activeDir := "./konf/active"
+	latestKonfPath := "./konf/latestkonf" // it is fine to use an imaginary file location here
+	fm := testhelper.FilesystemManager{Storedir: storeDir, Activedir: activeDir, LatestKonfPath: latestKonfPath}
 
 	tt := map[string]struct {
 		FSCreator func() afero.Fs
@@ -40,7 +43,8 @@ func TestSelectLastKonf(t *testing.T) {
 
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
-			id, err := idOfLatestKonf(tc.FSCreator())
+			sm := &store.Storemanager{Fs: tc.FSCreator(), Activedir: activeDir, Storedir: storeDir, LatestKonfPath: latestKonfPath}
+			id, err := idOfLatestKonf(sm)
 
 			if !testhelper.EqualError(tc.ExpError, err) {
 				t.Errorf("Want error %q, got %q", tc.ExpError, err)
@@ -56,7 +60,9 @@ func TestSelectLastKonf(t *testing.T) {
 func TestCompleteSet(t *testing.T) {
 	// since cobra takes care of the majority of the complexity (like parsing out results that don't match completion start),
 	// we only need to test regular cases
-	fm := testhelper.FilesystemManager{}
+	storeDir := "./konf/store"
+	activeDir := "./konf/active"
+	fm := testhelper.FilesystemManager{Storedir: storeDir, Activedir: activeDir}
 
 	tt := map[string]struct {
 		fsCreator    func() afero.Fs
@@ -77,8 +83,11 @@ func TestCompleteSet(t *testing.T) {
 
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
+			fs := tc.fsCreator()
+			sm := &store.Storemanager{Activedir: activeDir, Storedir: storeDir, Fs: fs}
+
 			scmd := newSetCommand()
-			scmd.fs = tc.fsCreator()
+			scmd.sm = sm
 
 			res, compdirec := scmd.completeSet(scmd.cmd, []string{}, "")
 
@@ -98,7 +107,8 @@ func TestSaveLatestKonf(t *testing.T) {
 	expID := konf.KonfID("context_cluster")
 
 	f := afero.NewMemMapFs()
-	err := saveLatestKonf(f, expID)
+	sm := &store.Storemanager{Fs: f, LatestKonfPath: expFile}
+	err := saveLatestKonf(sm, expID)
 	if err != nil {
 		t.Errorf("Could not save last konf: %q", err)
 	}
@@ -116,9 +126,10 @@ func TestSaveLatestKonf(t *testing.T) {
 }
 
 func TestSetContext(t *testing.T) {
-	storeDir := config.StoreDir()
+	storeDir := "./konf/store"
+	activeDir := "./konf/active"
 	ppid := os.Getppid()
-	sm := testhelper.SampleKonfManager{}
+	skm := testhelper.SampleKonfManager{}
 
 	tt := map[string]struct {
 		InID        konf.KonfID
@@ -130,7 +141,7 @@ func TestSetContext(t *testing.T) {
 			"dev-eu_dev-eu",
 			true,
 			nil,
-			konf.IDFromProcessID(ppid).ActivePath(),
+			activeDir + "/" + string(konf.IDFromProcessID(ppid)) + ".yaml",
 		},
 		"invalid id": {
 			"i-am-invalid",
@@ -144,12 +155,13 @@ func TestSetContext(t *testing.T) {
 
 		t.Run(name, func(t *testing.T) {
 			f := afero.NewMemMapFs()
+			sm := &store.Storemanager{Fs: f, Storedir: storeDir, Activedir: activeDir}
 
 			if tc.StoreExists {
-				afero.WriteFile(f, storeDir+"/"+string(tc.InID)+".yaml", []byte(sm.SingleClusterSingleContextEU()), utils.KonfPerm)
+				afero.WriteFile(f, storeDir+"/"+string(tc.InID)+".yaml", []byte(skm.SingleClusterSingleContextEU()), utils.KonfPerm)
 			}
 
-			resKonfPath, resError := setContext(tc.InID, f)
+			resKonfPath, resError := setContext(tc.InID, sm)
 
 			if !errors.Is(resError, tc.ExpErr) {
 				t.Errorf("Want error '%s', got '%s'", tc.ExpErr, resError)
@@ -172,8 +184,8 @@ func TestSetContext(t *testing.T) {
 				if err != nil {
 					t.Errorf("Wanted to read file %q, but failed: %q", tc.ExpKonfPath, err)
 				}
-				if string(res) != sm.SingleClusterSingleContextEU() {
-					t.Errorf("Exp content %q, got %q", res, sm.SingleClusterSingleContextEU())
+				if string(res) != skm.SingleClusterSingleContextEU() {
+					t.Errorf("Exp content %q, got %q", res, skm.SingleClusterSingleContextEU())
 				}
 			}
 		})
@@ -182,8 +194,11 @@ func TestSetContext(t *testing.T) {
 }
 
 func TestSelectContext(t *testing.T) {
-	fm := testhelper.FilesystemManager{}
+	storeDir := "./konf/store"
+	activeDir := "./konf/active"
+	fm := testhelper.FilesystemManager{Storedir: storeDir, Activedir: activeDir}
 	f := testhelper.FSWithFiles(fm.StoreDir, fm.SingleClusterSingleContextEU, fm.SingleClusterSingleContextASIA)()
+	sm := &store.Storemanager{Fs: f, Activedir: activeDir, Storedir: storeDir}
 
 	// cases
 	// - invalid selection
@@ -217,7 +232,7 @@ func TestSelectContext(t *testing.T) {
 
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
-			res, err := selectSingleKonf(f, tc.pf)
+			res, err := selectSingleKonf(sm, tc.pf)
 
 			if !testhelper.EqualError(err, tc.expErr) {
 				t.Errorf("Exp err %q, got %q", tc.expErr, err)

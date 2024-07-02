@@ -18,15 +18,16 @@ import (
 )
 
 type setCmd struct {
-	fs afero.Fs
+	sm *store.Storemanager
 
 	cmd *cobra.Command
 }
 
 func newSetCommand() *setCmd {
-
+	fs := afero.NewOsFs()
+	sm := &store.Storemanager{Fs: fs, Activedir: config.ActiveDir(), Storedir: config.StoreDir(), LatestKonfPath: config.LatestKonfFilePath()}
 	sc := &setCmd{
-		fs: afero.NewOsFs(),
+		sm: sm,
 	}
 
 	sc.cmd = &cobra.Command{
@@ -55,12 +56,12 @@ func (c *setCmd) set(cmd *cobra.Command, args []string) error {
 	var err error
 
 	if len(args) == 0 {
-		id, err = selectSingleKonf(c.fs, prompt.Terminal)
+		id, err = selectSingleKonf(c.sm, prompt.Terminal)
 		if err != nil {
 			return err
 		}
 	} else if args[0] == "-" {
-		id, err = idOfLatestKonf(c.fs)
+		id, err = idOfLatestKonf(c.sm)
 		if err != nil {
 			return err
 		}
@@ -68,11 +69,11 @@ func (c *setCmd) set(cmd *cobra.Command, args []string) error {
 		id = konf.KonfID(args[0])
 	}
 
-	context, err := setContext(id, c.fs)
+	context, err := setContext(id, c.sm)
 	if err != nil {
 		return err
 	}
-	err = saveLatestKonf(c.fs, id)
+	err = saveLatestKonf(c.sm, id)
 	if err != nil {
 		return fmt.Errorf("could not save latest konf. As a result 'konf set -' might not work: %q ", err)
 	}
@@ -88,7 +89,7 @@ func (c *setCmd) set(cmd *cobra.Command, args []string) error {
 }
 
 func (c *setCmd) completeSet(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	konfs, err := store.FetchAllKonfs(c.fs)
+	konfs, err := c.sm.FetchAllKonfs()
 	if err != nil {
 		// if the store is just empty, return no suggestions, instead of throwing an error
 		if _, ok := err.(*store.EmptyStore); ok {
@@ -115,8 +116,8 @@ func (c *setCmd) completeSet(cmd *cobra.Command, args []string, toComplete strin
 // it is also being used by two commands: "set" and "delete". But because
 // they are in the same package, we also cannot easily duplicate the code for
 // each
-func selectSingleKonf(f afero.Fs, pf prompt.RunFunc) (konf.KonfID, error) {
-	k, err := store.FetchAllKonfs(f)
+func selectSingleKonf(sm *store.Storemanager, pf prompt.RunFunc) (konf.KonfID, error) {
+	k, err := sm.FetchAllKonfs()
 	if err != nil {
 		return "", err
 	}
@@ -134,8 +135,8 @@ func selectSingleKonf(f afero.Fs, pf prompt.RunFunc) (konf.KonfID, error) {
 	return konf.IDFromClusterAndContext(sel.Cluster, sel.Context), nil
 }
 
-func idOfLatestKonf(f afero.Fs) (konf.KonfID, error) {
-	b, err := afero.ReadFile(f, config.LatestKonfFilePath())
+func idOfLatestKonf(sm *store.Storemanager) (konf.KonfID, error) {
+	b, err := afero.ReadFile(sm.Fs, sm.LatestKonfPath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			return "", fmt.Errorf("could not select latest konf, because no konf was yet set")
@@ -145,16 +146,16 @@ func idOfLatestKonf(f afero.Fs) (konf.KonfID, error) {
 	return konf.KonfID(b), nil
 }
 
-func setContext(id konf.KonfID, f afero.Fs) (string, error) {
-	k, err := afero.ReadFile(f, id.StorePath())
+func setContext(id konf.KonfID, sm *store.Storemanager) (string, error) {
+	k, err := afero.ReadFile(sm.Fs, sm.StorePathFromID(id))
 	if err != nil {
 		return "", err
 	}
 
 	ppid := os.Getppid()
 	konfID := konf.IDFromProcessID(ppid)
-	activeKonf := konfID.ActivePath()
-	err = afero.WriteFile(f, activeKonf, k, utils.KonfPerm)
+	activeKonf := sm.ActivePathFromID(konfID)
+	err = afero.WriteFile(sm.Fs, activeKonf, k, utils.KonfPerm)
 	if err != nil {
 		return "", err
 	}
@@ -163,8 +164,8 @@ func setContext(id konf.KonfID, f afero.Fs) (string, error) {
 
 }
 
-func saveLatestKonf(f afero.Fs, id konf.KonfID) error {
-	return afero.WriteFile(f, config.LatestKonfFilePath(), []byte(id), utils.KonfPerm)
+func saveLatestKonf(sm *store.Storemanager, id konf.KonfID) error {
+	return afero.WriteFile(sm.Fs, sm.LatestKonfPath, []byte(id), utils.KonfPerm)
 }
 
 func createSetPrompt(options []*store.Metadata) *promptui.Select {
@@ -193,8 +194,4 @@ func createSetPrompt(options []*store.Metadata) *promptui.Select {
 		Size:         15,
 	}
 	return &prompt
-}
-
-func init() {
-	rootCmd.AddCommand(newSetCommand().cmd)
 }

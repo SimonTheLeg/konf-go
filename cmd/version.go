@@ -71,7 +71,3 @@ func versionStringWithOverrides(gitversion string, gitcommit string, builddate s
 	}
 	return fmt.Sprintf(`{"GitVersion":"%s","GitCommit":"%s","BuildDate":"%s","GoVersion":"%s","Platform":"%s","Compiler":"%s"}`, v.GitVersion, v.GitCommit, v.BuildDate, v.GoVersion, v.Platform, v.Compiler)
 }
-
-func init() {
-	rootCmd.AddCommand(newVersionCommand().cmd)
-}

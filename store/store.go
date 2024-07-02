@@ -7,7 +7,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/simontheleg/konf-go/config"
 	"github.com/simontheleg/konf-go/konf"
 	"github.com/simontheleg/konf-go/log"
 	"github.com/simontheleg/konf-go/utils"
@@ -24,37 +23,16 @@ type Metadata struct {
 	File    string
 }
 
-// KubeConfigOverload describes a state in which a kubeconfig has multiple Contexts or Clusters
-// This can be undesirable for konf when such a kubeconfig is in its store
-type KubeConfigOverload struct {
-	path string
-}
-
-func (k *KubeConfigOverload) Error() string {
-	return fmt.Sprintf("Impure Store: The kubeconfig %q contains multiple contexts and/or clusters. Please only use 'konf import' for populating the store\n", k.path)
-}
-
-// EmptyStore describes a state in which no kubeconfig is inside the store
-// It makes sense to have this in a separate case as it does not matter for some operations (e.g. importing) but detrimental for others (e.g. running the selection prompt)
-type EmptyStore struct{}
-
-func (k *EmptyStore) Error() string {
-	return fmt.Sprintf("The konf store at %q is empty. Please run 'konf import' to populate it", config.StoreDir())
-}
-
-// NoMatch describes a state in which no konf was found matching the supplied glob
-// It makes sense to have this in a separate case as it does not matter for some operations (e.g. importing) but detrimental for others (e.g. running the selection prompt)
-type NoMatch struct {
-	Pattern string
-}
-
-func (k *NoMatch) Error() string {
-	return fmt.Sprintf("No konf file matched your search pattern %q", k.Pattern)
+type Storemanager struct {
+	Activedir      string
+	Storedir       string
+	LatestKonfPath string
+	Fs             afero.Fs
 }
 
 // FetchAllKonfs retrieves metadata for all konfs currently in the store
-func FetchAllKonfs(f afero.Fs) ([]*Metadata, error) {
-	return FetchKonfsForGlob(f, "*")
+func (s *Storemanager) FetchAllKonfs() ([]*Metadata, error) {
+	return s.FetchKonfsForGlob("*")
 }
 
 // FetchKonfsForGlob returns all konfs whose name matches the supplied pattern.
@@ -64,14 +42,14 @@ func FetchAllKonfs(f afero.Fs) ([]*Metadata, error) {
 // handled automatically.
 //
 // [filepath.Match]: https://pkg.go.dev/path/filepath#Match
-func FetchKonfsForGlob(f afero.Fs, pattern string) ([]*Metadata, error) {
+func (s *Storemanager) FetchKonfsForGlob(pattern string) ([]*Metadata, error) {
 	var konfs []fs.FileInfo
 	var filesChecked int
 
-	err := afero.Walk(f, config.StoreDir(), func(path string, info fs.FileInfo, errPath error) error {
+	err := afero.Walk(s.Fs, s.Storedir, func(path string, info fs.FileInfo, errPath error) error {
 		// do not add directories. This is important as later we check the number of items in konf to determine whether store is empty or not
 		// without this check we would display an empty prompt if the user has only directories in their storeDir
-		if info.IsDir() && path != config.StoreDir() {
+		if info.IsDir() && path != s.Storedir {
 			return filepath.SkipDir
 		}
 
@@ -89,7 +67,7 @@ func FetchKonfsForGlob(f afero.Fs, pattern string) ([]*Metadata, error) {
 		filesChecked++
 
 		// skip any files that do not match our glob
-		patternPath := config.StoreDir() + "/" + pattern + ".yaml"
+		patternPath := s.Storedir + "/" + pattern + ".yaml"
 		patternPath = strings.TrimPrefix(patternPath, "./") // we need this as afero.Walk trims out any leading "./"
 		match, err := filepath.Match(patternPath, path)
 		if err != nil {
@@ -115,7 +93,7 @@ func FetchKonfsForGlob(f afero.Fs, pattern string) ([]*Metadata, error) {
 	// if the walkfunc only ran once, it means that the storedir does not contain any file which could be a kubeconfig
 	// It will always run at least once because we do not skip the rootDir
 	if filesChecked == 1 {
-		return nil, &EmptyStore{}
+		return nil, &EmptyStore{storepath: s.Storedir}
 	}
 
 	// similar to fs.ReadDir, sort the entries for easier viewing for the user and to
@@ -132,8 +110,8 @@ func FetchKonfsForGlob(f afero.Fs, pattern string) ([]*Metadata, error) {
 	for _, k := range konfs {
 
 		id := konf.IDFromFileInfo(k)
-		path := id.StorePath()
-		file, err := f.Open(path)
+		path := s.StorePathFromID(id)
+		file, err := s.Fs.Open(path)
 		if err != nil {
 			return nil, err
 		}
@@ -162,18 +140,33 @@ func FetchKonfsForGlob(f afero.Fs, pattern string) ([]*Metadata, error) {
 	return out, nil
 }
 
-func WriteKonfToStore(f afero.Fs, konf *konf.Konfig) (storepath string, err error) {
+// WriteKonfToStore writes the config to the store according to the store manager
+func (s *Storemanager) WriteKonfToStore(konf *konf.Konfig) (storepath string, err error) {
 	b, err := yaml.Marshal(konf.Kubeconfig)
 	if err != nil {
 		return "", err
 	}
 
-	storepath = konf.Id.StorePath()
+	storepath = s.StorePathFromID(konf.Id)
 
-	err = afero.WriteFile(f, storepath, b, utils.KonfPerm)
+	err = afero.WriteFile(s.Fs, storepath, b, utils.KonfPerm)
 	if err != nil {
 		return "", err
 	}
 
 	return storepath, nil
+}
+
+// ActivePathForID returns the active filepath for an id
+func (s *Storemanager) ActivePathFromID(id konf.KonfID) string {
+	return genIDPath(s.Activedir, string(id))
+}
+
+// StorePathFromID returns the active filepath for an id
+func (s *Storemanager) StorePathFromID(id konf.KonfID) string {
+	return genIDPath(s.Storedir, string(id))
+}
+
+func genIDPath(path, id string) string {
+	return path + "/" + id + ".yaml"
 }

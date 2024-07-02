@@ -3,12 +3,22 @@ package utils
 import (
 	"testing"
 
+	"github.com/simontheleg/konf-go/config"
 	"github.com/spf13/afero"
 )
 
 func TestEnsureDir(t *testing.T) {
+	// since ensureDir is being run long before any storemanager is created,
+	// we need to manually set a config here
+	c := &config.Config{
+		KonfDir: "./konf",
+	}
+	config.InitWithOverrides(c)
 	f := afero.NewMemMapFs()
-	EnsureDir(f)
+	err := EnsureDir(f)
+	if err != nil {
+		t.Errorf("Unexpected error while running EnsureDir: %q", err)
+	}
 
 	r, err := f.Stat("./konf/active")
 	if err != nil {
