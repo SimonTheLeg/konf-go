@@ -1,4 +1,4 @@
-# This script tests the compatibility of the konf-go shellwrappe with different shells
+# This script tests the compatibility of the konf-go shellwrapper with different shells
 # Therefore it has no shebang line and is intended to be executed directly by the shell to test
 
 set -o errexit

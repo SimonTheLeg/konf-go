@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"flag"
 	"io"
 
 	"github.com/simontheleg/konf-go/config"
@@ -31,6 +32,7 @@ Afterwards switch between different kubeconfigs via 'konf set'
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() error {
 	initPersistentFlags()
+	flag.Parse()
 
 	if err := initConfig(); err != nil {
 		return err
