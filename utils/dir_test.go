@@ -13,7 +13,7 @@ func TestEnsureDir(t *testing.T) {
 	c := &config.Config{
 		KonfDir: "./konf",
 	}
-	config.InitWithOverrides(c)
+	config.SetGlobalConfig(c)
 	f := afero.NewMemMapFs()
 	err := EnsureDir(f)
 	if err != nil {

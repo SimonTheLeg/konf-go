@@ -59,11 +59,12 @@ func initPersistentFlags() {
 }
 
 func initConfig() error {
-	conf, err := config.ConfFromHomeDir()
+	conf, err := config.DefaultConfig()
 	if err != nil {
 		return err
 	}
 
+	// apply any overrides
 	if konfDir != "" {
 		conf.KonfDir = konfDir
 	}
@@ -72,7 +73,7 @@ func initConfig() error {
 		log.InitLogger(io.Discard, io.Discard)
 	}
 
-	config.InitWithOverrides(conf)
+	config.SetGlobalConfig(conf)
 	return nil
 }
 

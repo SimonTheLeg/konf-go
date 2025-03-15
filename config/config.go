@@ -12,8 +12,8 @@ type Config struct {
 	Silent  bool
 }
 
-// ConfFromHomeDir returns an initialized config based on the users HomeDir
-func ConfFromHomeDir() (*Config, error) {
+// DefaultConfig returns an initialized config based on the users HomeDir
+func DefaultConfig() (*Config, error) {
 	c := &Config{}
 
 	home, err := os.UserHomeDir()
@@ -27,8 +27,8 @@ func ConfFromHomeDir() (*Config, error) {
 	return c, nil
 }
 
-// InitWithOverrides sets the config to the config supplied as its argument
-func InitWithOverrides(or *Config) {
+// SetGlobalConfig sets the config to the config supplied as its argument
+func SetGlobalConfig(or *Config) {
 	curConf = or
 }
 
