@@ -4,7 +4,7 @@ jobs:
   unit-test:
     strategy:
       matrix:
-        go: [1.19.0]
+        go: [1.24.0]
     runs-on: ubuntu-latest
     name: unit -> go ${{ matrix.go }}
     steps:
@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        go: [1.19.0]
+        go: [1.24.0]
     runs-on: ${{ matrix.os }}
     name: integration -> ${{ matrix.os }} / go ${{ matrix.go }}
     steps:
@@ -42,7 +42,7 @@ jobs:
       - name: Setup go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.19.0 # for now we can keep this as a fixed version
+          go-version: 1.24.0 # for now we can keep this as a fixed version
       - name: Install zsh # until https://github.com/actions/virtual-environments/issues/4849 is resolved
         run: sudo apt-get update; sudo apt-get install zsh
       - name: Install konf-go
