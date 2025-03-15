@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"flag"
 	"io"
+	"os"
 
 	"github.com/simontheleg/konf-go/config"
 	"github.com/simontheleg/konf-go/log"
@@ -32,7 +32,13 @@ Afterwards switch between different kubeconfigs via 'konf set'
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() error {
 	initPersistentFlags()
-	flag.Parse()
+	// we need to make a copy of our flagset to parse them immediately. This is because we cannot wait for
+	// rootCmd.Execute to parse them naturally, as we need the config already ready during initCommands.
+	// We cannot use flags.Parse here, because cobra's flagchecker will complain that it cannot find
+	// flags supplied by the end-user, because it thinks those flags do not exist.
+	// For now I cannot think of a better way to handle this
+	cp := *rootCmd.Flags()
+	_ = cp.Parse(os.Args[1:]) // we don't care about the potential Errhelp return
 
 	if err := initConfig(); err != nil {
 		return err
