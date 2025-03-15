@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
@@ -90,7 +91,7 @@ func (c *importCmd) importf(cmd *cobra.Command, args []string) error {
 		for _, file := range files {
 			errMsg += fmt.Sprintf("\t- %q\n", file.FilePath)
 		}
-		return fmt.Errorf(errMsg)
+		return errors.New(errMsg)
 	}
 
 	for _, k := range konfs {

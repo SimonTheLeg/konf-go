@@ -177,7 +177,7 @@ func mixedFSWithAllProcs(t *testing.T, sm *store.Storemanager) (cmdsRunning []*e
 		cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 		err := cmd.Start()
 		if err != nil {
-			t.Fatalf(err.Error())
+			t.Fatal(err)
 		}
 		pid := cmd.Process.Pid
 		cmdsRunning = append(cmdsRunning, cmd)
@@ -195,7 +195,7 @@ func mixedFSIncompleteProcs(t *testing.T, sm *store.Storemanager) (cmdsRunning [
 	origPID := cmdToKill.Process.Pid
 	err := cmdToKill.Process.Kill()
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 
 	// we need to call release here, as otherwise our process will have received the signal, but
@@ -205,7 +205,7 @@ func mixedFSIncompleteProcs(t *testing.T, sm *store.Storemanager) (cmdsRunning [
 	// err = cmdToKill.Process.Release()
 	_, err = cmdToKill.Process.Wait()
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 
 	// Release will set the PID to -1. Therefore we need to set the PID back, so
