@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -17,6 +18,81 @@ import (
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 )
+
+type readOnlyLatestFS struct {
+	afero.Fs
+	latest string
+}
+
+func (f readOnlyLatestFS) OpenFile(name string, flag int, perm fs.FileMode) (afero.File, error) {
+	if name == f.latest && flag&(os.O_WRONLY|os.O_RDWR|os.O_TRUNC|os.O_CREATE) != 0 {
+		return nil, fs.ErrPermission
+	}
+	return f.Fs.OpenFile(name, flag, perm)
+}
+
+func TestRestoreDoesNotRewriteLatest(t *testing.T) {
+	mem := afero.NewMemMapFs()
+	sm := &store.Storemanager{
+		Fs: mem, Storedir: "/store", Activedir: "/active", LatestKonfPath: "/latestkonf",
+	}
+	const id = konf.KonfID("test_test")
+	const content = "original kubeconfig"
+	for path, data := range map[string]string{
+		sm.LatestKonfPath:      string(id),
+		sm.StorePathFromID(id): content,
+	} {
+		if err := afero.WriteFile(mem, path, []byte(data), utils.KonfPerm); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := mem.MkdirAll(sm.Activedir, utils.KonfDirPerm); err != nil {
+		t.Fatal(err)
+	}
+	sm.Fs = readOnlyLatestFS{Fs: mem, latest: sm.LatestKonfPath}
+	sc := newSetCommand()
+	sc.sm = sm
+	if err := sc.set(sc.cmd, []string{"-"}); err != nil {
+		t.Fatalf("restore attempted to rewrite latest selection: %v", err)
+	}
+	active := sm.ActivePathFromID(konf.IDFromProcessID(os.Getppid()))
+	got, err := afero.ReadFile(mem, active)
+	if err != nil || string(got) != content {
+		t.Fatalf("active config = %q, %v; want %q", got, err, content)
+	}
+	if err := sc.set(sc.cmd, []string{string(id)}); err == nil || !strings.Contains(err.Error(), "could not save latest konf") {
+		t.Fatalf("explicit selection did not report persistence failure: %v", err)
+	}
+}
+
+func TestSetContextShellPID(t *testing.T) {
+	for _, value := range []string{"42", "invalid"} {
+		t.Run(value, func(t *testing.T) {
+			t.Setenv("KONF_SHELL_PID", value)
+			sm := &store.Storemanager{Fs: afero.NewMemMapFs(), Storedir: "/store", Activedir: "/active"}
+			if err := afero.WriteFile(sm.Fs, sm.StorePathFromID("test"), []byte("config"), utils.KonfPerm); err != nil {
+				t.Fatal(err)
+			}
+			if err := sm.Fs.MkdirAll(sm.Activedir, utils.KonfDirPerm); err != nil {
+				t.Fatal(err)
+			}
+			path, err := setContext("test", sm)
+			if value == "invalid" {
+				if err == nil {
+					t.Fatal("invalid shell PID accepted")
+				}
+				return
+			}
+			if err != nil || path != sm.ActivePathFromID("42") {
+				t.Fatalf("got %q, %v; want owning shell's active file", path, err)
+			}
+			contents, err := afero.ReadFile(sm.Fs, path)
+			if err != nil || string(contents) != "config" {
+				t.Fatalf("active file: %q, %v", contents, err)
+			}
+		})
+	}
+}
 
 func TestSelectLastKonf(t *testing.T) {
 	storeDir := "./konf/store"

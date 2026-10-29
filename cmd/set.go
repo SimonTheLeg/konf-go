@@ -73,9 +73,12 @@ func (c *setCmd) set(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	err = saveLatestKonf(c.sm, id)
-	if err != nil {
-		return fmt.Errorf("could not save latest konf. As a result 'konf set -' might not work: %q ", err)
+	// A restore must not overwrite a newer selection made by another shell.
+	if len(args) == 0 || args[0] != "-" {
+		err = saveLatestKonf(c.sm, id)
+		if err != nil {
+			return fmt.Errorf("could not save latest konf. As a result 'konf set -' might not work: %q ", err)
+		}
 	}
 
 	log.Info("Setting context to %q\n", id)
@@ -152,7 +155,10 @@ func setContext(id konf.KonfID, sm *store.Storemanager) (string, error) {
 		return "", err
 	}
 
-	ppid := os.Getppid()
+	ppid, err := config.ShellPID()
+	if err != nil {
+		return "", err
+	}
 	konfID := konf.IDFromProcessID(ppid)
 	activeKonf := sm.ActivePathFromID(konfID)
 	err = afero.WriteFile(sm.Fs, activeKonf, k, utils.KonfPerm)

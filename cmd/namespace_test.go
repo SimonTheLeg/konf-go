@@ -1,7 +1,10 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -10,12 +13,81 @@ import (
 	"github.com/simontheleg/konf-go/testhelper"
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/yaml"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/kubernetes/fake"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/dynamic/fake"
 	k8s "k8s.io/client-go/tools/clientcmd/api/v1"
 )
+
+func TestNamespaceAPIClient(t *testing.T) {
+	for _, code := range []int{http.StatusOK, http.StatusForbidden} {
+		t.Run(fmt.Sprint(code), func(t *testing.T) {
+			requests := 0
+			server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				requests++
+				if r.Method != http.MethodGet || r.URL.Path != "/api/v1/namespaces" {
+					t.Errorf("unexpected request %s %s", r.Method, r.URL.Path)
+				}
+				if r.Header.Get("Authorization") != "Bearer test-token" {
+					t.Error("authentication missing")
+				}
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(code)
+				if code == http.StatusOK {
+					fmt.Fprint(w, `{"apiVersion":"v1","kind":"NamespaceList","items":[{"metadata":{"name":"first"}},{"metadata":{"name":"second"}}]}`)
+				} else {
+					fmt.Fprint(w, `{"apiVersion":"v1","kind":"Status","status":"Failure","reason":"Forbidden","code":403}`)
+				}
+			}))
+			defer server.Close()
+			mem := afero.NewMemMapFs()
+			const path = "/config.yaml"
+			conf := fmt.Sprintf(`apiVersion: v1
+kind: Config
+clusters:
+- name: test
+  cluster:
+    server: %s
+    insecure-skip-tls-verify: true
+contexts:
+- name: test
+  context:
+    cluster: test
+    user: test
+current-context: test
+users:
+- name: test
+  user:
+    token: test-token
+`, server.URL)
+			if err := afero.WriteFile(mem, path, []byte(conf), 0600); err != nil {
+				t.Fatal(err)
+			}
+			t.Setenv("KUBECONFIG", path)
+			client, err := newKubeClientSet(mem)
+			if err != nil {
+				t.Fatal(err)
+			}
+			list, err := client.Resource(namespaceResource).List(context.Background(), metav1.ListOptions{})
+			if code == http.StatusOK {
+				if err != nil {
+					t.Fatal(err)
+				}
+				if len(list.Items) != 2 || list.Items[0].GetName() != "first" || list.Items[1].GetName() != "second" {
+					t.Fatalf("unexpected namespace list: %v", list.Items)
+				}
+			} else if err == nil {
+				t.Fatal("API error not propagated")
+			}
+			if requests != 1 {
+				t.Fatalf("got %d requests, want a single namespace list request", requests)
+			}
+		})
+	}
+}
 
 func TestNamespace(t *testing.T) {
 
@@ -99,7 +171,9 @@ func TestCompleteNamespace(t *testing.T) {
 	for name, tc := range tt {
 		t.Run(name, func(t *testing.T) {
 			nscmd := newNamespaceCmd()
-			nscmd.clientSetCreator = func(f afero.Fs) (kubernetes.Interface, error) { return fake.NewSimpleClientset(tc.nss...), nil }
+			nscmd.clientSetCreator = func(f afero.Fs) (dynamic.Interface, error) {
+				return newNamespaceTestClient(t, tc.nss...), nil
+			}
 
 			res, compdirec := nscmd.completeNamespace(nscmd.cmd, []string{}, "")
 
@@ -213,8 +287,8 @@ func TestSelectNamespace(t *testing.T) {
 		testhelper.NamespaceFromName("zebra"),
 	}
 
-	var mockClientSetCreator = func(afero.Fs) (kubernetes.Interface, error) {
-		return fake.NewSimpleClientset(nss...), nil
+	var mockClientSetCreator = func(afero.Fs) (dynamic.Interface, error) {
+		return newNamespaceTestClient(t, nss...), nil
 	}
 
 	var mockSelect = func(sel int) prompt.RunFunc {
@@ -263,6 +337,15 @@ func TestSelectNamespace(t *testing.T) {
 		})
 	}
 
+}
+
+func newNamespaceTestClient(t *testing.T, objects ...runtime.Object) dynamic.Interface {
+	t.Helper()
+	scheme := runtime.NewScheme()
+	if err := corev1.AddToScheme(scheme); err != nil {
+		t.Fatal(err)
+	}
+	return fake.NewSimpleDynamicClient(scheme, objects...)
 }
 
 func TestSetNamespace(t *testing.T) {

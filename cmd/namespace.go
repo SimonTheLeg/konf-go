@@ -12,13 +12,16 @@ import (
 	"github.com/spf13/afero"
 	"github.com/spf13/cobra"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/tools/clientcmd"
 	k8s "k8s.io/client-go/tools/clientcmd/api/v1"
 	"sigs.k8s.io/yaml"
 )
 
-type clientSetCreator = func(afero.Fs) (kubernetes.Interface, error)
+type clientSetCreator = func(afero.Fs) (dynamic.Interface, error)
+
+var namespaceResource = schema.GroupVersionResource{Version: "v1", Resource: "namespaces"}
 
 type namespaceCmd struct {
 	fs afero.Fs
@@ -97,7 +100,7 @@ func (c *namespaceCmd) completeNamespace(cmd *cobra.Command, args []string, toCo
 		return nil, cobra.ShellCompDirectiveError
 	}
 
-	nsl, err := cs.CoreV1().Namespaces().List(context.Background(), v1.ListOptions{})
+	nsl, err := cs.Resource(namespaceResource).List(context.Background(), v1.ListOptions{})
 	if err != nil {
 		cobra.CompDebugln(err.Error(), true)
 		return nil, cobra.ShellCompDirectiveError
@@ -105,7 +108,7 @@ func (c *namespaceCmd) completeNamespace(cmd *cobra.Command, args []string, toCo
 
 	nss := []string{}
 	for _, ns := range nsl.Items {
-		nss = append(nss, ns.Name)
+		nss = append(nss, ns.GetName())
 	}
 
 	return nss, cobra.ShellCompDirectiveNoFileComp
@@ -117,14 +120,14 @@ func selectNamespace(csc clientSetCreator, pf prompt.RunFunc, fs afero.Fs) (stri
 		return "", err
 	}
 
-	nsl, err := cs.CoreV1().Namespaces().List(context.Background(), v1.ListOptions{})
+	nsl, err := cs.Resource(namespaceResource).List(context.Background(), v1.ListOptions{})
 	if err != nil {
 		return "", err
 	}
 
 	nss := []string{}
 	for _, ns := range nsl.Items {
-		nss = append(nss, ns.Name)
+		nss = append(nss, ns.GetName())
 	}
 
 	// Wrapper is required as we need access to nss, but the methodSignature from promptUI
@@ -163,7 +166,7 @@ func searchNamespace(searchTerm, curItem string) bool {
 	return fuzzy.Match(searchTerm, curItem)
 }
 
-func newKubeClientSet(fs afero.Fs) (kubernetes.Interface, error) {
+func newKubeClientSet(fs afero.Fs) (dynamic.Interface, error) {
 	kPath, err := kubeconfigEnv()
 	if err != nil {
 		return nil, err
@@ -184,7 +187,7 @@ func newKubeClientSet(fs afero.Fs) (kubernetes.Interface, error) {
 		return nil, err
 	}
 
-	cs, err := kubernetes.NewForConfig(cc)
+	cs, err := dynamic.NewForConfig(cc)
 	if err != nil {
 		return nil, err
 	}

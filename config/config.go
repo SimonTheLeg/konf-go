@@ -1,8 +1,23 @@
 package config
 
 import (
+	"fmt"
 	"os"
+	"strconv"
 )
+
+// ShellPID identifies the owning shell even when a wrapper uses command substitution.
+func ShellPID() (int, error) {
+	value := os.Getenv("KONF_SHELL_PID")
+	if value == "" {
+		return os.Getppid(), nil
+	}
+	pid, err := strconv.Atoi(value)
+	if err != nil || pid <= 0 {
+		return 0, fmt.Errorf("invalid KONF_SHELL_PID %q: expected a positive process ID", value)
+	}
+	return pid, nil
+}
 
 var curConf *Config = &Config{}
 

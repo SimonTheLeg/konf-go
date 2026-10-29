@@ -3,7 +3,6 @@ package cmd
 import (
 	"errors"
 	"io/fs"
-	"os"
 	"strconv"
 
 	"github.com/mitchellh/go-ps"
@@ -45,11 +44,14 @@ An active config is considered unused when no process points to it anymore`,
 // do not belong to any process anymore, but of course the current process
 // is still running at this time
 func selfClean(sm *store.Storemanager) error {
-	pid := os.Getppid()
+	pid, err := config.ShellPID()
+	if err != nil {
+		return err
+	}
 
 	konfID := konf.IDFromProcessID(pid)
 	fpath := sm.ActivePathFromID(konfID)
-	err := sm.Fs.Remove(fpath)
+	err = sm.Fs.Remove(fpath)
 
 	if errors.Is(err, fs.ErrNotExist) {
 		log.Info("current konf '%s' was already deleted, nothing to self-cleanup\n", fpath)
@@ -69,12 +71,17 @@ func selfClean(sm *store.Storemanager) error {
 // necessary as we cannot tell a user that a selfClean has failed if they close the shell
 // session before
 func cleanLeftOvers(sm *store.Storemanager) error {
+	return cleanLeftOversWithProcesses(sm, ps.Processes)
+}
+
+func cleanLeftOversWithProcesses(sm *store.Storemanager, listProcesses func() ([]ps.Process, error)) error {
 	konfs, err := afero.ReadDir(sm.Fs, sm.Activedir)
 
 	if err != nil {
 		return err
 	}
 
+	var running map[int]bool
 	for _, k := range konfs {
 		// We need to trim of the .yaml file extension to get to the PID
 		konfID := konf.IDFromFileInfo(k)
@@ -84,14 +91,20 @@ func cleanLeftOvers(sm *store.Storemanager) error {
 			continue
 		}
 
-		p, err := ps.FindProcess(pid)
-		if err != nil {
-			return err
+		if running == nil {
+			processes, err := listProcesses()
+			if err != nil {
+				return err
+			}
+			running = make(map[int]bool, len(processes))
+			for _, process := range processes {
+				running[process.Pid()] = true
+			}
 		}
 
-		if p == nil {
+		if !running[pid] {
 			err := sm.Fs.Remove(sm.ActivePathFromID(konfID))
-			if err != nil {
+			if err != nil && !errors.Is(err, fs.ErrNotExist) {
 				return err
 			}
 		}

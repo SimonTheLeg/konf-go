@@ -10,6 +10,7 @@
     - [2. Install the konf shellwrapper](#2-install-the-konf-shellwrapper)
     - [Customizations to Have a Good Time](#customizations-to-have-a-good-time)
   - [Usage](#usage)
+    - [Startup performance](#startup-performance)
   - [How does it work?](#how-does-it-work)
     - [kubeconfig management across shells](#kubeconfig-management-across-shells)
     - [zsh/bash-func-magic](#zshbash-func-magic)
@@ -148,6 +149,34 @@ konf set <id> # will set a specific konf. <id> is usually <context>_<cluster>
 
 Additional commands and flags can be seen by calling `konf --help`
 
+### Startup performance
+
+`konf set -` reads the saved selection and copies that stored kubeconfig into
+the current shell's active file. It does not scan the store, contact the cluster,
+or rewrite the saved selection. Each shell still receives an independent copy;
+namespace changes in one shell do not affect another.
+
+Namespace selection and completion use a dynamic Kubernetes client for the core
+`v1/namespaces` resource. This avoids linking and initializing the complete
+generated Kubernetes clientset and API scheme for every invocation, including
+local commands such as `set`, `completion` and `shellwrapper`. Kubernetes
+authentication, TLS, namespace listing and API error handling still use client-go.
+
+Cleanup takes one process snapshot per invocation rather than enumerating
+processes separately for every active file. Concurrent cleanup tolerates files
+that another shell has already removed.
+
+The generated wrappers forward arguments and exit status, keep their result
+variables local, and only change `KUBECONFIG` after a successful command.
+They pass the owning shell's PID via the command-local `KONF_SHELL_PID`
+environment variable so restore and cleanup use a stable active filename,
+including when command substitution creates an intermediate subshell. Direct
+binary calls without this variable continue to use their parent PID.
+Completion generation and completion requests stream directly to stdout instead
+of being captured and printed again. After upgrading the binary, regenerate any
+cached shell wrappers and completions, or use your shell configuration's cache
+refresh command if it provides one.
+
 ## How does it work?
 
 ### kubeconfig management across shells
@@ -192,6 +221,44 @@ If you want to only run integration tests, simply run:
 ```sh
 go test -run Integration ./...
 ```
+
+Process-level startup and cleanup benchmarks are available:
+
+```sh
+go test -run '^$' -bench BenchmarkCLI -benchtime=15x ./cmd
+```
+
+These include executable loading and package initialization, with isolated
+stores containing 1/1,000 configurations and cleanup of 1/100 stale active files.
+To compare two builds with the same benchmark harness, set `KONF_BENCH_BINARY` to
+the absolute path of each binary. Benchmarks never use your live kubeconfig
+store or contact a Kubernetes cluster.
+
+For reference, process benchmarks on an Apple M4 Pro (macOS, Go 1.27.3,
+15 iterations per case) measured:
+
+| Operation | Before | After |
+| --- | ---: | ---: |
+| Restore last selection, 1 stored config | 59.0 ms | 31.9 ms |
+| Restore last selection, 1,000 stored configs | 57.5 ms | 29.9 ms |
+| Generate Bash wrapper | 56.2 ms | 29.2 ms |
+| Generate Bash completions | 54.8 ms | 30.3 ms |
+| Cleanup, 100 stale active files | 175.9 ms | 53.3 ms |
+
+Unstripped binary size dropped from approximately 44 MiB to 20 MiB.
+These are warm process benchmarks, not cold filesystem-cache measurements.
+Results will vary by platform, process count and build configuration.
+
+With the built binary on `PATH`, run the same shell-wrapper integration tests
+used by CI:
+
+```sh
+bash testhelper/shellwrapper.sh
+zsh testhelper/shellwrapper.sh
+```
+
+They use temporary homes and stores, check stable shell-owned active paths,
+namespace isolation, restore and failed selections, and do not contact a cluster.
 
 ### Upgrading spf13/cobra
 

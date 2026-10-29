@@ -33,38 +33,62 @@ func (c *shellwrapperCmd) shellwrapper(cmd *cobra.Command, args []string) error 
 	var wrapper string
 	var zsh = `
 konf() {
-  res=$(konf-go $@)
+  local res result
+  local KONF_SHELL_PID=$$
+  export KONF_SHELL_PID
+  # Completion output does not change shell state and can be streamed directly.
+  case "${1-}" in
+    completion|__complete|__completeNoDesc) command konf-go "$@"; return $? ;;
+  esac
+  if res=$(command konf-go "$@"); then
+    result=0
+  else
+    result=$?
+  fi
   # only change $KUBECONFIG if instructed by konf-go
-  if [[ $res == "KUBECONFIGCHANGE:"* ]]
+  if [[ $result == 0 && $res == "KUBECONFIGCHANGE:"* ]]
   then
     # this basically takes the line and cuts out the KUBECONFIGCHANGE Part
     export KUBECONFIG="${res#*KUBECONFIGCHANGE:}"
   else
     # this makes --help work
-    echo "${res}"
+    printf '%s\n' "$res"
   fi
+  return "$result"
 }
 konf_cleanup() {
-  konf-go cleanup
+  KONF_SHELL_PID=$$ command konf-go cleanup
 }
 add-zsh-hook zshexit konf_cleanup
 `
 
 	var bash = `
 konf() {
-  res=$(konf-go $@)
+  local res result
+  local KONF_SHELL_PID=$$
+  export KONF_SHELL_PID
+  # Completion output does not change shell state and can be streamed directly.
+  case "${1-}" in
+    completion|__complete|__completeNoDesc) command konf-go "$@"; return $? ;;
+  esac
+  if res=$(command konf-go "$@"); then
+    result=0
+  else
+    result=$?
+  fi
   # only change $KUBECONFIG if instructed by konf-go
-  if [[ $res == "KUBECONFIGCHANGE:"* ]]
+  if [[ $result == 0 && $res == "KUBECONFIGCHANGE:"* ]]
   then
     # this basically takes the line and cuts out the KUBECONFIGCHANGE Part
     export KUBECONFIG="${res#*KUBECONFIGCHANGE:}"
   else
     # this makes --help work
-    echo "${res}"
+    printf '%s\n' "$res"
   fi
+  return "$result"
 }
 konf_cleanup() {
-  konf-go cleanup
+  KONF_SHELL_PID=$$ command konf-go cleanup
 }
 
 trap konf_cleanup EXIT
@@ -72,9 +96,15 @@ trap konf_cleanup EXIT
 
 	var fish = `
 function konf -w konf-go
+    set -lx KONF_SHELL_PID $fish_pid
+    if test (count $argv) -gt 0; and contains -- $argv[1] completion __complete __completeNoDesc
+        command konf-go $argv
+        return $status
+    end
     set -f res (konf-go $argv)
+    set -f result $status
     # only change $KUBECONFIG if instructed by konf-go
-    if string match -q 'KUBECONFIGCHANGE:*' $res
+    if test $result -eq 0; and string match -q 'KUBECONFIGCHANGE:*' $res
         # this basically takes the line and cuts out the KUBECONFIGCHANGE Part
         set -gx KUBECONFIG (string replace -r '^KUBECONFIGCHANGE:' '' $res)
     else
@@ -82,10 +112,12 @@ function konf -w konf-go
         # because fish does not support bracketed vars, we use printf instead
         printf "%s\n" $res
     end
+    return $result
 end
 
 function konf_cleanup
-    konf-go cleanup
+    set -lx KONF_SHELL_PID $fish_pid
+    command konf-go cleanup
 end
 
 trap konf_cleanup EXIT
@@ -102,7 +134,6 @@ trap konf_cleanup EXIT
 		return fmt.Errorf("konf currently does not support %s", args[0])
 	}
 
-	fmt.Println(wrapper)
-
-	return nil
+	_, err := fmt.Fprintln(cmd.OutOrStdout(), wrapper)
+	return err
 }
